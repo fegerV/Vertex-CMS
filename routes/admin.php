@@ -2,6 +2,7 @@
 
 use App\Admin\Http\Controllers\DashboardController;
 use App\Admin\Http\Controllers\RoleController;
+use App\Admin\Http\Controllers\SettingsController;
 use App\Admin\Http\Controllers\UserController;
 use App\Auth\Http\Controllers\AdminAuthController;
 use App\Builder\Http\Controllers\PageBuilderController;
@@ -49,6 +50,13 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::put('roles/{role}', [RoleController::class, 'update'])
             ->middleware('vertex.permission:roles.edit')
             ->name('roles.update');
+
+        Route::get('settings', [SettingsController::class, 'edit'])
+            ->middleware('vertex.permission:settings.view')
+            ->name('settings.edit');
+        Route::put('settings', [SettingsController::class, 'update'])
+            ->middleware('vertex.permission:settings.edit')
+            ->name('settings.update');
 
         Route::get('pages', [PageController::class, 'index'])
             ->middleware('vertex.permission:pages.view')

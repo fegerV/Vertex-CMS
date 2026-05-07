@@ -13,6 +13,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }}</title>
+    @if (config_value('pwa.enabled', false))
+        <link rel="manifest" href="{{ route('frontend.manifest') }}">
+        <meta name="theme-color" content="{{ config_value('pwa.theme_color', '#020617') }}">
+    @endif
     @if ($description)
         <meta name="description" content="{{ $description }}">
     @endif

@@ -15,6 +15,7 @@
 - Admin layout foundation: общий Blade layout, sidebar, topbar, единый flash output.
 - RBAC foundation: route-level permission middleware, role permission mapping, permission-aware navigation.
 - Users/Roles foundation: CRUD пользователей, назначение ролей, просмотр и редактирование permissions ролей.
+- Settings foundation: UI и persistence для site/seo/api/ai/pwa/cache, public settings API, PWA manifest, AI sidebar scaffold.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
 Не проверено end-to-end:
