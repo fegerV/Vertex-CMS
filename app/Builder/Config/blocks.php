@@ -56,6 +56,47 @@ $blocks = [
         ],
     ],
 
+    'list' => [
+        'name' => 'Список',
+        'category' => 'content',
+        'icon' => 'list',
+        'description' => 'Маркированный или нумерованный список',
+        'default' => [
+            'type' => 'list',
+            'settings' => [
+                'type' => 'disc',
+                'items' => [['content' => 'Элемент 1'], ['content' => 'Элемент 2']],
+            ],
+        ],
+        'fields' => [
+            'type' => ['type' => 'select', 'label' => 'Тип списка', 'options' => ['disc'=>'Маркированный','decimal'=>'Нумерованный','none'=>'Без маркеров']],
+            'items' => ['type' => 'repeater', 'label' => 'Элементы списка', 'fields' => [
+                ['type' => 'text', 'key' => 'content', 'label' => 'Текст'],
+            ]],
+        ],
+    ],
+
+    'faq' => [
+        'name' => 'FAQ',
+        'category' => 'content',
+        'icon' => 'help-circle',
+        'description' => 'Часто задаваемые вопросы',
+        'default' => [
+            'type' => 'faq',
+            'settings' => [
+                'items' => [
+                    ['question' => 'Вопрос 1', 'answer' => 'Ответ 1'],
+                ],
+            ],
+        ],
+        'fields' => [
+            'items' => ['type' => 'repeater', 'label' => 'Вопросы и ответы', 'fields' => [
+                ['type' => 'text', 'key' => 'question', 'label' => 'Вопрос'],
+                ['type' => 'textarea', 'key' => 'answer', 'label' => 'Ответ'],
+            ]],
+        ],
+    ],
+
     'button' => [
         'name' => 'Кнопка',
         'category' => 'content',
@@ -548,7 +589,7 @@ $blocks = [
             'description' => ['type' => 'textarea', 'label' => 'Описание', 'rows' => 2],
             'price' => ['type' => 'number', 'label' => 'Цена', 'required' => true, 'step' => 0.01],
             'old_price' => ['type' => 'number', 'label' => 'Старая цена', 'step' => 0.01],
-            'currency', => ['type' => 'text', 'label' => 'Валюта', 'value' => '₽'],
+            'currency' => ['type' => 'text', 'label' => 'Валюта', 'value' => '₽'],
             'rating' => ['type' => 'number', 'label' => 'Рейтинг', 'min' => 0, 'max' => 5, 'step' => 0.5],
             'reviews_count' => ['type' => 'number', 'label' => 'Количество отзывов'],
             'button_text' => ['type' => 'text', 'label' => 'Текст на кнопке'],
