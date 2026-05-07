@@ -1,0 +1,15 @@
+title:	Implement data-driven robots.txt
+state:	OPEN
+author:	cto-new
+labels:	
+assignees:	
+reviewers:	
+projects:	
+milestone:	
+number:	2
+url:	https://github.com/fegerV/Vertex-CMS/pull/2
+additions:	48
+deletions:	2
+auto-merge:	disabled
+--
+This PR updates robots.txt to be data-driven, using settings from the database.\n1. Added seo.robots_txt to SettingCatalog.\n2. Updated RobotsController to fetch and pass the setting to the view.\n3. Updated robots.blade.php to display the setting or a default value.\n4. Added a feature test for verification.
