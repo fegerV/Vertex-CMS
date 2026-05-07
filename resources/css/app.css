@@ -6,3 +6,41 @@ body {
     font-family: ui-sans-serif, system-ui, sans-serif;
 }
 
+.vc-section {
+    padding: 64px 20px;
+}
+
+.vc-container {
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+.vc-heading {
+    margin: 0 0 20px;
+    font-weight: 700;
+}
+
+.vc-text {
+    line-height: 1.7;
+}
+
+.vc-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    border-radius: 6px;
+    padding: 10px 16px;
+    background: #020617;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.vc-divider {
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.vc-faq-item {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px 0;
+}

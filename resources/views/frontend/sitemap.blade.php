@@ -3,7 +3,7 @@
 @foreach ($pages as $page)
     <url>
         <loc>{{ url($page->uri) }}</loc>
+        <lastmod>{{ $page->updated_at?->toAtomString() }}</lastmod>
     </url>
 @endforeach
 </urlset>
-

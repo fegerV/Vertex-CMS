@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Model;
 
 class SeoMeta extends Model
@@ -26,5 +28,14 @@ class SeoMeta extends Model
         'schema_json' => 'array',
         'include_in_sitemap' => 'boolean',
     ];
-}
 
+    public function entity(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function ogImage(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'og_image');
+    }
+}

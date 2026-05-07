@@ -7,6 +7,9 @@
 - Core Skeleton: структура проекта, маршруты, базовые модели, миграции, seeders.
 - Installer backend: requirements, проверка БД, запись `.env`, миграции, seeders, первый администратор, `installed.lock`.
 - Auth foundation: login/logout, remember me, `last_login_at`, activity logs входа/выхода.
+- Pages CRUD foundation: создание, редактирование, удаление, slug/URI, revisions, activity logs.
+- SEO foundation: SEO-поля страницы, robots, sitemap flag, публичные meta/OG/schema.
+- Renderer foundation: базовый вывод JSON-блоков Heading, Text, Button, Divider, FAQ, HTML.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
 Не проверено end-to-end:

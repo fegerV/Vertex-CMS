@@ -6,6 +6,7 @@ use App\Core\Services\SlugService;
 use App\Models\Page;
 use App\Models\PageRevision;
 use App\Models\User;
+use App\Seo\Services\SeoMetaService;
 use App\System\Services\ActivityLogService;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,7 @@ class PageService
     public function __construct(
         private readonly SlugService $slug,
         private readonly ActivityLogService $activityLog,
+        private readonly SeoMetaService $seoMeta,
     ) {
     }
 
@@ -25,11 +27,13 @@ class PageService
         $payload = $this->preparePayload($payload);
 
         $page = Page::query()->create([
-            ...$payload,
+            ...$this->pageAttributes($payload),
             'created_by' => $user->id,
             'updated_by' => $user->id,
         ]);
 
+        $this->seoMeta->updateFor($page, $payload);
+        $page->load('seoMeta');
         $this->createRevision($page, $user);
         $this->activityLog->record('pages.create', 'page', $page->id, "Page \"{$page->title}\" created.");
 
@@ -41,10 +45,12 @@ class PageService
         $payload = $this->preparePayload($payload, $page);
 
         $page->forceFill([
-            ...$payload,
+            ...$this->pageAttributes($payload),
             'updated_by' => $user->id,
         ])->save();
 
+        $this->seoMeta->updateFor($page, $payload);
+        $page->load('seoMeta');
         $this->createRevision($page, $user);
         $this->activityLog->record('pages.edit', 'page', $page->id, "Page \"{$page->title}\" updated.");
 
@@ -103,6 +109,15 @@ class PageService
             'template' => $payload['template'] ?: 'default',
             'content_json' => $content,
             'published_at' => $this->publishedAt($status, $page),
+            'seo_title' => $payload['seo_title'] ?? null,
+            'seo_description' => $payload['seo_description'] ?? null,
+            'seo_canonical_url' => $payload['seo_canonical_url'] ?? null,
+            'seo_robots' => $payload['seo_robots'] ?? 'index, follow',
+            'seo_og_title' => $payload['seo_og_title'] ?? null,
+            'seo_og_description' => $payload['seo_og_description'] ?? null,
+            'seo_og_image' => $payload['seo_og_image'] ?? null,
+            'seo_schema_json' => $payload['seo_schema_json'] ?? null,
+            'seo_include_in_sitemap' => $payload['seo_include_in_sitemap'] ?? true,
         ];
     }
 
@@ -177,8 +192,22 @@ class PageService
             'user_id' => $user->id,
             'title' => $page->title,
             'content_json' => $page->content_json,
-            'seo_json' => Arr::wrap($page->seoMeta?->toArray()),
+            'seo_json' => $page->seoMeta?->toArray() ?? [],
             'created_at' => now(),
+        ]);
+    }
+
+    private function pageAttributes(array $payload): array
+    {
+        return Arr::only($payload, [
+            'parent_id',
+            'title',
+            'slug',
+            'uri',
+            'status',
+            'template',
+            'content_json',
+            'published_at',
         ]);
     }
 }

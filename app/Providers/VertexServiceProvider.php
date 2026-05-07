@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Builder\Services\PageRenderer;
 use App\Content\Services\PageService;
 use App\Core\Services\InstallationService;
 use App\Core\Services\SettingsService;
 use App\Core\Support\RouteRegistrar;
+use App\Seo\Services\SeoMetaService;
 use App\System\Services\ActivityLogService;
 use App\System\Services\DatabaseConnectionService;
 use App\System\Services\EnvironmentFileService;
@@ -23,6 +25,8 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(InstallerRunner::class);
         $this->app->singleton(ActivityLogService::class);
         $this->app->singleton(PageService::class);
+        $this->app->singleton(SeoMetaService::class);
+        $this->app->singleton(PageRenderer::class);
     }
 
     public function boot(RouteRegistrar $routes): void
