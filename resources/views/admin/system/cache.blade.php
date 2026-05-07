@@ -20,18 +20,20 @@
         @endforeach
     </section>
 
-    <section class="mt-6 rounded-lg border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-semibold">Очистка кеша</h2>
-        <div class="mt-4 flex flex-wrap gap-3">
-            @foreach (['all' => 'Весь кеш', 'application' => 'Кеш приложения', 'pages' => 'Кеш страниц'] as $scope => $label)
-                <form method="POST" action="{{ route('admin.system.cache.clear') }}">
-                    @csrf
-                    <input type="hidden" name="scope" value="{{ $scope }}">
-                    <button class="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50">
-                        {{ $label }}
-                    </button>
-                </form>
-            @endforeach
-        </div>
-    </section>
+    @if (auth()->user()?->hasPermission('cache.clear'))
+        <section class="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+            <h2 class="text-lg font-semibold">Очистка кеша</h2>
+            <div class="mt-4 flex flex-wrap gap-3">
+                @foreach (['all' => 'Весь кеш', 'application' => 'Кеш приложения', 'pages' => 'Кеш страниц'] as $scope => $label)
+                    <form method="POST" action="{{ route('admin.system.cache.clear') }}">
+                        @csrf
+                        <input type="hidden" name="scope" value="{{ $scope }}">
+                        <button class="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50">
+                            {{ $label }}
+                        </button>
+                    </form>
+                @endforeach
+            </div>
+        </section>
+    @endif
 @endsection

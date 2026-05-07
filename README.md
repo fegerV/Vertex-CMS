@@ -40,6 +40,7 @@ The current machine does not have `php` or `composer`, so the app could not be f
 
 - [Documentation index](docs/README.md)
 - [Unimplemented Functions Plan](docs/unimplemented-functions-plan.md)
+- [VertexCMS vs WordPress](docs/vertexcms-vs-wordpress.md)
 - [Roadmap](docs/roadmap.md)
 - [Versioning](docs/versioning.md)
 - [Installer Architecture](docs/architecture/installer.md)

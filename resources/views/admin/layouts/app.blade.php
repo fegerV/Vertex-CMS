@@ -8,13 +8,14 @@
 </head>
 <body class="bg-slate-100 text-slate-950">
     @php
+        $user = auth()->user();
         $navigation = [
-            ['label' => 'Панель управления', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard'],
-            ['label' => 'Страницы', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*'],
-            ['label' => 'Медиа', 'route' => 'admin.media.index', 'active' => 'admin.media.*'],
-            ['label' => 'Система', 'route' => 'admin.system.info', 'active' => 'admin.system.info'],
-            ['label' => 'Кеш', 'route' => 'admin.system.cache', 'active' => 'admin.system.cache*'],
-            ['label' => 'Логи', 'route' => 'admin.system.logs', 'active' => 'admin.system.logs'],
+            ['label' => 'Панель управления', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access'],
+            ['label' => 'Страницы', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view'],
+            ['label' => 'Медиа', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view'],
+            ['label' => 'Система', 'route' => 'admin.system.info', 'active' => 'admin.system.info', 'permission' => 'system.view'],
+            ['label' => 'Кеш', 'route' => 'admin.system.cache', 'active' => 'admin.system.cache*', 'permission' => 'system.view'],
+            ['label' => 'Логи', 'route' => 'admin.system.logs', 'active' => 'admin.system.logs', 'permission' => 'system.view'],
         ];
     @endphp
 
@@ -27,6 +28,7 @@
 
             <nav class="flex gap-2 overflow-x-auto px-4 pb-4 lg:block lg:space-y-1 lg:overflow-visible">
                 @foreach ($navigation as $item)
+                    @continue($item['permission'] && ! $user?->hasPermission($item['permission']))
                     <a
                         href="{{ route($item['route']) }}"
                         class="block whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium {{ request()->routeIs($item['active']) ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}"

@@ -51,13 +51,60 @@ class RolesAndPermissionsSeeder extends Seeder
             'viewer' => 'Viewer',
         ];
 
+        $permissionIds = Permission::query()->pluck('id', 'slug');
+
+        $rolePermissions = [
+            'super-admin' => $permissionIds->keys()->all(),
+            'admin' => [
+                'admin.access',
+                'pages.view',
+                'pages.create',
+                'pages.edit',
+                'pages.delete',
+                'pages.publish',
+                'media.view',
+                'media.upload',
+                'media.edit',
+                'media.delete',
+                'seo.view',
+                'seo.edit',
+                'settings.view',
+                'settings.edit',
+                'system.view',
+                'cache.clear',
+            ],
+            'editor' => [
+                'admin.access',
+                'pages.view',
+                'pages.create',
+                'pages.edit',
+                'pages.publish',
+                'media.view',
+                'media.upload',
+                'media.edit',
+                'seo.view',
+                'seo.edit',
+            ],
+            'viewer' => [
+                'admin.access',
+                'pages.view',
+                'media.view',
+                'seo.view',
+                'settings.view',
+                'system.view',
+            ],
+        ];
+
         foreach ($roles as $slug => $name) {
             $role = Role::query()->firstOrCreate(['slug' => $slug], ['name' => $name]);
 
-            if ($slug === 'super-admin') {
-                $role->permissions()->sync(Permission::query()->pluck('id')->all());
-            }
+            $role->permissions()->sync(
+                collect($rolePermissions[$slug] ?? [])
+                    ->map(fn (string $permission) => $permissionIds[$permission] ?? null)
+                    ->filter()
+                    ->values()
+                    ->all()
+            );
         }
     }
 }
-

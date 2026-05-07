@@ -36,4 +36,11 @@ class User extends Authenticatable
             ->whereHas('permissions', fn ($query) => $query->where('slug', $permission))
             ->exists();
     }
+
+    public function hasAnyPermission(array $permissions): bool
+    {
+        return $this->roles()
+            ->whereHas('permissions', fn ($query) => $query->whereIn('slug', $permissions))
+            ->exists();
+    }
 }

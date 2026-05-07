@@ -19,20 +19,68 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
 
-        Route::resource('pages', PageController::class)->except(['show']);
-        Route::get('pages/{page}/builder', [PageBuilderController::class, 'edit'])->name('pages.builder');
-        Route::put('pages/{page}/builder', [PageBuilderController::class, 'update'])->name('pages.builder.update');
+        Route::get('pages', [PageController::class, 'index'])
+            ->middleware('vertex.permission:pages.view')
+            ->name('pages.index');
+        Route::get('pages/create', [PageController::class, 'create'])
+            ->middleware('vertex.permission:pages.create')
+            ->name('pages.create');
+        Route::post('pages', [PageController::class, 'store'])
+            ->middleware('vertex.permission:pages.create')
+            ->name('pages.store');
+        Route::get('pages/{page}/edit', [PageController::class, 'edit'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.edit');
+        Route::put('pages/{page}', [PageController::class, 'update'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.update');
+        Route::delete('pages/{page}', [PageController::class, 'destroy'])
+            ->middleware('vertex.permission:pages.delete')
+            ->name('pages.destroy');
+        Route::get('pages/{page}/builder', [PageBuilderController::class, 'edit'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder');
+        Route::put('pages/{page}/builder', [PageBuilderController::class, 'update'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.update');
 
-        Route::get('media', [MediaController::class, 'index'])->name('media.index');
-        Route::post('media/upload', [MediaController::class, 'store'])->name('media.store');
-        Route::put('media/{media}', [MediaController::class, 'update'])->name('media.update');
-        Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+        Route::get('media', [MediaController::class, 'index'])
+            ->middleware('vertex.permission:media.view')
+            ->name('media.index');
+        Route::post('media/upload', [MediaController::class, 'store'])
+            ->middleware('vertex.permission:media.upload')
+            ->name('media.store');
+        Route::put('media/{media}', [MediaController::class, 'update'])
+            ->middleware('vertex.permission:media.edit')
+            ->name('media.update');
+        Route::delete('media/{media}', [MediaController::class, 'destroy'])
+            ->middleware('vertex.permission:media.delete')
+            ->name('media.destroy');
 
-        Route::resource('seo/redirects', RedirectController::class)->except(['show', 'create', 'edit']);
+        Route::get('seo/redirects', [RedirectController::class, 'index'])
+            ->middleware('vertex.permission:seo.view')
+            ->name('redirects.index');
+        Route::post('seo/redirects', [RedirectController::class, 'store'])
+            ->middleware('vertex.permission:seo.edit')
+            ->name('redirects.store');
+        Route::put('seo/redirects/{redirect}', [RedirectController::class, 'update'])
+            ->middleware('vertex.permission:seo.edit')
+            ->name('redirects.update');
+        Route::delete('seo/redirects/{redirect}', [RedirectController::class, 'destroy'])
+            ->middleware('vertex.permission:seo.edit')
+            ->name('redirects.destroy');
 
-        Route::get('system/info', [SystemController::class, 'info'])->name('system.info');
-        Route::get('system/logs', [SystemController::class, 'logs'])->name('system.logs');
-        Route::get('system/cache', [SystemController::class, 'cache'])->name('system.cache');
-        Route::post('system/cache/clear', [SystemController::class, 'clearCache'])->name('system.cache.clear');
+        Route::get('system/info', [SystemController::class, 'info'])
+            ->middleware('vertex.permission:system.view')
+            ->name('system.info');
+        Route::get('system/logs', [SystemController::class, 'logs'])
+            ->middleware('vertex.permission:system.view')
+            ->name('system.logs');
+        Route::get('system/cache', [SystemController::class, 'cache'])
+            ->middleware('vertex.permission:system.view')
+            ->name('system.cache');
+        Route::post('system/cache/clear', [SystemController::class, 'clearCache'])
+            ->middleware('vertex.permission:cache.clear')
+            ->name('system.cache.clear');
     });
 });

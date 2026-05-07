@@ -5,12 +5,13 @@
 @section('page_subtitle', 'Создание, публикация и управление страницами сайта')
 
 @section('content')
-    <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div></div>
-        <a href="{{ route('admin.pages.create') }}" class="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-            Создать страницу
-        </a>
-    </header>
+    @if (auth()->user()?->hasPermission('pages.create'))
+        <header class="mb-6 flex flex-wrap items-center justify-end gap-4">
+            <a href="{{ route('admin.pages.create') }}" class="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                Создать страницу
+            </a>
+        </header>
+    @endif
 
     <section class="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table class="w-full border-collapse text-left text-sm">
@@ -36,19 +37,23 @@
                         <td class="px-4 py-3 text-slate-600">{{ $page->updated_at?->format('d.m.Y H:i') }}</td>
                         <td class="px-4 py-3">
                             <div class="flex justify-end gap-2">
-                                <a href="{{ route('admin.pages.edit', $page) }}" class="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50">
-                                    Изменить
-                                </a>
-                                <a href="{{ route('admin.pages.builder', $page) }}" class="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50">
-                                    Builder
-                                </a>
-                                <form method="POST" action="{{ route('admin.pages.destroy', $page) }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="rounded-md border border-red-200 px-3 py-1.5 text-red-700 hover:bg-red-50">
-                                        Удалить
-                                    </button>
-                                </form>
+                                @if (auth()->user()?->hasPermission('pages.edit'))
+                                    <a href="{{ route('admin.pages.edit', $page) }}" class="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50">
+                                        Изменить
+                                    </a>
+                                    <a href="{{ route('admin.pages.builder', $page) }}" class="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50">
+                                        Builder
+                                    </a>
+                                @endif
+                                @if (auth()->user()?->hasPermission('pages.delete'))
+                                    <form method="POST" action="{{ route('admin.pages.destroy', $page) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="rounded-md border border-red-200 px-3 py-1.5 text-red-700 hover:bg-red-50">
+                                            Удалить
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -67,4 +72,3 @@
         {{ $pages->links() }}
     </div>
 @endsection
-
