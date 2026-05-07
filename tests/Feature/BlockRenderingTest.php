@@ -101,4 +101,27 @@ class BlockRenderingTest extends TestCase
         $this->assertStringContainsString('Q1', $html);
         $this->assertStringContainsString('A1', $html);
     }
+
+    public function test_icon_rendering()
+    {
+        $html = $this->service->compileBlock('icon', [
+            'icon' => 'star',
+            'color' => '#ff0000'
+        ]);
+
+        $this->assertStringContainsString('vc-icon', $html);
+        $this->assertStringContainsString('color: #ff0000', $html);
+    }
+
+    public function test_progress_bar_rendering()
+    {
+        $html = $this->service->compileBlock('progress-bar', [
+            'value' => 75,
+            'max' => 100,
+            'color' => '#00ff00'
+        ]);
+
+        $this->assertStringContainsString('75%', $html);
+        $this->assertStringContainsString('background-color: #00ff00', $html);
+    }
 }
