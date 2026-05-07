@@ -21,6 +21,10 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $casts = [
+        'last_login_at' => 'datetime',
+    ];
+
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
@@ -33,4 +37,3 @@ class User extends Authenticatable
             ->exists();
     }
 }
-
