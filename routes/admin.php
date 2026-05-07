@@ -32,6 +32,7 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
 
         Route::get('system/info', [SystemController::class, 'info'])->name('system.info');
         Route::get('system/logs', [SystemController::class, 'logs'])->name('system.logs');
+        Route::get('system/cache', [SystemController::class, 'cache'])->name('system.cache');
         Route::post('system/cache/clear', [SystemController::class, 'clearCache'])->name('system.cache.clear');
     });
 });

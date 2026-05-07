@@ -11,6 +11,7 @@
 - SEO foundation: SEO-поля страницы, robots, sitemap flag, публичные meta/OG/schema.
 - Renderer foundation: базовый вывод JSON-блоков Heading, Text, Button, Divider, FAQ, HTML.
 - Media foundation: upload, metadata edit, delete, SVG sanitization, activity logs.
+- System foundation: system info, activity log filters, cache status and manual cache clear.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
 Не проверено end-to-end:

@@ -10,9 +10,11 @@ use App\Core\Support\RouteRegistrar;
 use App\Media\Services\MediaService;
 use App\Seo\Services\SeoMetaService;
 use App\System\Services\ActivityLogService;
+use App\System\Services\CacheService;
 use App\System\Services\DatabaseConnectionService;
 use App\System\Services\EnvironmentFileService;
 use App\System\Services\InstallerRunner;
+use App\System\Services\SystemInfoService;
 use Illuminate\Support\ServiceProvider;
 
 class VertexServiceProvider extends ServiceProvider
@@ -29,6 +31,8 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(SeoMetaService::class);
         $this->app->singleton(PageRenderer::class);
         $this->app->singleton(MediaService::class);
+        $this->app->singleton(CacheService::class);
+        $this->app->singleton(SystemInfoService::class);
     }
 
     public function boot(RouteRegistrar $routes): void
