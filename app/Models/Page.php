@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Page extends Model
@@ -26,5 +29,25 @@ class Page extends Model
         'content_json' => 'array',
         'published_at' => 'datetime',
     ];
-}
 
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Page::class, 'parent_id');
+    }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(PageRevision::class);
+    }
+
+    public function seoMeta(): MorphOne
+    {
+        return $this->morphOne(SeoMeta::class, 'entity');
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status === 'published'
+            && ($this->published_at === null || $this->published_at->isPast());
+    }
+}

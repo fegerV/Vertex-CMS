@@ -5,6 +5,7 @@
 ## Основные документы
 
 - [Core Skeleton](architecture/core-skeleton.md) - базовый технический каркас проекта.
+- [Unimplemented Functions Plan](unimplemented-functions-plan.md) - карта нереализованных функций и ближайший порядок реализации.
 - [Roadmap](roadmap.md) - этапы развития от MVP v0.1 до следующих версий.
 - [Versioning](versioning.md) - правила версионирования ядра, API, модулей и миграций.
 - [Installer Architecture](architecture/installer.md) - backend flow установки CMS через браузер.

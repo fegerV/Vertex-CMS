@@ -39,6 +39,7 @@ The current machine does not have `php` or `composer`, so the app could not be f
 ## Documentation
 
 - [Documentation index](docs/README.md)
+- [Unimplemented Functions Plan](docs/unimplemented-functions-plan.md)
 - [Roadmap](docs/roadmap.md)
 - [Versioning](docs/versioning.md)
 - [Installer Architecture](docs/architecture/installer.md)

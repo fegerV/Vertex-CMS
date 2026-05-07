@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Content\Services\PageService;
 use App\Core\Services\InstallationService;
 use App\Core\Services\SettingsService;
 use App\Core\Support\RouteRegistrar;
@@ -21,6 +22,7 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(EnvironmentFileService::class);
         $this->app->singleton(InstallerRunner::class);
         $this->app->singleton(ActivityLogService::class);
+        $this->app->singleton(PageService::class);
     }
 
     public function boot(RouteRegistrar $routes): void
