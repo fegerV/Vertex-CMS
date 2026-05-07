@@ -30,6 +30,7 @@ class SettingCatalog
                     'seo.sitemap_enabled' => ['label' => 'Включить sitemap.xml', 'type' => 'boolean', 'input' => 'checkbox', 'rules' => ['nullable', 'boolean']],
                     'seo.organization_name' => ['label' => 'Название организации', 'type' => 'string', 'input' => 'text', 'rules' => ['nullable', 'string', 'max:255']],
                     'seo.organization_logo' => ['label' => 'Media ID логотипа организации', 'type' => 'integer', 'input' => 'number', 'rules' => ['nullable', 'integer']],
+                    'seo.robots_txt' => ['label' => 'Содержимое robots.txt', 'type' => 'string', 'input' => 'textarea', 'rules' => ['nullable', 'string', 'max:5000']],
                 ],
             ],
             'api' => [
