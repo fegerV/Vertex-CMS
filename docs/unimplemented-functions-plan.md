@@ -12,6 +12,7 @@
 - Renderer foundation: базовый вывод JSON-блоков Heading, Text, Button, Divider, FAQ, HTML.
 - Media foundation: upload, metadata edit, delete, SVG sanitization, activity logs.
 - System foundation: system info, activity log filters, cache status and manual cache clear.
+- Admin layout foundation: общий Blade layout, sidebar, topbar, единый flash output.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
 Не проверено end-to-end:
