@@ -2,20 +2,22 @@
 
 ## Текущее состояние
 
-Реализовано частично:
+Реализовано в коде:
 
 - Core Skeleton: структура проекта, маршруты, базовые модели, миграции, seeders.
 - Installer backend: requirements, проверка БД, запись `.env`, миграции, seeders, первый администратор, `installed.lock`.
 - Auth foundation: login/logout, remember me, `last_login_at`, activity logs входа/выхода.
 - Pages CRUD foundation: создание, редактирование, удаление, slug/URI, revisions, activity logs.
 - SEO foundation: SEO-поля страницы, robots, sitemap flag, публичные meta/OG/schema.
-- Renderer foundation: базовый вывод JSON-блоков Heading, Text, Button, Divider, FAQ, HTML.
+- Renderer foundation: вывод JSON-блоков Heading, Text, Button, Divider, FAQ, HTML.
 - Media foundation: upload, metadata edit, delete, SVG sanitization, activity logs.
 - System foundation: system info, activity log filters, cache status and manual cache clear.
 - Admin layout foundation: общий Blade layout, sidebar, topbar, единый flash output.
 - RBAC foundation: route-level permission middleware, role permission mapping, permission-aware navigation.
 - Users/Roles foundation: CRUD пользователей, назначение ролей, просмотр и редактирование permissions ролей.
 - Settings foundation: UI и persistence для site/seo/api/ai/pwa/cache, public settings API, PWA manifest, AI sidebar scaffold.
+- Builder advanced foundation: 60+ block definitions, revisions, preview, export/import sections, template apply.
+- Custom fields foundation: `custom_fields_json`, field groups, reusable presets, apply/save/update/delete preset workflow, template/scope rules.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
 Не проверено end-to-end:
@@ -23,6 +25,29 @@
 - `composer install` пока блокируется сетевой политикой PHP-процесса к Packagist.
 - Laravel runtime не запускался через `artisan serve`.
 - Миграции не прогонялись на реальной БД.
+- PHP lint локально не выполнен, потому что `php` отсутствует в PATH текущего окружения.
+
+## Статус P0
+
+Статус: `реализовано в коде, но не подтверждено end-to-end`.
+
+Что покрыто:
+
+- Pages CRUD из админки.
+- Slug generation и validation.
+- URI generation и уникальность.
+- Page revisions при сохранении.
+- Frontend page rendering по `content_json`.
+- SEO fields для страниц.
+- Sitemap на реальных данных опубликованных страниц.
+- Media upload.
+- Cache clear.
+- Публичная недоступность draft-страниц.
+
+Что ещё не стоит считать полностью закрытым:
+
+- `robots.txt` пока статический и не опирается на настройки или состояние сайта.
+- Нет runtime-подтверждения сценария “создать страницу в админке -> открыть публичный URL”.
 
 ## Приоритет P0 - довести MVP до первого рабочего сценария
 
@@ -47,6 +72,12 @@ Acceptance criteria:
 - Опубликованная страница открывается публично.
 - Черновик публично не открывается.
 - После каждого сохранения создаётся revision.
+
+Оценка:
+
+- Все acceptance criteria реализованы на уровне кода.
+- End-to-end проверка пока не выполнена.
+- Подзадача `robots.txt на реальных данных` остаётся частично реализованной.
 
 ## Приоритет P1 - управляемая админка
 
@@ -161,13 +192,6 @@ Acceptance criteria:
 
 ## Ближайший порядок реализации
 
-1. Pages CRUD foundation.
-2. Page revisions.
-3. Public page visibility rules.
-4. SEO meta для страниц.
-5. Renderer MVP.
-6. Media upload MVP.
-7. Admin layout и sidebar.
-8. Settings UI.
-9. API v1 public read endpoints.
-10. Builder MVP.
+1. Довести `robots.txt` до data-driven варианта.
+2. Подтвердить P0 end-to-end после появления рабочего PHP runtime.
+3. Перейти к visual block templating library с сохранением пользовательских block templates в БД.

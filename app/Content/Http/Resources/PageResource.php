@@ -17,6 +17,10 @@ class PageResource extends JsonResource
             'status' => $this->status,
             'template' => $this->template,
             'content_json' => $this->content_json,
+            'custom_fields_json' => $this->custom_fields_json ?? [],
+            'custom_fields' => collect($this->custom_fields_json ?? [])
+                ->mapWithKeys(fn (array $field) => [$field['key'] => $field['value'] ?? null])
+                ->all(),
             'published_at' => $this->published_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

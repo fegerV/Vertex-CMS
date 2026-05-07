@@ -37,6 +37,8 @@ class VertexServiceProvider extends ServiceProvider
 
     public function boot(RouteRegistrar $routes): void
     {
+        require_once app_path('Builder/Config/blocks.php');
+
         $routes->register();
     }
 }

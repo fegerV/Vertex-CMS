@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('status', 50)->default('draft');
             $table->string('template')->default('default');
             $table->longText('content_json')->nullable();
+            $table->longText('custom_fields_json')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
@@ -31,8 +32,24 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('title');
             $table->longText('content_json')->nullable();
+            $table->longText('custom_fields_json')->nullable();
             $table->longText('seo_json')->nullable();
+            $table->string('action', 100)->default('save');
             $table->timestamp('created_at')->nullable();
+        });
+
+        Schema::create('custom_field_groups', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('handle')->unique();
+            $table->string('scope', 50)->default('all_pages');
+            $table->text('description')->nullable();
+            $table->longText('fields_json');
+            $table->longText('rules_json')->nullable();
+            $table->boolean('is_system')->default(false);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
         });
 
         Schema::create('seo_meta', function (Blueprint $table): void {
@@ -56,8 +73,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('seo_meta');
+        Schema::dropIfExists('custom_field_groups');
         Schema::dropIfExists('page_revisions');
         Schema::dropIfExists('pages');
     }
 };
-

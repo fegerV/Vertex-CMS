@@ -4,6 +4,7 @@ namespace App\Content\Http\Controllers;
 
 use App\Content\Services\PageService;
 use App\Http\Controllers\Controller;
+use App\Models\CustomFieldGroup;
 use App\Models\Page;
 use App\Seo\Services\SeoMetaService;
 use Illuminate\Http\RedirectResponse;
@@ -33,6 +34,8 @@ class PageController extends Controller
                 'template' => 'default',
                 'content_json' => $this->pages->defaultContent(),
             ]),
+            'fieldGroups' => $this->fieldGroupsForTemplate('default'),
+            'allFieldGroups' => CustomFieldGroup::query()->orderBy('name')->get(),
             'parentPages' => Page::query()->orderBy('title')->get(),
             'statuses' => PageService::STATUSES,
             'robotsOptions' => SeoMetaService::ROBOTS,
@@ -52,6 +55,8 @@ class PageController extends Controller
     {
         return view('admin.pages.edit', [
             'page' => $page->load('seoMeta'),
+            'fieldGroups' => $this->fieldGroupsForTemplate($page->template ?: 'default'),
+            'allFieldGroups' => CustomFieldGroup::query()->orderBy('name')->get(),
             'parentPages' => Page::query()
                 ->whereKeyNot($page->id)
                 ->orderBy('title')
@@ -88,6 +93,7 @@ class PageController extends Controller
             'status' => ['required', Rule::in(PageService::STATUSES)],
             'template' => ['nullable', 'string', 'max:255'],
             'content_json' => ['nullable', 'string'],
+            'custom_fields_json' => ['nullable', 'string'],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:500'],
             'seo_canonical_url' => ['nullable', 'url', 'max:500'],
@@ -102,5 +108,14 @@ class PageController extends Controller
         $payload['seo_include_in_sitemap'] = $request->boolean('seo_include_in_sitemap');
 
         return $payload;
+    }
+
+    private function fieldGroupsForTemplate(string $template)
+    {
+        return CustomFieldGroup::query()
+            ->orderBy('name')
+            ->get()
+            ->filter(fn (CustomFieldGroup $group) => $group->appliesToPageTemplate($template))
+            ->values();
     }
 }

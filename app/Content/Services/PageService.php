@@ -108,6 +108,7 @@ class PageService
             'status' => $status,
             'template' => $payload['template'] ?: 'default',
             'content_json' => $content,
+            'custom_fields_json' => $this->normalizeCustomFieldsPayload($payload['custom_fields_json'] ?? null),
             'published_at' => $this->publishedAt($status, $page),
             'seo_title' => $payload['seo_title'] ?? null,
             'seo_description' => $payload['seo_description'] ?? null,
@@ -192,7 +193,9 @@ class PageService
             'user_id' => $user->id,
             'title' => $page->title,
             'content_json' => $page->content_json,
+            'custom_fields_json' => $page->custom_fields_json,
             'seo_json' => $page->seoMeta?->toArray() ?? [],
+            'action' => 'page-save',
             'created_at' => now(),
         ]);
     }
@@ -207,7 +210,49 @@ class PageService
             'status',
             'template',
             'content_json',
+            'custom_fields_json',
             'published_at',
         ]);
+    }
+
+    public function normalizeCustomFieldsPayload(mixed $fields): array
+    {
+        if (blank($fields)) {
+            return [];
+        }
+
+        if (is_array($fields)) {
+            return array_values(array_filter(array_map([$this, 'normalizeCustomField'], $fields)));
+        }
+
+        $decoded = json_decode((string) $fields, true);
+
+        if (! is_array($decoded)) {
+            throw ValidationException::withMessages([
+                'custom_fields_json' => 'Custom fields JSON is invalid.',
+            ]);
+        }
+
+        return array_values(array_filter(array_map([$this, 'normalizeCustomField'], $decoded)));
+    }
+
+    private function normalizeCustomField(mixed $field): ?array
+    {
+        if (! is_array($field)) {
+            return null;
+        }
+
+        $key = trim((string) ($field['key'] ?? ''));
+        if ($key === '') {
+            return null;
+        }
+
+        return [
+            'key' => $key,
+            'label' => trim((string) ($field['label'] ?? $key)),
+            'type' => trim((string) ($field['type'] ?? 'text')),
+            'value' => $field['value'] ?? null,
+            'description' => trim((string) ($field['description'] ?? '')),
+        ];
     }
 }

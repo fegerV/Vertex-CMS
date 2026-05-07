@@ -23,12 +23,13 @@ class PageRenderer
     private function renderSection(array $section): string
     {
         $blocks = $section['blocks'] ?? $section['children'] ?? [];
+        $sectionSettings = is_array($section['settings'] ?? null) ? $section['settings'] : [];
         $style = $this->style([
-            'background-color' => $section['background_color'] ?? null,
-            'padding-top' => $this->size($section['padding_top'] ?? null),
-            'padding-bottom' => $this->size($section['padding_bottom'] ?? null),
+            'background-color' => $sectionSettings['background_color'] ?? $section['background_color'] ?? null,
+            'padding-top' => $this->size($sectionSettings['padding_top'] ?? $section['padding_top'] ?? null),
+            'padding-bottom' => $this->size($sectionSettings['padding_bottom'] ?? $section['padding_bottom'] ?? null),
         ]);
-        $class = trim('vc-section '.($section['css_class'] ?? ''));
+        $class = trim('vc-section '.($sectionSettings['css_class'] ?? $section['css_class'] ?? ''));
 
         return '<section class="'.e($class).'"'.$style.'><div class="vc-container">'
             .collect($blocks)->map(fn (array $block) => $this->renderBlock($block))->implode('')
@@ -76,7 +77,7 @@ class PageRenderer
             'color' => $settings['color'] ?? null,
             'text-align' => $settings['align'] ?? null,
             'font-size' => $this->size($settings['font_size'] ?? null),
-        ])).'">'.nl2br(e($settings['text'] ?? '')).'</div>';
+        ])).'">'.nl2br(e($settings['text'] ?? $settings['content'] ?? '')).'</div>';
     }
 
     private function button(array $settings): string

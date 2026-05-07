@@ -5,7 +5,9 @@ use App\Admin\Http\Controllers\RoleController;
 use App\Admin\Http\Controllers\SettingsController;
 use App\Admin\Http\Controllers\UserController;
 use App\Auth\Http\Controllers\AdminAuthController;
+use App\Builder\Http\Controllers\AdvancedBuilderController;
 use App\Builder\Http\Controllers\PageBuilderController;
+use App\Content\Http\Controllers\CustomFieldGroupController;
 use App\Content\Http\Controllers\PageController;
 use App\Media\Http\Controllers\MediaController;
 use App\Seo\Http\Controllers\RedirectController;
@@ -82,7 +84,60 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::put('pages/{page}/builder', [PageBuilderController::class, 'update'])
             ->middleware('vertex.permission:pages.edit')
             ->name('pages.builder.update');
-
+        Route::get('pages/{page}/builder/advanced', [AdvancedBuilderController::class, 'advanced'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.advanced');
+        Route::post('pages/{page}/builder/advanced/save', [AdvancedBuilderController::class, 'saveAdvanced'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.advanced.save');
+        Route::post('pages/{page}/builder/advanced/auto-save', [AdvancedBuilderController::class, 'autoSave'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.advanced.autosave');
+        Route::post('pages/{page}/builder/preview', [PageBuilderController::class, 'preview'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.preview');
+        Route::post('pages/{page}/revisions/{revision}/restore', [AdvancedBuilderController::class, 'restoreRevision'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.revisions.restore');
+        Route::get('pages/{page}/revisions/compare/{revisionA}/{revisionB}', [AdvancedBuilderController::class, 'compareRevisions'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.revisions.compare');
+        Route::get('pages/{page}/revisions', [AdvancedBuilderController::class, 'getRevisions'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.revisions');
+        Route::post('pages/export-sections', [AdvancedBuilderController::class, 'exportSections'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.export-sections');
+        Route::post('pages/import-sections', [AdvancedBuilderController::class, 'importSections'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.import-sections');
+        Route::get('pages/templates', [AdvancedBuilderController::class, 'getTemplates'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.templates');
+        Route::post('pages/{page}/apply-template', [AdvancedBuilderController::class, 'applyTemplate'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.apply-template');
+        Route::post('pages/{page}/builder/template', [AdvancedBuilderController::class, 'applyTemplate'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.template');
+        Route::post('pages/{page}/builder/auto-save', [AdvancedBuilderController::class, 'autoSave'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.autosave');
+        Route::get('pages/{page}/search', [AdvancedBuilderController::class, 'searchContent'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.search');
+        Route::get('custom-field-groups', [CustomFieldGroupController::class, 'index'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('custom-field-groups.index');
+        Route::post('custom-field-groups', [CustomFieldGroupController::class, 'store'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('custom-field-groups.store');
+        Route::put('custom-field-groups/{customFieldGroup}', [CustomFieldGroupController::class, 'update'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('custom-field-groups.update');
+        Route::delete('custom-field-groups/{customFieldGroup}', [CustomFieldGroupController::class, 'destroy'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('custom-field-groups.destroy');
         Route::get('media', [MediaController::class, 'index'])
             ->middleware('vertex.permission:media.view')
             ->name('media.index');

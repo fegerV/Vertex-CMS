@@ -20,6 +20,7 @@ class Page extends Model
         'status',
         'template',
         'content_json',
+        'custom_fields_json',
         'published_at',
         'created_by',
         'updated_by',
@@ -27,6 +28,7 @@ class Page extends Model
 
     protected $casts = [
         'content_json' => 'array',
+        'custom_fields_json' => 'array',
         'published_at' => 'datetime',
     ];
 
