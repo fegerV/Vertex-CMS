@@ -10,6 +10,7 @@
 - Pages CRUD foundation: создание, редактирование, удаление, slug/URI, revisions, activity logs.
 - SEO foundation: SEO-поля страницы, robots, sitemap flag, публичные meta/OG/schema.
 - Renderer foundation: базовый вывод JSON-блоков Heading, Text, Button, Divider, FAQ, HTML.
+- Media foundation: upload, metadata edit, delete, SVG sanitization, activity logs.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
 Не проверено end-to-end:
