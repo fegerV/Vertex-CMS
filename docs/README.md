@@ -7,6 +7,7 @@
 - [Core Skeleton](architecture/core-skeleton.md) - базовый технический каркас проекта.
 - [Roadmap](roadmap.md) - этапы развития от MVP v0.1 до следующих версий.
 - [Versioning](versioning.md) - правила версионирования ядра, API, модулей и миграций.
+- [Installer Architecture](architecture/installer.md) - backend flow установки CMS через браузер.
 - [API Strategy](architecture/api-strategy.md) - архитектура API для админки, мобильных приложений и внешних клиентов.
 - [AI Module](architecture/ai-module.md) - поддержка нейросетей, ключей провайдеров и AI-чата на странице создания контента.
 - [PWA, Theme, Taxonomy](architecture/pwa-theme-taxonomy.md) - адаптивные шаблоны, PWA и решение по таксономии.

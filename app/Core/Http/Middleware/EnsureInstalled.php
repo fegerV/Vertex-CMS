@@ -16,11 +16,20 @@ class EnsureInstalled
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $this->installation->isInstalled() && ! $request->is('install*')) {
+        if (! $this->installation->isInstalled() && ! $this->isAllowedBeforeInstall($request)) {
             return redirect()->route('install.index');
         }
 
         return $next($request);
     }
-}
 
+    private function isAllowedBeforeInstall(Request $request): bool
+    {
+        return $request->is('install*')
+            || $request->is('up')
+            || $request->is('build/*')
+            || $request->is('storage/*')
+            || $request->is('uploads/*')
+            || $request->is('favicon.ico');
+    }
+}

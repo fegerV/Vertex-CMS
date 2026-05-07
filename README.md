@@ -41,6 +41,7 @@ The current machine does not have `php` or `composer`, so the app could not be f
 - [Documentation index](docs/README.md)
 - [Roadmap](docs/roadmap.md)
 - [Versioning](docs/versioning.md)
+- [Installer Architecture](docs/architecture/installer.md)
 - [API Strategy](docs/architecture/api-strategy.md)
 - [AI Module](docs/architecture/ai-module.md)
 - [PWA, Theme, Taxonomy](docs/architecture/pwa-theme-taxonomy.md)
