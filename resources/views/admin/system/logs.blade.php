@@ -5,51 +5,51 @@
 @section('page_subtitle', 'Аудит действий администраторов')
 
 @section('content')
-    <form method="GET" action="{{ route('admin.system.logs') }}" class="mb-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
+    <form method="GET" action="{{ route('admin.system.logs') }}" class="vc-panel mb-6 grid gap-3 p-4 md:grid-cols-3">
         <input
             type="text"
             name="action"
             value="{{ $filters['action'] ?? '' }}"
             placeholder="Action"
-            class="rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
+            class="vc-input"
         >
         <input
             type="number"
             name="user_id"
             value="{{ $filters['user_id'] ?? '' }}"
             placeholder="User ID"
-            class="rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
+            class="vc-input"
         >
-        <button class="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+        <button class="vc-button vc-button-primary px-4 py-3">
             Фильтровать
         </button>
     </form>
 
-    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <table class="w-full border-collapse text-left text-sm">
-            <thead class="bg-slate-50 text-slate-500">
+    <section class="vc-table-wrap">
+        <table class="vc-table text-sm">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-medium">Дата</th>
-                    <th class="px-4 py-3 font-medium">User</th>
-                    <th class="px-4 py-3 font-medium">Action</th>
-                    <th class="px-4 py-3 font-medium">Entity</th>
-                    <th class="px-4 py-3 font-medium">IP</th>
-                    <th class="px-4 py-3 font-medium">Описание</th>
+                    <th>Дата</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>IP</th>
+                    <th>Описание</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($logs as $log)
-                    <tr class="border-t border-slate-100">
-                        <td class="px-4 py-3 text-slate-600">{{ $log->created_at?->format('d.m.Y H:i') }}</td>
-                        <td class="px-4 py-3">{{ $log->user_id ?? '-' }}</td>
-                        <td class="px-4 py-3 font-medium">{{ $log->action }}</td>
-                        <td class="px-4 py-3">{{ $log->entity_type }} {{ $log->entity_id }}</td>
-                        <td class="px-4 py-3">{{ $log->ip }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $log->description }}</td>
+                    <tr>
+                        <td>{{ $log->created_at?->format('d.m.Y H:i') }}</td>
+                        <td>{{ $log->user_id ?? '-' }}</td>
+                        <td class="font-medium text-[var(--vc-text)]">{{ $log->action }}</td>
+                        <td>{{ $log->entity_type }} {{ $log->entity_id }}</td>
+                        <td>{{ $log->ip }}</td>
+                        <td>{{ $log->description }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-slate-500">Логи пока не найдены.</td>
+                        <td colspan="6" class="py-10 text-center text-[var(--vc-text-muted)]">Логи пока не найдены.</td>
                     </tr>
                 @endforelse
             </tbody>

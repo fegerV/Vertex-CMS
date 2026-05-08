@@ -7,34 +7,34 @@
 @section('content')
     @if (auth()->user()?->hasPermission('users.create'))
         <div class="mb-6 flex justify-end">
-            <a href="{{ route('admin.users.create') }}" class="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+            <a href="{{ route('admin.users.create') }}" class="vc-button vc-button-primary px-4 py-3">
                 Создать пользователя
             </a>
         </div>
     @endif
 
-    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <table class="w-full border-collapse text-left text-sm">
-            <thead class="bg-slate-50 text-slate-500">
+    <section class="vc-table-wrap">
+        <table class="vc-table text-sm">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-medium">Имя</th>
-                    <th class="px-4 py-3 font-medium">Email</th>
-                    <th class="px-4 py-3 font-medium">Статус</th>
-                    <th class="px-4 py-3 font-medium">Роли</th>
-                    <th class="px-4 py-3 text-right font-medium">Действия</th>
+                    <th>Имя</th>
+                    <th>Email</th>
+                    <th>Статус</th>
+                    <th>Роли</th>
+                    <th class="text-right">Действия</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($users as $user)
-                    <tr class="border-t border-slate-100">
-                        <td class="px-4 py-3 font-medium">{{ $user->name }}</td>
-                        <td class="px-4 py-3">{{ $user->email }}</td>
-                        <td class="px-4 py-3">{{ $user->status }}</td>
-                        <td class="px-4 py-3">{{ $user->roles->pluck('name')->join(', ') ?: '-' }}</td>
-                        <td class="px-4 py-3">
+                    <tr>
+                        <td class="font-medium text-[var(--vc-text)]">{{ $user->name }}</td>
+                        <td>{{ $user->email }}</td>
+                        <td><span class="vc-badge">{{ $user->status }}</span></td>
+                        <td>{{ $user->roles->pluck('name')->join(', ') ?: '-' }}</td>
+                        <td>
                             <div class="flex justify-end gap-2">
                                 @if (auth()->user()?->hasPermission('users.edit'))
-                                    <a href="{{ route('admin.users.edit', $user) }}" class="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50">
+                                    <a href="{{ route('admin.users.edit', $user) }}" class="vc-button vc-button-secondary px-3 py-2">
                                         Изменить
                                     </a>
                                 @endif
@@ -42,7 +42,7 @@
                                     <form method="POST" action="{{ route('admin.users.destroy', $user) }}">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="rounded-md border border-red-200 px-3 py-1.5 text-red-700 hover:bg-red-50">
+                                        <button class="vc-button vc-button-danger px-3 py-2">
                                             Удалить
                                         </button>
                                     </form>
@@ -52,7 +52,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-10 text-center text-slate-500">Пользователей пока нет.</td>
+                        <td colspan="5" class="py-10 text-center text-[var(--vc-text-muted)]">Пользователей пока нет.</td>
                     </tr>
                 @endforelse
             </tbody>
