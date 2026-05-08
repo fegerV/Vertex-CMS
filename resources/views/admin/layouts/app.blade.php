@@ -85,6 +85,9 @@
                         </button>
                         <div>
                             <h1 class="text-xl font-semibold">@yield('page_title', 'Панель управления')</h1>
+                            @hasSection('page_subtitle')
+                                <p class="mt-1 text-sm text-slate-500">@yield('page_subtitle')</p>
+                            @endif
                         </div>
                     </div>
 

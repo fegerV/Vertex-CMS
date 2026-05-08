@@ -5,6 +5,8 @@
 @section('page_subtitle', $role->slug)
 
 @section('content')
+    @php($isSuperAdminRole = $role->slug === 'super-admin')
+
     <form method="POST" action="{{ route('admin.roles.update', $role) }}" class="space-y-6 rounded-lg border border-slate-200 bg-white p-6">
         @csrf
         @method('PUT')
@@ -14,6 +16,12 @@
             <input type="text" name="name" value="{{ old('name', $role->name) }}" required class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900">
             @error('name') <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
         </label>
+
+        @if ($isSuperAdminRole)
+            <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                Роль `super-admin` всегда получает полный набор permissions. Изменения чекбоксов в этом интерфейсе не применяются.
+            </div>
+        @endif
 
         <section class="space-y-5">
             @foreach ($permissions as $group => $items)
@@ -27,6 +35,7 @@
                                     name="permissions[]"
                                     value="{{ $permission->id }}"
                                     @checked(in_array($permission->id, old('permissions', $selectedPermissions), true))
+                                    @disabled($isSuperAdminRole)
                                     class="rounded border-slate-300"
                                 >
                                 <span>{{ $permission->slug }}</span>
