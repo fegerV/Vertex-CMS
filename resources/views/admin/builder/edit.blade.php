@@ -6,27 +6,28 @@
 @section('page_subtitle', $page->title)
 
 @section('content')
-<div id="page-builder" class="flex h-[calc(100vh-80px)]">
+<div id="page-builder" class="vc-builder-shell">
     <!-- Sidebar: Blocks Library -->
-    <aside class="w-80 border-r border-slate-200 bg-slate-50 flex flex-col">
-        <div class="p-4 border-b border-slate-200 bg-white">
-            <h3 class="font-semibold text-sm uppercase tracking-wide">Блоки</h3>
+    <aside class="vc-builder-sidebar vc-builder-scroll flex w-80 flex-col border-r">
+        <div class="border-b border-[var(--vc-border)] p-4">
+            <h3 class="vc-builder-panel-title">Блоки</h3>
+            <p class="mt-2 text-sm text-[var(--vc-text-muted)]">Библиотека базовых блоков для быстрой сборки страницы.</p>
         </div>
         <div class="flex-1 overflow-y-auto p-3 space-y-2">
             <template v-for="(block, type) in availableBlocks" :key="type">
                 <div 
                     @click="addBlock(type)"
-                    class="block-item p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-slate-400 hover:shadow transition-all"
+                    class="vc-builder-card block-item cursor-pointer p-3"
                 >
-                    <div class="font-medium text-sm">{{ block.name }}</div>
-                    <div class="text-xs text-slate-500 mt-1">Нажми чтобы добавить</div>
+                    <div class="font-medium text-sm text-[var(--vc-text)]">{{ block.name }}</div>
+                    <div class="mt-1 text-xs text-[var(--vc-text-muted)]">Нажми чтобы добавить</div>
                 </div>
             </template>
         </div>
-        <div class="p-3 border-t border-slate-200 bg-white">
+        <div class="border-t border-[var(--vc-border)] p-3">
             <button 
                 @click="clearBlocks"
-                class="w-full rounded-md border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                class="vc-button vc-button-danger w-full px-3 py-3"
             >
                 Очистить все
             </button>
@@ -34,26 +35,26 @@
     </aside>
 
     <!-- Canvas -->
-    <main class="flex-1 overflow-y-auto bg-slate-100 p-6">
+    <main class="vc-builder-canvas flex-1 overflow-y-auto p-6">
         <div class="max-w-4xl mx-auto">
             <!-- Page header info -->
-            <div class="mb-6 bg-white rounded-lg border border-slate-200 p-4">
+            <div class="vc-panel vc-panel-strong mb-6 p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="font-semibold">{{ page.title }}</h2>
-                        <p class="text-sm text-slate-500">URI: {{ page.uri }} | Статус: {{ page.status }}</p>
+                        <h2 class="text-lg font-semibold text-[var(--vc-text)]">{{ page.title }}</h2>
+                        <p class="mt-1 text-sm text-[var(--vc-text-muted)]">URI: {{ page.uri }} | Статус: {{ page.status }}</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button 
                             @click="previewContent"
-                            class="px-4 py-2 text-sm rounded-md border border-slate-300 bg-white hover:bg-slate-50"
+                            class="vc-button vc-button-secondary px-4 py-3"
                         >
                             Превью
                         </button>
                         <button 
                             @click="saveContent"
                             :disabled="saving"
-                            class="px-4 py-2 text-sm rounded-md bg-slate-950 text-white hover:bg-slate-800 disabled:opacity-50"
+                            class="vc-button vc-button-primary px-4 py-3 disabled:opacity-50"
                         >
                             <span v-if="!saving">Сохранить</span>
                             <span v-else>Сохранение...</span>
@@ -66,40 +67,40 @@
             <div class="space-y-4">
                 <div 
                     v-if="content.length === 0"
-                    class="text-center py-20 bg-white rounded-lg border-2 border-dashed border-slate-300"
+                    class="vc-builder-empty text-center py-20"
                 >
-                    <p class="text-slate-400">Выберите блок слева, чтобы начать</p>
+                    <p>Выберите блок слева, чтобы начать</p>
                 </div>
 
                 <div 
                     v-for="(block, index) in content" 
                     :key="block._id"
-                    class="relative bg-white rounded-lg border-2 transition-all"
-                    :class="{ 'border-slate-200': selectedIndex !== index, 'border-blue-500 shadow-lg': selectedIndex === index }"
+                    class="vc-builder-card relative"
+                    :class="{ 'vc-builder-card-active': selectedIndex === index }"
                     @click="selectBlock(index)"
                 >
                     <!-- Selected overlay -->
                     <div 
                         v-if="selectedIndex === index" 
-                        class="absolute -top-2 -right-2 z-10 flex gap-1 bg-slate-950 rounded-md"
+                        class="vc-builder-floating-controls absolute -top-2 -right-2 z-10 flex gap-1"
                     >
                         <button 
                             @click.stop="moveBlockUp(index)"
-                            class="p-1 text-white hover:bg-slate-700 rounded-l"
+                            class="rounded-l p-1"
                             title="Вверх"
                         >
                             ↑
                         </button>
                         <button 
                             @click.stop="moveBlockDown(index)"
-                            class="p-1 text-white hover:bg-slate-700"
+                            class="p-1"
                             title="Вниз"
                         >
                             ↓
                         </button>
                         <button 
                             @click.stop="deleteBlock(index)"
-                            class="p-1 text-red-400 hover:bg-slate-700 hover:text-white rounded-r"
+                            class="rounded-r p-1 text-rose-300"
                             title="Удалить"
                         >
                             ✕
@@ -118,7 +119,7 @@
                             >
                                 {{ block.settings.text || 'Заголовок' }}
                             </component>
-                            <div class="mt-2 text-xs text-slate-400">
+                            <div class="vc-builder-meta mt-2">
                                 Заголовок ({{ block.settings.level || 'h2' }})
                             </div>
                         </template>
@@ -128,7 +129,7 @@
                             <div class="vc-text" :style="textStyle(block.settings)">
                                 {{ block.settings.text || 'Текстовый блок...' }}
                             </div>
-                            <div class="mt-2 text-xs text-slate-400">Текст</div>
+                            <div class="vc-builder-meta mt-2">Текст</div>
                         </template>
 
                         <!-- Button Block -->
@@ -142,13 +143,13 @@
                                     {{ block.settings.text || 'Кнопка' }}
                                 </a>
                             </div>
-                            <div class="mt-2 text-xs text-slate-400">Кнопка</div>
+                            <div class="vc-builder-meta mt-2">Кнопка</div>
                         </template>
 
                         <!-- Divider Block -->
                         <template v-else-if="block.type === 'divider'">
                             <hr class="vc-divider my-4">
-                            <div class="text-xs text-slate-400">Разделитель</div>
+                            <div class="vc-builder-meta">Разделитель</div>
                         </template>
 
                         <!-- FAQ Block -->
@@ -160,26 +161,26 @@
                                     class="vc-faq-item"
                                 >
                                     <summary class="cursor-pointer font-medium">{{ item.question || 'Вопрос?' }}</summary>
-                                    <div class="mt-2 text-slate-600">{{ item.answer || 'Ответ...' }}</div>
+                                    <div class="mt-2 text-[var(--vc-text-muted)]">{{ item.answer || 'Ответ...' }}</div>
                                 </details>
                             </div>
-                            <div class="mt-2 text-xs text-slate-400">FAQ</div>
+                            <div class="vc-builder-meta mt-2">FAQ</div>
                         </template>
 
                         <!-- HTML Block -->
                         <template v-else-if="block.type === 'html'">
                             <div class="vc-html">
-                                <span class="text-xs text-slate-400">[ HTML код ]</span>
+                                <span class="vc-builder-meta">[ HTML код ]</span>
                             </div>
-                            <div class="mt-2 text-xs text-slate-400">HTML</div>
+                            <div class="vc-builder-meta mt-2">HTML</div>
                         </template>
 
                         <!-- Image Block -->
                         <template v-else-if="block.type === 'image'">
-                            <div class="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
-                                <span class="text-slate-400">Изображение</span>
+                            <div class="vc-builder-empty rounded-lg p-8 text-center">
+                                <span>Изображение</span>
                             </div>
-                            <div class="mt-2 text-xs text-slate-400">Изображение</div>
+                            <div class="vc-builder-meta mt-2">Изображение</div>
                         </template>
                     </div>
                 </div>
@@ -188,9 +189,9 @@
     </main>
 
     <!-- Settings Panel -->
-    <aside class="w-96 border-l border-slate-200 bg-white overflow-y-auto">
+    <aside class="vc-builder-sidebar vc-builder-scroll w-96 overflow-y-auto border-l">
         <div v-if="selectedBlock !== null" class="p-6">
-            <h3 class="font-semibold mb-4">Настройки блока</h3>
+            <h3 class="mb-4 text-lg font-semibold text-[var(--vc-text)]">Настройки блока</h3>
             
             <!-- Heading Settings -->
             <div v-if="selectedBlock.type === 'heading'" class="space-y-4">
@@ -383,18 +384,18 @@
             </div>
         </div>
 
-        <div v-else class="p-6 text-center text-slate-400">
+            <div v-else class="p-6 text-center text-[var(--vc-text-muted)]">
             <p class="text-sm">Выберите блок для редактирования</p>
         </div>
     </aside>
 </div>
 
 <!-- Preview Modal -->
-<div v-if="showPreview" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg w-full max-w-5xl max-h-[90vh] overflow-hidden">
-        <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-            <h3 class="font-semibold">Превью страницы</h3>
-            <button @click="showPreview = false" class="text-slate-400 hover:text-slate-600">✕</button>
+<div v-if="showPreview" class="vc-builder-modal fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="vc-builder-modal-card w-full max-w-5xl max-h-[90vh] overflow-hidden">
+        <div class="flex items-center justify-between border-b border-[var(--vc-border)] p-4">
+            <h3 class="font-semibold text-[var(--vc-text)]">Превью страницы</h3>
+            <button @click="showPreview = false" class="text-[var(--vc-text-soft)] hover:text-[var(--vc-text)]">✕</button>
         </div>
         <div class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
             <iframe 
