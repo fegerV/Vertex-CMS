@@ -417,39 +417,44 @@
                 template: `
                     <div class="space-y-4">
                         <div v-if="blockDef?.fields" class="space-y-4">
-                            <div v-for="(field, key) in blockDef.fields" :key="key" class="space-y-2">
-                                <label class="block text-sm font-medium text-slate-700">{{ field.label }}</label>
+                            <div v-for="(field, key) in blockDef.fields" :key="key" class="vc-builder-form-section">
+                                <div class="vc-builder-field">
+                                    <label>{{ field.label }}</label>
+                                    <span v-if="field.help" class="vc-builder-field-hint">{{ field.help }}</span>
+                                </div>
                                 <input 
                                     v-if="field.type === 'text' || field.type === 'color' || field.type === 'number'"
                                     :type="field.type"
                                     v-model="localSettings[key]"
                                     :placeholder="field.placeholder"
-                                    class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                    :class="field.type === 'color' ? 'vc-input h-12' : 'vc-input'"
                                 >
                                 <textarea 
                                     v-else-if="field.type === 'textarea'"
                                     v-model="localSettings[key]"
                                     :rows="field.rows || 3"
-                                    class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                    class="vc-textarea"
                                 ></textarea>
                                 <select 
                                     v-else-if="field.type === 'select'"
                                     v-model="localSettings[key]"
-                                    class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                    class="vc-select"
                                 >
                                     <option v-for="opt in field.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                                 </select>
                                 <div 
                                     v-else-if="field.type === 'toggle'"
                                     @click="localSettings[key] = !localSettings[key]"
-                                    class="w-12 h-6 rounded-full cursor-pointer transition-colors"
-                                    :class="localSettings[key] ? 'bg-blue-500' : 'bg-slate-300'"
+                                    class="vc-builder-toggle"
+                                    :class="localSettings[key] ? 'vc-builder-toggle-active' : ''"
                                 >
-                                    <div class="w-5 h-5 bg-white rounded-full transform transition-transform" :class="localSettings[key] ? 'translate-x-6' : 'translate-x-0.5'"></div>
+                                    <div class="vc-builder-toggle-knob"></div>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-sm text-slate-500">No settings available for this block type</div>
+                        <div v-else class="vc-builder-form-section">
+                            <div class="vc-builder-field-hint">No settings available for this block type</div>
+                        </div>
                     </div>
                 `,
                 computed: {
@@ -483,49 +488,64 @@
                 },
                 template: `
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Background Color</label>
-                            <input 
-                                type="color"
-                                v-model="localSettings.background_color"
-                                class="w-12 h-8 rounded cursor-pointer"
-                            >
-                            <button 
-                                v-if="localSettings.background_color"
-                                @click="localSettings.background_color = null"
-                                class="ml-2 text-xs text-red-500"
-                            >
-                                Clear
-                            </button>
+                        <div class="vc-builder-form-section">
+                            <div class="vc-builder-form-title">Surface</div>
+                            <div class="vc-builder-field">
+                                <label>Background Color</label>
+                                <div class="vc-builder-inline-actions">
+                                    <div class="vc-builder-swatch-row">
+                                        <div class="vc-builder-swatch">
+                                            <input 
+                                                type="color"
+                                                v-model="localSettings.background_color"
+                                            >
+                                        </div>
+                                        <span class="vc-builder-field-hint">{{ localSettings.background_color || 'transparent' }}</span>
+                                    </div>
+                                    <button 
+                                        v-if="localSettings.background_color"
+                                        @click="localSettings.background_color = null"
+                                        class="text-xs font-semibold text-[var(--vc-danger)]"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Padding Top</label>
-                            <input 
-                                type="range" 
-                                min="0" max="100" 
-                                v-model.number="localSettings.padding_top"
-                                class="w-full"
-                            >
-                            <span class="text-xs text-slate-500">{{ localSettings.padding_top || 16 }}px</span>
+                        <div class="vc-builder-form-section">
+                            <div class="vc-builder-form-title">Spacing</div>
+                            <div class="vc-builder-field">
+                                <label>Padding Top</label>
+                                <input 
+                                    type="range" 
+                                    min="0" max="100" 
+                                    v-model.number="localSettings.padding_top"
+                                    class="vc-builder-range w-full"
+                                >
+                                <span class="vc-builder-range-value">{{ localSettings.padding_top || 16 }}px</span>
+                            </div>
+                            <div class="vc-builder-field">
+                                <label>Padding Bottom</label>
+                                <input 
+                                    type="range" 
+                                    min="0" max="100" 
+                                    v-model.number="localSettings.padding_bottom"
+                                    class="vc-builder-range w-full"
+                                >
+                                <span class="vc-builder-range-value">{{ localSettings.padding_bottom || 16 }}px</span>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Padding Bottom</label>
-                            <input 
-                                type="range" 
-                                min="0" max="100" 
-                                v-model.number="localSettings.padding_bottom"
-                                class="w-full"
-                            >
-                            <span class="text-xs text-slate-500">{{ localSettings.padding_bottom || 16 }}px</span>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">CSS Class</label>
-                            <input 
-                                type="text"
-                                v-model="localSettings.css_class"
-                                placeholder="e.g., my-custom-class"
-                                class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                            >
+                        <div class="vc-builder-form-section">
+                            <div class="vc-builder-form-title">Advanced</div>
+                            <div class="vc-builder-field">
+                                <label>CSS Class</label>
+                                <input 
+                                    type="text"
+                                    v-model="localSettings.css_class"
+                                    placeholder="e.g., my-custom-class"
+                                    class="vc-input"
+                                >
+                            </div>
                         </div>
                     </div>
                 `

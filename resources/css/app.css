@@ -468,6 +468,115 @@ html[data-theme='dark'] .vc-builder-canvas {
     color: var(--vc-text-soft);
 }
 
+.vc-builder-form-section {
+    display: grid;
+    gap: 1rem;
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface-muted);
+    padding: 1rem;
+}
+
+.vc-builder-form-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--vc-text-soft);
+}
+
+.vc-builder-field {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.vc-builder-field label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--vc-text-muted);
+}
+
+.vc-builder-field-hint {
+    font-size: 0.78rem;
+    color: var(--vc-text-soft);
+}
+
+.vc-builder-swatch-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.vc-builder-swatch {
+    height: 2.75rem;
+    width: 2.75rem;
+    border: 1px solid var(--vc-border);
+    border-radius: 0.9rem;
+    background: var(--vc-surface-strong);
+    overflow: hidden;
+}
+
+.vc-builder-swatch input[type='color'] {
+    height: 100%;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.vc-builder-range {
+    accent-color: var(--vc-primary);
+}
+
+.vc-builder-range-value {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--vc-text-soft);
+}
+
+.vc-builder-toggle {
+    display: inline-flex;
+    width: 3.25rem;
+    padding: 0.2rem;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.3);
+    cursor: pointer;
+    transition: background-color 160ms ease;
+}
+
+.vc-builder-toggle-active {
+    background: color-mix(in srgb, var(--vc-primary) 72%, white 10%);
+}
+
+.vc-builder-toggle-knob {
+    height: 1.2rem;
+    width: 1.2rem;
+    border-radius: 9999px;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.16);
+    transition: transform 160ms ease;
+}
+
+.vc-builder-toggle-active .vc-builder-toggle-knob {
+    transform: translateX(1.35rem);
+}
+
+.vc-builder-inline-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.vc-builder-settings-card {
+    display: grid;
+    gap: 0.75rem;
+    border: 1px solid var(--vc-border);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface);
+    padding: 0.9rem;
+}
+
 .vc-builder-card {
     border: 1px solid var(--vc-border);
     border-radius: 1rem;

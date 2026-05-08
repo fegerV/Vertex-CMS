@@ -190,24 +190,25 @@
 
     <!-- Settings Panel -->
     <aside class="vc-builder-sidebar vc-builder-scroll w-96 overflow-y-auto border-l">
-        <div v-if="selectedBlock !== null" class="p-6">
+        <div v-if="selectedBlock !== null" class="p-6 space-y-4">
             <h3 class="mb-4 text-lg font-semibold text-[var(--vc-text)]">Настройки блока</h3>
             
             <!-- Heading Settings -->
-            <div v-if="selectedBlock.type === 'heading'" class="space-y-4">
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Текст</label>
+            <div v-if="selectedBlock.type === 'heading'" class="vc-builder-form-section">
+                <div class="vc-builder-form-title">Контент</div>
+                <div class="vc-builder-field">
+                    <label>Текст</label>
                     <input 
                         v-model="selectedBlock.settings.text"
                         type="text"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-input"
                     >
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Уровень</label>
+                <div class="vc-builder-field">
+                    <label>Уровень</label>
                     <select 
                         v-model="selectedBlock.settings.level"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-select"
                     >
                         <option value="h1">H1</option>
                         <option value="h2">H2</option>
@@ -217,19 +218,23 @@
                         <option value="h6">H6</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Цвет</label>
-                    <input 
-                        v-model="selectedBlock.settings.color"
-                        type="color"
-                        class="w-10 h-10"
-                    >
+                <div class="vc-builder-field">
+                    <label>Цвет</label>
+                    <div class="vc-builder-swatch-row">
+                        <div class="vc-builder-swatch">
+                            <input 
+                                v-model="selectedBlock.settings.color"
+                                type="color"
+                            >
+                        </div>
+                        <span class="vc-builder-field-hint">{{ selectedBlock.settings.color || '#111827' }}</span>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Выравнивание</label>
+                <div class="vc-builder-field">
+                    <label>Выравнивание</label>
                     <select 
                         v-model="selectedBlock.settings.align"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-select"
                     >
                         <option value="left">По левому краю</option>
                         <option value="center">По центру</option>
@@ -239,28 +244,33 @@
             </div>
 
             <!-- Text Settings -->
-            <div v-else-if="selectedBlock.type === 'text'" class="space-y-4">
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Текст</label>
+            <div v-else-if="selectedBlock.type === 'text'" class="vc-builder-form-section">
+                <div class="vc-builder-form-title">Текстовый блок</div>
+                <div class="vc-builder-field">
+                    <label>Текст</label>
                     <textarea 
                         v-model="selectedBlock.settings.text"
                         rows="4"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-textarea"
                     ></textarea>
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Цвет</label>
-                    <input 
-                        v-model="selectedBlock.settings.color"
-                        type="color"
-                        class="w-10 h-10"
-                    >
+                <div class="vc-builder-field">
+                    <label>Цвет</label>
+                    <div class="vc-builder-swatch-row">
+                        <div class="vc-builder-swatch">
+                            <input 
+                                v-model="selectedBlock.settings.color"
+                                type="color"
+                            >
+                        </div>
+                        <span class="vc-builder-field-hint">{{ selectedBlock.settings.color || '#374151' }}</span>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Выравнивание</label>
+                <div class="vc-builder-field">
+                    <label>Выравнивание</label>
                     <select 
                         v-model="selectedBlock.settings.align"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-select"
                     >
                         <option value="left">По левому краю</option>
                         <option value="center">По центру</option>
@@ -270,38 +280,39 @@
             </div>
 
             <!-- Button Settings -->
-            <div v-else-if="selectedBlock.type === 'button'" class="space-y-4">
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Текст</label>
+            <div v-else-if="selectedBlock.type === 'button'" class="vc-builder-form-section">
+                <div class="vc-builder-form-title">Кнопка</div>
+                <div class="vc-builder-field">
+                    <label>Текст</label>
                     <input 
                         v-model="selectedBlock.settings.text"
                         type="text"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-input"
                     >
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">URL</label>
+                <div class="vc-builder-field">
+                    <label>URL</label>
                     <input 
                         v-model="selectedBlock.settings.url"
                         type="text"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-input"
                     >
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Цель</label>
+                <div class="vc-builder-field">
+                    <label>Цель</label>
                     <select 
                         v-model="selectedBlock.settings.target"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-select"
                     >
                         <option value="_self">Текущая вкладка</option>
                         <option value="_blank">Новая вкладка</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Стиль</label>
+                <div class="vc-builder-field">
+                    <label>Стиль</label>
                     <select 
                         v-model="selectedBlock.settings.style"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-select"
                     >
                         <option value="primary">Основной</option>
                         <option value="secondary">Вторичный</option>
@@ -310,30 +321,30 @@
             </div>
 
             <!-- FAQ Settings -->
-            <div v-else-if="selectedBlock.type === 'faq'" class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <label class="block text-sm text-slate-600">Вопросы и ответы</label>
+            <div v-else-if="selectedBlock.type === 'faq'" class="vc-builder-form-section">
+                <div class="vc-builder-inline-actions">
+                    <div class="vc-builder-form-title">FAQ</div>
                     <button 
                         @click="addFaqItem"
-                        class="text-xs bg-slate-950 text-white px-2 py-1 rounded"
+                        class="vc-button vc-button-secondary px-3 py-2 text-xs"
                     >
                         + Добавить
                     </button>
                 </div>
-                <div v-for="(item, i) in selectedBlock.settings.items || []" :key="i" class="space-y-2 p-3 bg-slate-50 rounded">
+                <div v-for="(item, i) in selectedBlock.settings.items || []" :key="i" class="vc-builder-settings-card">
                     <input 
                         v-model="item.question"
                         placeholder="Вопрос"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-input"
                     >
                     <textarea 
                         v-model="item.answer"
                         placeholder="Ответ"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-textarea"
                     ></textarea>
                     <button 
                         @click="removeFaqItem(i)"
-                        class="text-xs text-red-600"
+                        class="text-xs font-semibold text-[var(--vc-danger)]"
                     >
                         Удалить
                     </button>
@@ -341,43 +352,48 @@
             </div>
 
             <!-- HTML Settings -->
-            <div v-else-if="selectedBlock.type === 'html'" class="space-y-4">
-                <label class="block text-sm text-slate-600 mb-1">HTML код</label>
-                <textarea 
-                    v-model="selectedBlock.settings.html"
-                    rows="6"
-                    class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono"
-                    placeholder="<p>HTML код...</p>"
-                ></textarea>
+            <div v-else-if="selectedBlock.type === 'html'" class="vc-builder-form-section">
+                <div class="vc-builder-form-title">HTML</div>
+                <div class="vc-builder-field">
+                    <label>HTML код</label>
+                    <textarea 
+                        v-model="selectedBlock.settings.html"
+                        rows="6"
+                        class="vc-textarea font-mono"
+                        placeholder="<p>HTML код...</p>"
+                    ></textarea>
+                </div>
             </div>
 
             <!-- Image Settings -->
-            <div v-else-if="selectedBlock.type === 'image'" class="space-y-4">
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Media ID</label>
+            <div v-else-if="selectedBlock.type === 'image'" class="vc-builder-form-section">
+                <div class="vc-builder-form-title">Изображение</div>
+                <div class="vc-builder-field">
+                    <label>Media ID</label>
                     <input 
                         v-model="selectedBlock.settings.media_id"
                         type="number"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-input"
                         placeholder="ID медиафайла"
                     >
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-600 mb-1">Alt текст</label>
+                <div class="vc-builder-field">
+                    <label>Alt текст</label>
                     <input 
                         v-model="selectedBlock.settings.alt"
                         type="text"
-                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        class="vc-input"
                     >
                 </div>
             </div>
 
             <!-- Common Block Settings -->
-            <div class="pt-4 border-t border-slate-200 mt-4">
-                <div class="text-sm font-medium text-slate-600 mb-2">Тип блока: {{ selectedBlock.type }}</div>
+            <div class="vc-builder-form-section">
+                <div class="vc-builder-form-title">Действия</div>
+                <div class="vc-builder-field-hint">Тип блока: {{ selectedBlock.type }}</div>
                 <button 
                     @click="duplicateBlock"
-                    class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
+                    class="vc-button vc-button-secondary w-full justify-center px-4 py-3"
                 >
                     Копировать блок
                 </button>

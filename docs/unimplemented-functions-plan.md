@@ -101,6 +101,25 @@ Acceptance criteria:
 - Editor не видит управление пользователями.
 - Super Admin видит системные разделы.
 
+Статус: `реализовано в коде, ожидает runtime/manual QA подтверждения`.
+
+Что закрыто:
+
+- Admin layout с sidebar, topbar, breadcrumb-навигацией и адаптивным мобильным drawer.
+- Permission-aware навигация по разделам.
+- CRUD пользователей.
+- Просмотр и редактирование ролей с назначением permissions.
+- Settings UI с read-only режимом для ролей без `settings.edit`.
+- System info UI.
+- Activity logs UI с фильтрами.
+- Современный light/dark UI для админки и builder-экранов.
+
+Оценка:
+
+- Все acceptance criteria реализованы на уровне кода и UI.
+- Route-level ограничения и sidebar gating согласованы.
+- Тестовый каркас для access control добавлен, но полный runtime-прогон отложен.
+
 ## Приоритет P2 - Page Builder MVP
 
 Цель: собрать страницу из JSON-блоков и отрендерить её публично.
@@ -122,6 +141,23 @@ Acceptance criteria:
 - Неизвестный block type не ломает страницу.
 - HTML-блок проходит sanitization.
 - Блок можно удалить и после сохранения он исчезает.
+
+Статус: `MVP реализован в коде и частично расширен сверх исходного объёма, но не подтверждён end-to-end`.
+
+Что уже есть сверх базового MVP:
+
+- Basic builder и advanced builder.
+- Preview.
+- Revisions и autosave.
+- Export/import sections.
+- Template apply workflow.
+- Обновлённый light/dark UI для canvas и внутренних control-панелей настроек блоков и секций.
+
+Оценка:
+
+- Исходные acceptance criteria закрыты на уровне кода.
+- По объёму функций модуль уже сильнее первоначального MVP.
+- До полного закрытия остаётся runtime/manual QA подтверждение сценариев редактирования и публикации.
 
 ## Приоритет P3 - API для мобильных приложений
 
