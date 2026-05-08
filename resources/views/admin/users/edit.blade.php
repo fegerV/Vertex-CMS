@@ -6,7 +6,7 @@
 
 @section('content')
     <div class="mx-auto max-w-3xl">
-        <form method="POST" action="{{ route('admin.users.update', $user) }}" class="space-y-5 rounded-lg border border-slate-200 bg-white p-6">
+        <form method="POST" action="{{ route('admin.users.update', $user) }}" class="vc-panel space-y-5 p-6">
             @csrf
             @method('PUT')
             @include('admin.users.partials.form')

@@ -7,18 +7,18 @@
 @section('content')
     @php($isSuperAdminRole = $role->slug === 'super-admin')
 
-    <form method="POST" action="{{ route('admin.roles.update', $role) }}" class="space-y-6 rounded-lg border border-slate-200 bg-white p-6">
+    <form method="POST" action="{{ route('admin.roles.update', $role) }}" class="vc-panel space-y-6 p-6">
         @csrf
         @method('PUT')
 
         <label class="block max-w-xl">
-            <span class="mb-1 block text-sm font-medium">Название</span>
-            <input type="text" name="name" value="{{ old('name', $role->name) }}" required class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900">
-            @error('name') <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
+            <span class="mb-2 block text-sm font-semibold text-[var(--vc-text)]">Название</span>
+            <input type="text" name="name" value="{{ old('name', $role->name) }}" required class="vc-input">
+            @error('name') <span class="mt-2 block text-sm text-rose-500">{{ $message }}</span> @enderror
         </label>
 
         @if ($isSuperAdminRole)
-            <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+            <div class="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-900">
                 Роль `super-admin` всегда получает полный набор permissions. Изменения чекбоксов в этом интерфейсе не применяются.
             </div>
         @endif
@@ -26,10 +26,10 @@
         <section class="space-y-5">
             @foreach ($permissions as $group => $items)
                 <div>
-                    <h2 class="text-base font-semibold">{{ $group ?: 'other' }}</h2>
+                    <h2 class="text-base font-semibold capitalize text-[var(--vc-text)]">{{ $group ?: 'other' }}</h2>
                     <div class="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                         @foreach ($items as $permission)
-                            <label class="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm">
+                            <label class="vc-checkbox-row text-sm">
                                 <input
                                     type="checkbox"
                                     name="permissions[]"
@@ -38,7 +38,7 @@
                                     @disabled($isSuperAdminRole)
                                     class="rounded border-slate-300"
                                 >
-                                <span>{{ $permission->slug }}</span>
+                                <span class="text-[var(--vc-text)]">{{ $permission->slug }}</span>
                             </label>
                         @endforeach
                     </div>
@@ -46,8 +46,8 @@
             @endforeach
         </section>
 
-        <div class="flex justify-end border-t border-slate-100 pt-5">
-            <button class="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+        <div class="flex justify-end border-t border-[var(--vc-border)] pt-5">
+            <button class="vc-button vc-button-primary px-4 py-3">
                 Сохранить
             </button>
         </div>
