@@ -70,8 +70,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'seo.edit',
                 'settings.view',
                 'settings.edit',
-                'system.view',
-                'cache.clear',
             ],
             'editor' => [
                 'admin.access',
@@ -91,7 +89,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'media.view',
                 'seo.view',
                 'settings.view',
-                'system.view',
             ],
         ];
 
