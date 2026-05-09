@@ -274,6 +274,7 @@
                                         @click.stop="runQuickAddItem(sIndex, quickAddInsertIndex, item)"
                                         class="vc-builder-quick-card"
                                     >
+                                        <div class="vc-builder-quick-preview" v-html="renderQuickAddPreview(item)"></div>
                                         <span class="vc-builder-quick-card-title">{{ item.name }}</span>
                                         <span class="vc-builder-quick-card-meta">{{ item.meta }}</span>
                                     </button>
@@ -642,7 +643,9 @@
                 emits: ['update', 'open-media-picker'],
                 data() {
                     return {
-                        localSettings: { ...this.settings }
+                        localSettings: { ...this.settings },
+                        draggedRepeater: null,
+                        repeaterDropTarget: null,
                     };
                 },
                 watch: {
@@ -676,10 +679,27 @@
                                     <div v-else class="vc-builder-repeater-list">
                                         <div v-for="(item, itemIndex) in localSettings[key]" :key="item.id || itemIndex" class="vc-builder-repeater-card">
                                             <div class="flex items-center justify-between gap-3">
-                                                <span class="vc-builder-badge">Item {{ itemIndex + 1 }}</span>
+                                                <div class="flex items-center gap-2">
+                                                    <button
+                                                        draggable="true"
+                                                        @dragstart="onRepeaterDragStart(key, itemIndex, $event)"
+                                                        @dragend="onRepeaterDragEnd"
+                                                        type="button"
+                                                        class="vc-builder-icon-button vc-builder-drag-handle"
+                                                        title="Move item"
+                                                    >
+                                                        ::
+                                                    </button>
+                                                    <span class="vc-builder-badge">Item {{ itemIndex + 1 }}</span>
+                                                </div>
                                                 <button @click="removeRepeaterItem(key, itemIndex)" type="button" class="vc-builder-icon-button text-rose-300" title="Remove item">Del</button>
                                             </div>
-                                            <div class="space-y-3">
+                                            <div
+                                                class="space-y-3"
+                                                :class="{ 'vc-builder-drop-target': isRepeaterDropTarget(key, itemIndex) }"
+                                                @dragover.prevent="onRepeaterDragOver(key, itemIndex)"
+                                                @drop.prevent="onRepeaterDrop(key, itemIndex)"
+                                            >
                                                 <div v-for="nestedField in field.fields || []" :key="nestedField.key" class="vc-builder-field">
                                                     <label>{{ nestedField.label }}</label>
                                                     <div v-if="isMediaField(nestedField, nestedField.key)" class="space-y-3">
@@ -867,6 +887,40 @@
                     updateRepeaterField(key, itemIndex, nestedKey, value) {
                         if (!Array.isArray(this.localSettings[key])) return;
                         this.localSettings[key][itemIndex][nestedKey] = value;
+                    },
+                    onRepeaterDragStart(key, itemIndex, event) {
+                        this.draggedRepeater = { key, itemIndex };
+                        this.repeaterDropTarget = { key, itemIndex };
+                        if (event?.dataTransfer) {
+                            event.dataTransfer.effectAllowed = 'move';
+                        }
+                    },
+                    onRepeaterDragOver(key, itemIndex) {
+                        if (!this.draggedRepeater || this.draggedRepeater.key !== key) return;
+                        this.repeaterDropTarget = { key, itemIndex };
+                    },
+                    onRepeaterDrop(key, itemIndex) {
+                        if (!this.draggedRepeater || this.draggedRepeater.key !== key || !Array.isArray(this.localSettings[key])) {
+                            this.onRepeaterDragEnd();
+                            return;
+                        }
+
+                        const fromIndex = this.draggedRepeater.itemIndex;
+                        if (fromIndex === itemIndex) {
+                            this.onRepeaterDragEnd();
+                            return;
+                        }
+
+                        const [item] = this.localSettings[key].splice(fromIndex, 1);
+                        this.localSettings[key].splice(itemIndex, 0, item);
+                        this.onRepeaterDragEnd();
+                    },
+                    onRepeaterDragEnd() {
+                        this.draggedRepeater = null;
+                        this.repeaterDropTarget = null;
+                    },
+                    isRepeaterDropTarget(key, itemIndex) {
+                        return this.repeaterDropTarget?.key === key && this.repeaterDropTarget?.itemIndex === itemIndex;
                     }
                 }
             },
@@ -963,7 +1017,7 @@
             const config = @json($config);
             const initialSections = @json($page->content_json['sections'] ?? []);
             const INSPECTOR_STATE_KEY = 'vertexcms.builder.inspector';
-            const PRESETS_STORAGE_KEY = 'vertexcms.builder.block-presets';
+            const PRESETS_STORAGE_KEY = 'vertexcms.builder.shared-presets-cache';
 
             // State
             const sections = ref(initialSections);
@@ -999,7 +1053,7 @@
             const inspectorPinned = ref(false);
             const inspectorMode = ref('block');
             const presetDraftName = ref('');
-            const blockPresets = ref([]);
+            const sharedPresets = ref([]);
             const mediaLookup = ref({});
             const showMediaPicker = ref(false);
             const mediaPickerQuery = ref('');
@@ -1064,7 +1118,7 @@
             const quickAddPresetItems = computed(() => {
                 const query = quickAddQuery.value.trim().toLowerCase();
 
-                return blockPresets.value
+                return sharedPresets.value
                     .filter((preset) => !query
                         || preset.name.toLowerCase().includes(query)
                         || preset.type.toLowerCase().includes(query)
@@ -1134,6 +1188,52 @@
                     type,
                 }));
             });
+            const renderPreviewBlocks = (blocks) => {
+                if (!Array.isArray(blocks) || blocks.length === 0) {
+                    return '<div class="vc-builder-renderer-fallback"><strong>Empty</strong><span>No preview available.</span></div>';
+                }
+
+                return blocks.slice(0, 2).map((block) => {
+                    const definition = allBlocks.value?.[block.type];
+                    if (!definition) {
+                        return `<div class="vc-builder-html-preview">${block.type}</div>`;
+                    }
+
+                    try {
+                        if (typeof definition.render === 'function') {
+                            return definition.render(block.settings || {});
+                        }
+                    } catch (error) {
+                        console.error('Quick preview render error:', error);
+                    }
+
+                    if (block.type === 'image' && block.settings?.url) {
+                        return `<img src="${block.settings.url}" alt="${block.settings.alt || ''}" style="max-width:100%;height:88px;object-fit:cover;border-radius:12px;">`;
+                    }
+
+                    if (block.type === 'heading') {
+                        return `<strong style="display:block;font-size:1rem;color:#111827;">${block.settings?.text || 'Heading'}</strong>`;
+                    }
+
+                    if (block.type === 'text') {
+                        return `<div style="font-size:0.82rem;color:#64748b;">${(block.settings?.content || block.settings?.text || '').slice(0, 96)}</div>`;
+                    }
+
+                    return `<div class="vc-builder-html-preview">${blockLabel(block.type)}</div>`;
+                }).join('');
+            };
+            const renderQuickAddPreview = (item) => {
+                if (item.kind === 'preset') {
+                    return renderPreviewBlocks([{ type: item.preset.type, settings: item.preset.settings || {} }]);
+                }
+
+                if (item.kind === 'template') {
+                    return renderPreviewBlocks(item.blocks || []);
+                }
+
+                const block = buildBlock(item.type);
+                return block ? renderPreviewBlocks([block]) : '<div class="vc-builder-html-preview">Preview</div>';
+            };
 
             const canvasClass = computed(() => {
                 const bp = breakpoints.value.find(b => b.name === activeBreakpoint.value);
@@ -1158,7 +1258,7 @@
             const currentBlockPresets = computed(() => {
                 if (!selectedBlockData.value) return [];
 
-                return blockPresets.value.filter((preset) => preset.type === selectedBlockData.value.type);
+                return sharedPresets.value.filter((preset) => preset.type === selectedBlockData.value.type);
             });
             const inspectorTitle = computed(() => {
                 if (selectedBlockData.value) {
@@ -1199,7 +1299,7 @@
             };
 
             const persistBlockPresets = () => {
-                localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(blockPresets.value));
+                localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(sharedPresets.value));
             };
 
             const collectReferencedMediaIds = () => {
@@ -1926,30 +2026,51 @@
                 commandQuery.value = '';
             };
 
-            const saveCurrentBlockPreset = () => {
+            const loadSharedPresets = async () => {
+                try {
+                    const response = await fetch('/admin/pages/builder/presets');
+                    const data = await response.json();
+                    sharedPresets.value = data.data || [];
+                    persistBlockPresets();
+                } catch (error) {
+                    console.error('Shared presets load error:', error);
+                }
+            };
+
+            const saveCurrentBlockPreset = async () => {
                 if (!selectedBlockData.value) return;
 
                 const name = presetDraftName.value.trim() || `${blockLabel(selectedBlockData.value.type)} preset`;
-                const now = new Date().toISOString();
-                const existingIndex = blockPresets.value.findIndex((preset) =>
+                const existingPreset = sharedPresets.value.find((preset) =>
                     preset.type === selectedBlockData.value.type && preset.name.toLowerCase() === name.toLowerCase()
                 );
                 const payload = {
-                    id: existingIndex >= 0 ? blockPresets.value[existingIndex].id : generateId(),
                     type: selectedBlockData.value.type,
                     name,
                     settings: JSON.parse(JSON.stringify(selectedBlockData.value.settings || {})),
-                    updated_at: now,
                 };
+                const url = existingPreset
+                    ? `/admin/pages/builder/presets/${existingPreset.id}`
+                    : '/admin/pages/builder/presets';
+                const method = existingPreset ? 'PUT' : 'POST';
 
-                if (existingIndex >= 0) {
-                    blockPresets.value.splice(existingIndex, 1, payload);
-                } else {
-                    blockPresets.value.unshift(payload);
+                try {
+                    const response = await fetch(url, {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                        },
+                        body: JSON.stringify(payload),
+                    });
+                    const data = await response.json();
+                    sharedPresets.value = data.presets || sharedPresets.value;
+                    persistBlockPresets();
+                } catch (error) {
+                    console.error('Shared preset save error:', error);
                 }
 
                 presetDraftName.value = '';
-                persistBlockPresets();
             };
 
             const applyBlockPreset = (preset) => {
@@ -1986,9 +2107,20 @@
                 saveToHistory('Insert block preset');
             };
 
-            const deleteBlockPreset = (presetId) => {
-                blockPresets.value = blockPresets.value.filter((preset) => preset.id !== presetId);
-                persistBlockPresets();
+            const deleteBlockPreset = async (presetId) => {
+                try {
+                    const response = await fetch(`/admin/pages/builder/presets/${presetId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                        },
+                    });
+                    const data = await response.json();
+                    sharedPresets.value = data.presets || sharedPresets.value.filter((preset) => preset.id !== presetId);
+                    persistBlockPresets();
+                } catch (error) {
+                    console.error('Shared preset delete error:', error);
+                }
             };
 
             const formatPresetDate = (value) => {
@@ -2345,13 +2477,14 @@
                     const savedInspectorState = JSON.parse(localStorage.getItem(INSPECTOR_STATE_KEY) || '{}');
                     inspectorPinned.value = Boolean(savedInspectorState.pinned);
                     inspectorMode.value = savedInspectorState.mode === 'section' ? 'section' : 'block';
-                    blockPresets.value = JSON.parse(localStorage.getItem(PRESETS_STORAGE_KEY) || '[]');
+                    sharedPresets.value = JSON.parse(localStorage.getItem(PRESETS_STORAGE_KEY) || '[]');
                 } catch (error) {
                     console.error('Builder local state restore error:', error);
                 }
 
                 saveToHistory('Initial state');
                 loadRevisions();
+                loadSharedPresets();
                 hydrateMediaLookup(collectReferencedMediaIds());
                 document.addEventListener('keydown', handleKeydown);
                 document.addEventListener('click', handleGlobalPointer);
@@ -2390,7 +2523,7 @@
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
                 autoSaveStatus, autoSaveStatusText, currentHistoryLabel, previewHtml, previewBreakpoint,
                 allBlocks, filteredBlocks, quickAddBlocks, quickAddItems, quickAddMode, blockLabel, sectionCanvasStyle, draggedSectionIndex, dropSectionIndex,
-                quickAddSectionIndex, quickAddInsertIndex, quickAddQuery, runQuickAddItem,
+                quickAddSectionIndex, quickAddInsertIndex, quickAddQuery, runQuickAddItem, renderQuickAddPreview,
                 addBlock, addBlockToSection, deleteSection, duplicateSection, moveSectionUp, moveSectionDown,
                 moveBlockUp, moveBlockDown, duplicateBlock, deleteBlock,
                 insertBlockAt, openQuickAdd, closeQuickAdd, toggleBlockSelection, duplicateSelectedBlocks, deleteSelectedBlocks,

@@ -114,6 +114,18 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::get('pages/templates', [AdvancedBuilderController::class, 'getTemplates'])
             ->middleware('vertex.permission:pages.edit')
             ->name('pages.templates');
+        Route::get('pages/builder/presets', [AdvancedBuilderController::class, 'getSharedPresets'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.presets.index');
+        Route::post('pages/builder/presets', [AdvancedBuilderController::class, 'storeSharedPreset'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.presets.store');
+        Route::put('pages/builder/presets/{presetId}', [AdvancedBuilderController::class, 'updateSharedPreset'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.presets.update');
+        Route::delete('pages/builder/presets/{presetId}', [AdvancedBuilderController::class, 'destroySharedPreset'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.presets.destroy');
         Route::post('pages/{page}/apply-template', [AdvancedBuilderController::class, 'applyTemplate'])
             ->middleware('vertex.permission:pages.edit')
             ->name('pages.apply-template');

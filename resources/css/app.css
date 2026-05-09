@@ -843,6 +843,19 @@ html[data-theme='dark'] .vc-builder-section-body {
     box-shadow: 0 14px 22px rgba(15, 23, 42, 0.08);
 }
 
+.vc-builder-quick-preview {
+    min-height: 5.5rem;
+    overflow: hidden;
+    border: 1px solid var(--vc-border);
+    border-radius: 0.85rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(241, 245, 249, 0.9) 100%);
+    padding: 0.7rem;
+}
+
+html[data-theme='dark'] .vc-builder-quick-preview {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.82) 0%, rgba(15, 23, 42, 0.94) 100%);
+}
+
 .vc-builder-quick-card-title {
     font-size: 0.82rem;
     font-weight: 700;

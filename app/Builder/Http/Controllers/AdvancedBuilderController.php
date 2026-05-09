@@ -5,11 +5,15 @@ namespace App\Builder\Http\Controllers;
 use App\Builder\Config\BlockRegistry;
 use App\Builder\Services\PageBuilderService;
 use App\Content\Services\PageService;
+use App\Core\Services\SettingsService;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Models\PageRevision;
+use App\Models\Setting;
+use App\System\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -18,6 +22,8 @@ class AdvancedBuilderController extends Controller
     public function __construct(
         private readonly PageBuilderService $builder,
         private readonly PageService $pages,
+        private readonly SettingsService $settings,
+        private readonly ActivityLogService $activityLog,
     ) {
     }
 
@@ -311,6 +317,100 @@ class AdvancedBuilderController extends Controller
         ]);
     }
 
+    public function getSharedPresets(): JsonResponse
+    {
+        return response()->json([
+            'ok' => true,
+            'data' => $this->sharedPresets(),
+        ]);
+    }
+
+    public function storeSharedPreset(Request $request): JsonResponse
+    {
+        $payload = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'type' => ['required', 'string', 'max:80'],
+            'settings' => ['required', 'array'],
+        ]);
+
+        $presets = $this->sharedPresets();
+        $preset = [
+            'id' => (string) Str::uuid(),
+            'name' => $payload['name'],
+            'type' => $payload['type'],
+            'settings' => $payload['settings'],
+            'updated_at' => now()->toIso8601String(),
+            'created_by' => $request->user()?->name,
+        ];
+
+        array_unshift($presets, $preset);
+        $this->storeSharedPresets($presets);
+        $this->activityLog->record('builder.preset.create', 'settings', null, 'Builder shared preset created.', [
+            'preset_id' => $preset['id'],
+            'preset_type' => $preset['type'],
+        ], $request);
+
+        return response()->json([
+            'ok' => true,
+            'data' => $preset,
+            'presets' => $presets,
+        ], 201);
+    }
+
+    public function updateSharedPreset(Request $request, string $presetId): JsonResponse
+    {
+        $payload = $request->validate([
+            'name' => ['sometimes', 'string', 'max:120'],
+            'type' => ['sometimes', 'string', 'max:80'],
+            'settings' => ['sometimes', 'array'],
+        ]);
+
+        $presets = collect($this->sharedPresets())->map(function (array $preset) use ($presetId, $payload, $request) {
+            if (($preset['id'] ?? null) !== $presetId) {
+                return $preset;
+            }
+
+            return [
+                ...$preset,
+                ...$payload,
+                'updated_at' => now()->toIso8601String(),
+                'updated_by' => $request->user()?->name,
+            ];
+        })->values()->all();
+
+        $updated = collect($presets)->firstWhere('id', $presetId);
+        abort_unless($updated, 404);
+
+        $this->storeSharedPresets($presets);
+        $this->activityLog->record('builder.preset.update', 'settings', null, 'Builder shared preset updated.', [
+            'preset_id' => $presetId,
+        ], $request);
+
+        return response()->json([
+            'ok' => true,
+            'data' => $updated,
+            'presets' => $presets,
+        ]);
+    }
+
+    public function destroySharedPreset(Request $request, string $presetId): JsonResponse
+    {
+        $presets = collect($this->sharedPresets())
+            ->reject(fn (array $preset) => ($preset['id'] ?? null) === $presetId)
+            ->values()
+            ->all();
+
+        $this->storeSharedPresets($presets);
+        $this->activityLog->record('builder.preset.delete', 'settings', null, 'Builder shared preset deleted.', [
+            'preset_id' => $presetId,
+        ], $request);
+
+        return response()->json([
+            'ok' => true,
+            'presets' => $presets,
+        ]);
+    }
+
     protected function calculateDiff(array $old, array $new): array
     {
         return [
@@ -342,5 +442,26 @@ class AdvancedBuilderController extends Controller
     {
         return collect($content['sections'] ?? [])
             ->sum(fn (array $section) => count($section['blocks'] ?? []));
+    }
+
+    protected function sharedPresets(): array
+    {
+        $value = $this->settings->get('builder.shared_presets', []);
+
+        return is_array($value) ? array_values($value) : [];
+    }
+
+    protected function storeSharedPresets(array $presets): void
+    {
+        Setting::query()->updateOrCreate(
+            ['group_name' => 'builder', 'setting_key' => 'shared_presets'],
+            [
+                'setting_value' => json_encode(array_values($presets), JSON_UNESCAPED_UNICODE),
+                'type' => 'json',
+                'autoload' => true,
+            ],
+        );
+
+        $this->settings->forgetCache();
     }
 }
