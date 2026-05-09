@@ -195,8 +195,14 @@
                         v-for="(section, sIndex) in sections" 
                         :key="section.id"
                         class="vc-builder-section group"
-                        :class="{ 'vc-builder-section-active': selectedSection === sIndex }"
+                        :class="{
+                            'vc-builder-section-active': selectedSection === sIndex,
+                            'vc-builder-dragging': draggedSectionIndex === sIndex,
+                            'vc-builder-drop-target': dropSectionIndex === sIndex && draggedSectionIndex !== null && draggedSectionIndex !== sIndex
+                        }"
                         @click="selectSection(sIndex)"
+                        @dragover.prevent="onSectionDragOver(sIndex)"
+                        @drop.prevent="onSectionDrop(sIndex)"
                     >
                         <!-- Section Controls -->
                         <div class="vc-builder-section-head">
@@ -209,25 +215,34 @@
                             </div>
 
                             <div class="vc-builder-floating-controls flex gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                                <button @click.stop="addBlockToSection(sIndex)" class="p-1" title="Add block">
+                                <button
+                                    draggable="true"
+                                    @dragstart="onSectionDragStart(sIndex, $event)"
+                                    @dragend="onSectionDragEnd"
+                                    class="vc-builder-icon-button vc-builder-drag-handle p-1"
+                                    title="Move section"
+                                >
+                                    ::
+                                </button>
+                                <button @click.stop="addBlockToSection(sIndex)" class="vc-builder-icon-button p-1" title="Add block">
                                     +
                                 </button>
-                            <button @click.stop="moveSectionUp(sIndex)" class="p-1" title="Move up">
+                            <button @click.stop="moveSectionUp(sIndex)" class="vc-builder-icon-button p-1" title="Move up">
                                 ↑
                             </button>
-                            <button @click.stop="moveSectionDown(sIndex)" class="p-1" title="Move down">
+                            <button @click.stop="moveSectionDown(sIndex)" class="vc-builder-icon-button p-1" title="Move down">
                                 ↓
                             </button>
-                            <button @click.stop="duplicateSection(sIndex)" class="p-1" title="Duplicate">
+                            <button @click.stop="duplicateSection(sIndex)" class="vc-builder-icon-button p-1" title="Duplicate">
                                 📋
                             </button>
-                            <button @click.stop="deleteSection(sIndex)" class="p-1 text-rose-300" title="Delete">
+                            <button @click.stop="deleteSection(sIndex)" class="vc-builder-icon-button p-1 text-rose-300" title="Delete">
                                 ✕
                             </button>
                         </div>
 
                         </div>
-                        <div class="vc-builder-section-body" :style="sectionCanvasStyle(section)">
+                        <div class="vc-builder-section-body" :style="sectionCanvasStyle(section)" @dragover.prevent="onSectionBodyDragOver(sIndex)" @drop.prevent="onSectionBodyDrop(sIndex)">
                             <div v-if="section.blocks.length === 0" class="vc-builder-empty flex min-h-32 flex-col items-center justify-center text-center">
                                 <p class="text-sm font-semibold text-[var(--vc-text)]">This section is empty</p>
                                 <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Use the add control or choose a block from the library.</p>
@@ -237,17 +252,37 @@
                                     v-for="(block, bIndex) in section.blocks" 
                                     :key="block.id"
                                     class="vc-builder-block-shell"
-                                    :class="{ 'vc-builder-block-active': selectedBlock === bIndex && selectedSection === sIndex }"
+                                    :class="{
+                                        'vc-builder-block-active': selectedBlock === bIndex && selectedSection === sIndex,
+                                        'vc-builder-dragging': isDraggedBlock(sIndex, bIndex),
+                                        'vc-builder-drop-target': isBlockDropTarget(sIndex, bIndex)
+                                    }"
                                     @click.stop="selectBlock(sIndex, bIndex)"
+                                    @dragover.prevent="onBlockDragOver(sIndex, bIndex)"
+                                    @drop.prevent="onBlockDrop(sIndex, bIndex)"
                                 >
                                     <div class="vc-builder-block-head">
                                         <div class="vc-builder-section-meta">
+                                            <button
+                                                draggable="true"
+                                                @dragstart="onBlockDragStart(sIndex, bIndex, $event)"
+                                                @dragend="onBlockDragEnd"
+                                                class="vc-builder-icon-button vc-builder-drag-handle"
+                                                title="Move block"
+                                            >
+                                                ::
+                                            </button>
                                             <span class="vc-builder-block-title">{{ blockLabel(block.type) }}</span>
                                             <span class="vc-builder-badge" :class="{ 'vc-builder-badge-active': selectedBlock === bIndex && selectedSection === sIndex }">
                                                 Block {{ bIndex + 1 }}
                                             </span>
                                         </div>
-                                        <span v-if="selectedBlock === bIndex && selectedSection === sIndex" class="vc-builder-field-hint">Editing</span>
+                                        <div class="vc-builder-block-actions">
+                                            <button @click.stop="moveBlockUp(sIndex, bIndex)" class="vc-builder-icon-button" title="Move up">Up</button>
+                                            <button @click.stop="moveBlockDown(sIndex, bIndex)" class="vc-builder-icon-button" title="Move down">Dn</button>
+                                            <button @click.stop="duplicateBlock(sIndex, bIndex)" class="vc-builder-icon-button" title="Duplicate">Cp</button>
+                                            <button @click.stop="deleteBlock(sIndex, bIndex)" class="vc-builder-icon-button text-rose-300" title="Delete">Del</button>
+                                        </div>
                                     </div>
 
                                     <BlockRenderer 
@@ -576,6 +611,10 @@
             const autoSaveTimer = ref(null);
             const autoSaveStatus = ref('saved');
             const revisions = ref([]);
+            const draggedSectionIndex = ref(null);
+            const dropSectionIndex = ref(null);
+            const draggedBlock = ref(null);
+            const dropBlockTarget = ref(null);
 
             // History for undo/redo
             const history = ref([]);
@@ -644,6 +683,14 @@
                 };
             };
 
+            const isDraggedBlock = (sIndex, bIndex) => {
+                return draggedBlock.value?.sectionIndex === sIndex && draggedBlock.value?.blockIndex === bIndex;
+            };
+
+            const isBlockDropTarget = (sIndex, bIndex) => {
+                return dropBlockTarget.value?.sectionIndex === sIndex && dropBlockTarget.value?.blockIndex === bIndex;
+            };
+
             // Methods
             const addBlock = (type) => {
                 const block = allBlocks.value[type];
@@ -704,6 +751,143 @@
                     sections.value[sIndex + 1] = temp;
                     saveToHistory();
                 }
+            };
+
+            const moveBlockUp = (sIndex, bIndex) => {
+                if (bIndex <= 0) return;
+                const blocks = sections.value[sIndex].blocks;
+                const temp = blocks[bIndex];
+                blocks[bIndex] = blocks[bIndex - 1];
+                blocks[bIndex - 1] = temp;
+                selectBlock(sIndex, bIndex - 1);
+                saveToHistory();
+            };
+
+            const moveBlockDown = (sIndex, bIndex) => {
+                const blocks = sections.value[sIndex].blocks;
+                if (bIndex >= blocks.length - 1) return;
+                const temp = blocks[bIndex];
+                blocks[bIndex] = blocks[bIndex + 1];
+                blocks[bIndex + 1] = temp;
+                selectBlock(sIndex, bIndex + 1);
+                saveToHistory();
+            };
+
+            const duplicateBlock = (sIndex, bIndex) => {
+                const source = sections.value[sIndex].blocks[bIndex];
+                if (!source) return;
+                const copy = JSON.parse(JSON.stringify(source));
+                copy.id = generateId();
+                sections.value[sIndex].blocks.splice(bIndex + 1, 0, copy);
+                selectBlock(sIndex, bIndex + 1);
+                saveToHistory();
+            };
+
+            const deleteBlock = (sIndex, bIndex) => {
+                sections.value[sIndex].blocks.splice(bIndex, 1);
+                if (selectedSection.value === sIndex && selectedBlock.value === bIndex) {
+                    selectedBlock.value = null;
+                    selectedBlockData.value = null;
+                } else if (selectedSection.value === sIndex && selectedBlock.value > bIndex) {
+                    selectedBlock.value--;
+                    const nextBlock = sections.value[sIndex].blocks[selectedBlock.value];
+                    selectedBlockData.value = nextBlock
+                        ? { type: nextBlock.type, settings: nextBlock.settings }
+                        : null;
+                }
+                saveToHistory();
+            };
+
+            const onSectionDragStart = (sIndex, event) => {
+                draggedSectionIndex.value = sIndex;
+                dropSectionIndex.value = sIndex;
+                if (event?.dataTransfer) {
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', `section:${sIndex}`);
+                }
+            };
+
+            const onSectionDragOver = (sIndex) => {
+                if (draggedSectionIndex.value === null) return;
+                dropSectionIndex.value = sIndex;
+            };
+
+            const onSectionDrop = (sIndex) => {
+                const from = draggedSectionIndex.value;
+                if (from === null || from === sIndex) {
+                    onSectionDragEnd();
+                    return;
+                }
+                const [section] = sections.value.splice(from, 1);
+                sections.value.splice(sIndex, 0, section);
+                selectSection(sIndex);
+                saveToHistory();
+                onSectionDragEnd();
+            };
+
+            const onSectionDragEnd = () => {
+                draggedSectionIndex.value = null;
+                dropSectionIndex.value = null;
+            };
+
+            const onBlockDragStart = (sIndex, bIndex, event) => {
+                draggedBlock.value = { sectionIndex: sIndex, blockIndex: bIndex };
+                dropBlockTarget.value = { sectionIndex: sIndex, blockIndex: bIndex };
+                if (event?.dataTransfer) {
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', `block:${sIndex}:${bIndex}`);
+                }
+            };
+
+            const onBlockDragOver = (sIndex, bIndex) => {
+                if (!draggedBlock.value) return;
+                dropBlockTarget.value = { sectionIndex: sIndex, blockIndex: bIndex };
+            };
+
+            const moveDraggedBlock = (targetSectionIndex, targetBlockIndex = null) => {
+                if (!draggedBlock.value) return;
+                const { sectionIndex: fromSectionIndex, blockIndex: fromBlockIndex } = draggedBlock.value;
+                const sourceBlocks = sections.value[fromSectionIndex]?.blocks;
+                if (!sourceBlocks?.[fromBlockIndex]) {
+                    onBlockDragEnd();
+                    return;
+                }
+
+                const [block] = sourceBlocks.splice(fromBlockIndex, 1);
+                let insertIndex = targetBlockIndex;
+
+                if (insertIndex === null || insertIndex === undefined) {
+                    insertIndex = sections.value[targetSectionIndex].blocks.length;
+                }
+
+                if (fromSectionIndex === targetSectionIndex && fromBlockIndex < insertIndex) {
+                    insertIndex--;
+                }
+
+                sections.value[targetSectionIndex].blocks.splice(insertIndex, 0, block);
+                selectBlock(targetSectionIndex, insertIndex);
+                saveToHistory();
+                onBlockDragEnd();
+            };
+
+            const onBlockDrop = (sIndex, bIndex) => {
+                if (!draggedBlock.value) return;
+                moveDraggedBlock(sIndex, bIndex);
+            };
+
+            const onSectionBodyDragOver = (sIndex) => {
+                if (!draggedBlock.value) return;
+                dropBlockTarget.value = { sectionIndex: sIndex, blockIndex: sections.value[sIndex].blocks.length };
+            };
+
+            const onSectionBodyDrop = (sIndex) => {
+                if (!draggedBlock.value) return;
+                moveDraggedBlock(sIndex, sections.value[sIndex].blocks.length);
+            };
+
+            const onBlockDragEnd = () => {
+                draggedBlock.value = null;
+                dropBlockTarget.value = null;
             };
 
             const selectSection = (sIndex) => {
@@ -982,9 +1166,13 @@
                 selectedBlockData, saving, showPreview, showRevisions, showTemplates, templates,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
                 autoSaveStatus, autoSaveStatusText, previewHtml, previewBreakpoint,
-                allBlocks, filteredBlocks, blockLabel, sectionCanvasStyle,
+                allBlocks, filteredBlocks, blockLabel, sectionCanvasStyle, draggedSectionIndex, dropSectionIndex,
                 addBlock, addBlockToSection, deleteSection, duplicateSection, moveSectionUp, moveSectionDown,
+                moveBlockUp, moveBlockDown, duplicateBlock, deleteBlock,
                 selectSection, selectBlock, updateBlockSettings, updateSectionSettings,
+                onSectionDragStart, onSectionDragOver, onSectionDrop, onSectionDragEnd,
+                onBlockDragStart, onBlockDragOver, onBlockDrop, onBlockDragEnd,
+                onSectionBodyDragOver, onSectionBodyDrop, isDraggedBlock, isBlockDropTarget,
                 saveContent, previewContent, undo, redo, restoreRevision, applyTemplate,
                 exportCurrentSections, importSectionsPrompt, generateId, formatDate, countBlocks
             };

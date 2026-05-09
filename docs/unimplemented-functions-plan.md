@@ -151,6 +151,8 @@ Acceptance criteria:
 - Revisions и autosave.
 - Export/import sections.
 - Template apply workflow.
+- Drag-and-drop reorder для секций и блоков.
+- Inline block actions для перемещения, дублирования и удаления.
 - Обновлённый light/dark UI для canvas и внутренних control-панелей настроек блоков и секций.
 
 Оценка:

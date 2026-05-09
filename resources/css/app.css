@@ -622,6 +622,15 @@ html[data-theme='dark'] .vc-builder-canvas {
     margin-left: auto;
 }
 
+.vc-builder-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 2rem;
+    border-radius: 0.7rem;
+}
+
 .vc-builder-section-head .vc-builder-floating-controls button {
     font-size: 0;
     line-height: 1;
@@ -634,6 +643,10 @@ html[data-theme='dark'] .vc-builder-canvas {
 
 .vc-builder-section-head .vc-builder-floating-controls button[title='Add block']::before {
     content: "+";
+}
+
+.vc-builder-section-head .vc-builder-floating-controls button[title='Move section']::before {
+    content: "::";
 }
 
 .vc-builder-section-head .vc-builder-floating-controls button[title='Move up']::before {
@@ -650,6 +663,22 @@ html[data-theme='dark'] .vc-builder-canvas {
 
 .vc-builder-section-head .vc-builder-floating-controls button[title='Delete']::before {
     content: "✕";
+}
+
+.vc-builder-section-head .vc-builder-floating-controls button[title='Move up']::before {
+    content: "^";
+}
+
+.vc-builder-section-head .vc-builder-floating-controls button[title='Move down']::before {
+    content: "v";
+}
+
+.vc-builder-section-head .vc-builder-floating-controls button[title='Duplicate']::before {
+    content: "[]";
+}
+
+.vc-builder-section-head .vc-builder-floating-controls button[title='Delete']::before {
+    content: "x";
 }
 
 .vc-builder-badge {
@@ -715,6 +744,32 @@ html[data-theme='dark'] .vc-builder-section-body {
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
+}
+
+.vc-builder-block-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 160ms ease;
+}
+
+.vc-builder-block-shell:hover .vc-builder-block-actions,
+.vc-builder-block-active .vc-builder-block-actions {
+    opacity: 1;
+}
+
+.vc-builder-drag-handle {
+    cursor: grab;
+}
+
+.vc-builder-dragging {
+    opacity: 0.55;
+}
+
+.vc-builder-drop-target {
+    border-color: rgba(45, 212, 191, 0.68) !important;
+    box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.16);
 }
 
 .vc-builder-block-title {
