@@ -262,17 +262,23 @@
                                     <input v-model="quickAddQuery" type="text" class="vc-input" placeholder="Find a block for this section...">
                                     <button @click.stop="closeQuickAdd" class="vc-button vc-button-secondary px-3 py-2">Close</button>
                                 </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button @click.stop="quickAddMode = 'blocks'" class="vc-builder-chip" :class="quickAddMode === 'blocks' ? 'vc-builder-chip-active' : ''">Blocks</button>
+                                    <button @click.stop="quickAddMode = 'presets'" class="vc-builder-chip" :class="quickAddMode === 'presets' ? 'vc-builder-chip-active' : ''">Presets</button>
+                                    <button @click.stop="quickAddMode = 'templates'" class="vc-builder-chip" :class="quickAddMode === 'templates' ? 'vc-builder-chip-active' : ''">Templates</button>
+                                </div>
                                 <div class="vc-builder-quick-grid">
                                     <button
-                                        v-for="(blockDef, type) in quickAddBlocks"
-                                        :key="`quick-${sIndex}-${type}`"
-                                        @click.stop="insertBlockAt(sIndex, quickAddInsertIndex, type)"
+                                        v-for="item in quickAddItems"
+                                        :key="`quick-${sIndex}-${item.id}`"
+                                        @click.stop="runQuickAddItem(sIndex, quickAddInsertIndex, item)"
                                         class="vc-builder-quick-card"
                                     >
-                                        <span class="vc-builder-quick-card-title">{{ blockDef.name }}</span>
-                                        <span class="vc-builder-quick-card-meta">{{ blockDef.category || 'Block' }}</span>
+                                        <span class="vc-builder-quick-card-title">{{ item.name }}</span>
+                                        <span class="vc-builder-quick-card-meta">{{ item.meta }}</span>
                                     </button>
                                 </div>
+                                <div v-if="!quickAddItems.length" class="vc-builder-field-hint">Nothing matched this query in the current library.</div>
                             </div>
                             <div class="space-y-4">
                                 <div 
@@ -662,7 +668,81 @@
                                     <label>{{ field.label }}</label>
                                     <span v-if="field.help" class="vc-builder-field-hint">{{ field.help }}</span>
                                 </div>
-                                <div v-if="isMediaField(field, key)" class="space-y-3">
+                                <div v-if="field.type === 'repeater'" class="space-y-3">
+                                    <div v-if="!Array.isArray(localSettings[key]) || localSettings[key].length === 0" class="vc-builder-empty p-4 text-center">
+                                        <p class="text-sm font-semibold text-[var(--vc-text)]">No items yet</p>
+                                        <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Add entries to populate this repeater field.</p>
+                                    </div>
+                                    <div v-else class="vc-builder-repeater-list">
+                                        <div v-for="(item, itemIndex) in localSettings[key]" :key="item.id || itemIndex" class="vc-builder-repeater-card">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="vc-builder-badge">Item {{ itemIndex + 1 }}</span>
+                                                <button @click="removeRepeaterItem(key, itemIndex)" type="button" class="vc-builder-icon-button text-rose-300" title="Remove item">Del</button>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <div v-for="nestedField in field.fields || []" :key="nestedField.key" class="vc-builder-field">
+                                                    <label>{{ nestedField.label }}</label>
+                                                    <div v-if="isMediaField(nestedField, nestedField.key)" class="space-y-3">
+                                                        <div v-if="mediaPreview([key, itemIndex, nestedField.key])" class="vc-builder-media-inline">
+                                                            <div class="vc-builder-media-inline-thumb">
+                                                                <img
+                                                                    v-if="mediaPreview([key, itemIndex, nestedField.key]).mime_type?.startsWith('image/')"
+                                                                    :src="mediaPreview([key, itemIndex, nestedField.key]).url"
+                                                                    :alt="mediaPreview([key, itemIndex, nestedField.key]).alt || mediaPreview([key, itemIndex, nestedField.key]).original_filename || nestedField.label"
+                                                                >
+                                                                <div v-else class="vc-builder-renderer-fallback h-full place-content-center">File</div>
+                                                            </div>
+                                                            <div class="space-y-1">
+                                                                <div class="text-sm font-semibold text-[var(--vc-text)]">{{ mediaPreview([key, itemIndex, nestedField.key]).title || mediaPreview([key, itemIndex, nestedField.key]).original_filename }}</div>
+                                                                <div class="text-xs text-[var(--vc-text-soft)]">ID: {{ resolveMediaId([key, itemIndex, nestedField.key]) }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex items-center gap-3">
+                                                            <button @click="$emit('open-media-picker', { path: [key, itemIndex, nestedField.key], field: nestedField, blockType: type })" type="button" class="vc-button vc-button-secondary px-3 py-2">
+                                                                {{ resolveMediaId([key, itemIndex, nestedField.key]) ? 'Replace media' : 'Choose media' }}
+                                                            </button>
+                                                            <button v-if="resolveMediaId([key, itemIndex, nestedField.key])" @click="clearMediaField([key, itemIndex, nestedField.key])" type="button" class="vc-button vc-button-secondary px-3 py-2">
+                                                                Remove
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <input
+                                                        v-else-if="nestedField.type === 'text' || nestedField.type === 'number' || nestedField.type === 'color'"
+                                                        :type="nestedField.type"
+                                                        :value="item[nestedField.key]"
+                                                        @input="updateRepeaterField(key, itemIndex, nestedField.key, $event.target.value)"
+                                                        :class="nestedField.type === 'color' ? 'vc-input h-12' : 'vc-input'"
+                                                    >
+                                                    <textarea
+                                                        v-else-if="nestedField.type === 'textarea'"
+                                                        :rows="nestedField.rows || 3"
+                                                        class="vc-textarea"
+                                                        :value="item[nestedField.key]"
+                                                        @input="updateRepeaterField(key, itemIndex, nestedField.key, $event.target.value)"
+                                                    ></textarea>
+                                                    <select
+                                                        v-else-if="nestedField.type === 'select'"
+                                                        class="vc-select"
+                                                        :value="item[nestedField.key]"
+                                                        @change="updateRepeaterField(key, itemIndex, nestedField.key, $event.target.value)"
+                                                    >
+                                                        <option v-for="opt in nestedField.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                                                    </select>
+                                                    <div
+                                                        v-else-if="nestedField.type === 'toggle'"
+                                                        @click="updateRepeaterField(key, itemIndex, nestedField.key, !item[nestedField.key])"
+                                                        class="vc-builder-toggle"
+                                                        :class="item[nestedField.key] ? 'vc-builder-toggle-active' : ''"
+                                                    >
+                                                        <div class="vc-builder-toggle-knob"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button @click="addRepeaterItem(key, field)" type="button" class="vc-button vc-button-secondary px-3 py-2">Add item</button>
+                                </div>
+                                <div v-else-if="isMediaField(field, key)" class="space-y-3">
                                     <div v-if="mediaPreview(key)" class="vc-builder-media-inline">
                                         <div class="vc-builder-media-inline-thumb">
                                             <img
@@ -735,24 +815,58 @@
                     isMediaField(field, key) {
                         return field?.type === 'media' || key === 'media_id';
                     },
-                    resolveMediaId(key) {
-                        if (key === 'media_id') {
-                            return this.localSettings.media_id || null;
-                        }
+                    normalizePath(path) {
+                        return Array.isArray(path) ? path : [path];
+                    },
+                    getValueAtPath(path) {
+                        return this.normalizePath(path).reduce((acc, segment) => acc?.[segment], this.localSettings);
+                    },
+                    setValueAtPath(path, value) {
+                        const normalizedPath = this.normalizePath(path);
+                        const last = normalizedPath.at(-1);
+                        const target = normalizedPath.slice(0, -1).reduce((acc, segment) => acc?.[segment], this.localSettings);
+                        if (!target || last === undefined) return;
+                        target[last] = value;
+                    },
+                    resolveMediaId(path) {
+                        return this.getValueAtPath(path) || null;
+                    },
+                    mediaPreview(path) {
+                        return this.mediaLookup?.[this.resolveMediaId(path)] || null;
+                    },
+                    clearMediaField(path) {
+                        const normalizedPath = this.normalizePath(path);
+                        const last = normalizedPath.at(-1);
 
-                        return this.localSettings[key] || null;
-                    },
-                    mediaPreview(key) {
-                        return this.mediaLookup?.[this.resolveMediaId(key)] || null;
-                    },
-                    clearMediaField(key) {
-                        if (key === 'media_id') {
+                        if (last === 'media_id' && normalizedPath.length === 1) {
                             this.localSettings.media_id = null;
                             this.localSettings.url = '';
                             return;
                         }
 
-                        this.localSettings[key] = null;
+                        this.setValueAtPath(normalizedPath, null);
+                    },
+                    addRepeaterItem(key, field) {
+                        if (!Array.isArray(this.localSettings[key])) {
+                            this.localSettings[key] = [];
+                        }
+
+                        const template = Object.fromEntries(
+                            (field.fields || []).map((nestedField) => {
+                                if (nestedField.type === 'toggle') return [nestedField.key, false];
+                                if (nestedField.type === 'number') return [nestedField.key, null];
+                                return [nestedField.key, nestedField.type === 'media' ? null : ''];
+                            })
+                        );
+                        this.localSettings[key].push(template);
+                    },
+                    removeRepeaterItem(key, itemIndex) {
+                        if (!Array.isArray(this.localSettings[key])) return;
+                        this.localSettings[key].splice(itemIndex, 1);
+                    },
+                    updateRepeaterField(key, itemIndex, nestedKey, value) {
+                        if (!Array.isArray(this.localSettings[key])) return;
+                        this.localSettings[key][itemIndex][nestedKey] = value;
                     }
                 }
             },
@@ -877,6 +991,7 @@
             const quickAddSectionIndex = ref(null);
             const quickAddInsertIndex = ref(0);
             const quickAddQuery = ref('');
+            const quickAddMode = ref('blocks');
             const showCommandPalette = ref(false);
             const commandQuery = ref('');
             const commandPaletteInput = ref(null);
@@ -945,6 +1060,79 @@
                     );
 
                 return Object.fromEntries(filtered.slice(0, 8));
+            });
+            const quickAddPresetItems = computed(() => {
+                const query = quickAddQuery.value.trim().toLowerCase();
+
+                return blockPresets.value
+                    .filter((preset) => !query
+                        || preset.name.toLowerCase().includes(query)
+                        || preset.type.toLowerCase().includes(query)
+                    )
+                    .slice(0, 8)
+                    .map((preset) => ({
+                        id: `preset-${preset.id}`,
+                        name: preset.name,
+                        meta: `${blockLabel(preset.type)} preset`,
+                        kind: 'preset',
+                        preset,
+                    }));
+            });
+            const quickAddTemplateItems = computed(() => {
+                const library = [
+                    {
+                        id: 'template-hero-heading',
+                        name: 'Hero heading',
+                        meta: 'Template · heading + text + button',
+                        kind: 'template',
+                        blocks: [
+                            { type: 'heading', settings: { level: 'h1', text: 'Launch a stronger headline', align: 'left', color: '#111827', font_size: '2rem' } },
+                            { type: 'text', settings: { content: 'Add a concise supporting paragraph for the section intro.', align: 'left', color: '#4b5563' } },
+                            { type: 'button', settings: { text: 'Primary action', url: '#', style: 'primary', size: 'md', target: '_self' } },
+                        ],
+                    },
+                    {
+                        id: 'template-image-feature',
+                        name: 'Feature with image',
+                        meta: 'Template · image + heading + text',
+                        kind: 'template',
+                        blocks: [
+                            { type: 'image', settings: { media_id: null, url: '', alt: '', width: '100%', height: 'auto', radius: 'md', shadow: 'sm' } },
+                            { type: 'heading', settings: { level: 'h3', text: 'Feature title', align: 'left', color: '#111827', font_size: '1.5rem' } },
+                            { type: 'text', settings: { content: 'Describe this feature in one useful paragraph.', align: 'left', color: '#4b5563' } },
+                        ],
+                    },
+                    {
+                        id: 'template-faq-starter',
+                        name: 'FAQ starter',
+                        meta: 'Template · heading + faq',
+                        kind: 'template',
+                        blocks: [
+                            { type: 'heading', settings: { level: 'h2', text: 'Frequently asked questions', align: 'left', color: '#111827', font_size: '1.5rem' } },
+                            { type: 'faq', settings: { items: [{ question: 'Question one', answer: 'Answer one' }, { question: 'Question two', answer: 'Answer two' }] } },
+                        ],
+                    },
+                ];
+                const query = quickAddQuery.value.trim().toLowerCase();
+
+                return library
+                    .filter((item) => !query
+                        || item.name.toLowerCase().includes(query)
+                        || item.meta.toLowerCase().includes(query)
+                    )
+                    .slice(0, 8);
+            });
+            const quickAddItems = computed(() => {
+                if (quickAddMode.value === 'presets') return quickAddPresetItems.value;
+                if (quickAddMode.value === 'templates') return quickAddTemplateItems.value;
+
+                return Object.entries(quickAddBlocks.value).map(([type, blockDef]) => ({
+                    id: `block-${type}`,
+                    name: blockDef.name,
+                    meta: blockDef.category || 'Block',
+                    kind: 'block',
+                    type,
+                }));
             });
 
             const canvasClass = computed(() => {
@@ -1168,17 +1356,59 @@
                 saveToHistory('Insert block');
             };
 
+            const buildPresetBlock = (preset) => ({
+                id: generateId(),
+                type: preset.type,
+                settings: JSON.parse(JSON.stringify(preset.settings || {})),
+            });
+
+            const insertPresetAt = (sIndex, insertIndex, preset) => {
+                sections.value[sIndex].blocks.splice(insertIndex, 0, buildPresetBlock(preset));
+                selectBlock(sIndex, insertIndex);
+                closeQuickAdd();
+                saveToHistory('Insert preset block');
+            };
+
+            const insertTemplateBlocksAt = (sIndex, insertIndex, template) => {
+                const blocks = (template.blocks || []).map((block) => ({
+                    id: generateId(),
+                    type: block.type,
+                    settings: JSON.parse(JSON.stringify(block.settings || {})),
+                }));
+
+                sections.value[sIndex].blocks.splice(insertIndex, 0, ...blocks);
+                selectBlock(sIndex, insertIndex);
+                closeQuickAdd();
+                saveToHistory('Insert quick template');
+            };
+
+            const runQuickAddItem = (sIndex, insertIndex, item) => {
+                if (item.kind === 'preset') {
+                    insertPresetAt(sIndex, insertIndex, item.preset);
+                    return;
+                }
+
+                if (item.kind === 'template') {
+                    insertTemplateBlocksAt(sIndex, insertIndex, item);
+                    return;
+                }
+
+                insertBlockAt(sIndex, insertIndex, item.type);
+            };
+
             const openQuickAdd = (sIndex, insertIndex) => {
                 selectedSection.value = sIndex;
                 quickAddSectionIndex.value = sIndex;
                 quickAddInsertIndex.value = insertIndex;
                 quickAddQuery.value = '';
+                quickAddMode.value = 'blocks';
             };
 
             const closeQuickAdd = () => {
                 quickAddSectionIndex.value = null;
                 quickAddInsertIndex.value = 0;
                 quickAddQuery.value = '';
+                quickAddMode.value = 'blocks';
             };
 
             const addBlockToSection = (sIndex) => {
@@ -1773,9 +2003,11 @@
                 mediaPickerSelected.value = null;
                 mediaPickerPage.value = 1;
 
-                const currentValue = payload?.key === 'media_id'
-                    ? selectedBlockData.value?.settings?.media_id
-                    : selectedBlockData.value?.settings?.[payload?.key];
+                const resolvePathValue = (source, path) => {
+                    const normalized = Array.isArray(path) ? path : [path];
+                    return normalized.reduce((acc, segment) => acc?.[segment], source);
+                };
+                const currentValue = resolvePathValue(selectedBlockData.value?.settings || {}, payload?.path || payload?.key);
 
                 if (currentValue) {
                     await hydrateMediaLookup([currentValue]);
@@ -1838,17 +2070,27 @@
                 const settings = {
                     ...block.settings,
                 };
-                const targetKey = mediaPickerTarget.value?.key;
+                const targetPath = mediaPickerTarget.value?.path || (mediaPickerTarget.value?.key ? [mediaPickerTarget.value.key] : []);
+                const setAtPath = (targetValue, path, value) => {
+                    const normalized = Array.isArray(path) ? path : [path];
+                    const last = normalized.at(-1);
+                    const target = normalized.slice(0, -1).reduce((acc, segment) => acc?.[segment], targetValue);
+                    if (!target || last === undefined) return;
+                    target[last] = value;
+                };
+                const lastKey = targetPath.at(-1);
 
-                if (targetKey === 'media_id') {
-                    settings.media_id = mediaPickerSelected.value.id;
-                    settings.url = mediaPickerSelected.value.url || settings.url || '';
-                    if (!settings.alt && mediaPickerSelected.value.alt) {
-                        settings.alt = mediaPickerSelected.value.alt;
+                if (lastKey === 'media_id') {
+                    setAtPath(settings, targetPath, mediaPickerSelected.value.id);
+                    if (targetPath.length === 1) {
+                        settings.url = mediaPickerSelected.value.url || settings.url || '';
+                        if (!settings.alt && mediaPickerSelected.value.alt) {
+                            settings.alt = mediaPickerSelected.value.alt;
+                        }
                     }
-                } else if (targetKey) {
-                    settings[targetKey] = mediaPickerSelected.value.id;
-                    if ((targetKey === 'image' || targetKey.endsWith('_image')) && !settings.url) {
+                } else if (lastKey) {
+                    setAtPath(settings, targetPath, mediaPickerSelected.value.id);
+                    if (targetPath.length === 1 && (lastKey === 'image' || lastKey.endsWith('_image')) && !settings.url) {
                         settings.url = mediaPickerSelected.value.url || '';
                     }
                 }
@@ -2147,8 +2389,8 @@
                 openMediaPicker, closeMediaPicker, selectMediaItem, applyPickedMedia, changeMediaPickerPage,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
                 autoSaveStatus, autoSaveStatusText, currentHistoryLabel, previewHtml, previewBreakpoint,
-                allBlocks, filteredBlocks, quickAddBlocks, blockLabel, sectionCanvasStyle, draggedSectionIndex, dropSectionIndex,
-                quickAddSectionIndex, quickAddInsertIndex, quickAddQuery,
+                allBlocks, filteredBlocks, quickAddBlocks, quickAddItems, quickAddMode, blockLabel, sectionCanvasStyle, draggedSectionIndex, dropSectionIndex,
+                quickAddSectionIndex, quickAddInsertIndex, quickAddQuery, runQuickAddItem,
                 addBlock, addBlockToSection, deleteSection, duplicateSection, moveSectionUp, moveSectionDown,
                 moveBlockUp, moveBlockDown, duplicateBlock, deleteBlock,
                 insertBlockAt, openQuickAdd, closeQuickAdd, toggleBlockSelection, duplicateSelectedBlocks, deleteSelectedBlocks,
