@@ -190,19 +190,28 @@
                 </div>
 
                 <!-- Sections -->
-                <div v-else class="space-y-4 p-4">
+                <div v-else class="vc-builder-stage p-4">
                     <div 
                         v-for="(section, sIndex) in sections" 
                         :key="section.id"
-                        class="relative group"
-                        :class="{ 'ring-2 ring-blue-500': selectedSection === sIndex }"
+                        class="vc-builder-section group"
+                        :class="{ 'vc-builder-section-active': selectedSection === sIndex }"
                         @click="selectSection(sIndex)"
                     >
                         <!-- Section Controls -->
-                        <div class="vc-builder-floating-controls absolute -top-2 -right-2 z-10 hidden gap-1 group-hover:flex">
-                            <button @click.stop="addBlockToSection(sIndex)" class="p-1" title="Add block">
-                                +
-                            </button>
+                        <div class="vc-builder-section-head">
+                            <div class="vc-builder-section-meta">
+                                <span class="vc-builder-badge" :class="{ 'vc-builder-badge-active': selectedSection === sIndex && selectedBlock === null }">
+                                    Section {{ sIndex + 1 }}
+                                </span>
+                                <span class="vc-builder-badge">{{ section.blocks.length }} blocks</span>
+                                <span v-if="section.settings?.background_color" class="vc-builder-badge">Tinted</span>
+                            </div>
+
+                            <div class="vc-builder-floating-controls flex gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                                <button @click.stop="addBlockToSection(sIndex)" class="p-1" title="Add block">
+                                    +
+                                </button>
                             <button @click.stop="moveSectionUp(sIndex)" class="p-1" title="Move up">
                                 ↑
                             </button>
@@ -217,44 +226,35 @@
                             </button>
                         </div>
 
-                        <!-- Section Background -->
-                        <div class="p-4 rounded-lg border-2 border-transparent group-hover:border-slate-200">
-                            <div v-if="section.settings?.background_color" 
-                                 class="rounded" 
-                                 :style="{ backgroundColor: section.settings.background_color }">
-                                <div class="p-4">
-                                    <div class="space-y-4">
-                                        <div 
-                                            v-for="(block, bIndex) in section.blocks" 
-                                            :key="block.id"
-                                            class="relative"
-                                            :class="{ 'ring-2 ring-blue-400': selectedBlock === bIndex && selectedSection === sIndex }"
-                                            @click.stop="selectBlock(sIndex, bIndex)"
-                                        >
-                                            <BlockRenderer 
-                                                :type="block.type" 
-                                                :settings="block.settings"
-                                                :editable="false"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
+                        </div>
+                        <div class="vc-builder-section-body" :style="sectionCanvasStyle(section)">
+                            <div v-if="section.blocks.length === 0" class="vc-builder-empty flex min-h-32 flex-col items-center justify-center text-center">
+                                <p class="text-sm font-semibold text-[var(--vc-text)]">This section is empty</p>
+                                <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Use the add control or choose a block from the library.</p>
                             </div>
-                            <div v-else>
-                                <div class="space-y-4">
-                                    <div 
-                                        v-for="(block, bIndex) in section.blocks" 
-                                        :key="block.id"
-                                        class="relative"
-                                        :class="{ 'ring-2 ring-blue-400': selectedBlock === bIndex && selectedSection === sIndex }"
-                                        @click.stop="selectBlock(sIndex, bIndex)"
-                                    >
-                                        <BlockRenderer 
-                                            :type="block.type" 
-                                            :settings="block.settings"
-                                            :editable="false"
-                                        />
+                            <div v-else class="space-y-4">
+                                <div 
+                                    v-for="(block, bIndex) in section.blocks" 
+                                    :key="block.id"
+                                    class="vc-builder-block-shell"
+                                    :class="{ 'vc-builder-block-active': selectedBlock === bIndex && selectedSection === sIndex }"
+                                    @click.stop="selectBlock(sIndex, bIndex)"
+                                >
+                                    <div class="vc-builder-block-head">
+                                        <div class="vc-builder-section-meta">
+                                            <span class="vc-builder-block-title">{{ blockLabel(block.type) }}</span>
+                                            <span class="vc-builder-badge" :class="{ 'vc-builder-badge-active': selectedBlock === bIndex && selectedSection === sIndex }">
+                                                Block {{ bIndex + 1 }}
+                                            </span>
+                                        </div>
+                                        <span v-if="selectedBlock === bIndex && selectedSection === sIndex" class="vc-builder-field-hint">Editing</span>
                                     </div>
+
+                                    <BlockRenderer 
+                                        :type="block.type" 
+                                        :settings="block.settings"
+                                        :editable="false"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -352,7 +352,7 @@
             BlockRenderer: {
                 props: ['type', 'settings', 'editable'],
                 template: `
-                    <div class="block-renderer">
+                    <div class="vc-builder-renderer">
                         <!-- Dynamic block rendering will be injected here -->
                         <div v-html="renderedHtml"></div>
                     </div>
@@ -365,7 +365,7 @@
                 methods: {
                     renderBlock(type, settings) {
                         const block = window.availableBlocks?.[type];
-                        if (!block) return '<div>Unknown block</div>';
+                        if (!block) return '<div class="vc-builder-renderer-fallback"><strong>Unknown block</strong><span>This block type is not registered in the current builder config.</span></div>';
                         
                         return block.render ? block.render(settings) : this.defaultRender(type, settings);
                     },
@@ -374,7 +374,7 @@
                             case 'heading':
                                 return \`<h2 style="color: \${settings.color || '#111'}; text-align: \${settings.align || 'left'}">\${settings.text || 'Heading'}</h2>\`;
                             case 'text':
-                                return \`<div style="color: \${settings.color || '#333'}; text-align: \${settings.align || 'left'}">\${settings.content || ''}</div>\`;
+                                return \`<div style="color: \${settings.color || '#333'}; text-align: \${settings.align || 'left'}">\${settings.content || settings.text || ''}</div>\`;
                             case 'button':
                                 return \`<a href="\${settings.url || '#'}" class="btn" style="background: \${settings.style === 'primary' ? '#3b82f6' : '#6b7280'}; color: white; padding: 0.5rem 1rem; border-radius: 0.25rem; text-decoration: none; display: inline-block;">\${settings.text || 'Button'}</a>\`;
                             case 'divider':
@@ -382,11 +382,13 @@
                             case 'faq':
                                 return \`<div class="faq">\${(settings.items || []).map(item => \`<details><summary>\${item.question || 'Question'}</summary><div>\${item.answer || 'Answer'}</div></details>\`).join('')}</div>\`;
                             case 'image':
-                                return \`<img src="\${settings.url || ''}" alt="\${settings.alt || ''}" style="max-width: 100%; height: auto;">\`;
+                                return settings.url
+                                    ? \`<img src="\${settings.url}" alt="\${settings.alt || ''}" style="max-width: 100%; height: auto; border-radius: 16px;">\`
+                                    : '<div class="vc-builder-renderer-fallback"><strong>Image placeholder</strong><span>Bind a media file or image URL in block settings.</span></div>';
                             case 'html':
-                                return settings.html || '';
+                                return settings.html || '<div class="vc-builder-html-preview">HTML block</div>';
                             default:
-                                return \`<div>[\${type}]</div>\`;
+                                return \`<div class="vc-builder-renderer-fallback"><strong>\${type}</strong><span>No default renderer is defined for this block.</span></div>\`;
                         }
                     }
                 }
@@ -629,6 +631,18 @@
                     default: return '';
                 }
             });
+
+            const blockLabel = (type) => {
+                return allBlocks.value?.[type]?.name || type;
+            };
+
+            const sectionCanvasStyle = (section) => {
+                return {
+                    backgroundColor: section.settings?.background_color || '',
+                    paddingTop: `${section.settings?.padding_top ?? 16}px`,
+                    paddingBottom: `${section.settings?.padding_bottom ?? 16}px`,
+                };
+            };
 
             // Methods
             const addBlock = (type) => {
@@ -968,7 +982,7 @@
                 selectedBlockData, saving, showPreview, showRevisions, showTemplates, templates,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
                 autoSaveStatus, autoSaveStatusText, previewHtml, previewBreakpoint,
-                allBlocks, filteredBlocks,
+                allBlocks, filteredBlocks, blockLabel, sectionCanvasStyle,
                 addBlock, addBlockToSection, deleteSection, duplicateSection, moveSectionUp, moveSectionDown,
                 selectSection, selectBlock, updateBlockSettings, updateSectionSettings,
                 saveContent, previewContent, undo, redo, restoreRevision, applyTemplate,
