@@ -212,6 +212,11 @@
                                 </span>
                                 <span class="vc-builder-badge">{{ section.blocks.length }} blocks</span>
                                 <span v-if="section.settings?.background_color" class="vc-builder-badge">Tinted</span>
+                                <div v-if="selectedCountForSection(sIndex) > 0" class="vc-builder-batch-bar">
+                                    <span class="vc-builder-badge vc-builder-badge-active">{{ selectedCountForSection(sIndex) }} selected</span>
+                                    <button @click.stop="duplicateSelectedBlocks(sIndex)" class="vc-builder-icon-button" title="Duplicate selection">Cp</button>
+                                    <button @click.stop="deleteSelectedBlocks(sIndex)" class="vc-builder-icon-button text-rose-300" title="Delete selection">Del</button>
+                                </div>
                             </div>
 
                             <div class="vc-builder-floating-controls flex gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
@@ -243,21 +248,42 @@
 
                         </div>
                         <div class="vc-builder-section-body" :style="sectionCanvasStyle(section)" @dragover.prevent="onSectionBodyDragOver(sIndex)" @drop.prevent="onSectionBodyDrop(sIndex)">
+                            <div class="vc-builder-insert-slot" :class="{ 'vc-builder-insert-slot-active': isInsertTarget(sIndex, 0) }" @dragover.prevent="onInsertDragOver(sIndex, 0)" @drop.prevent="onInsertDrop(sIndex, 0)">
+                                <button @click.stop="openQuickAdd(sIndex, 0)" class="vc-builder-insert-button">Add block here</button>
+                            </div>
                             <div v-if="section.blocks.length === 0" class="vc-builder-empty flex min-h-32 flex-col items-center justify-center text-center">
                                 <p class="text-sm font-semibold text-[var(--vc-text)]">This section is empty</p>
                                 <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Use the add control or choose a block from the library.</p>
                             </div>
-                            <div v-else class="space-y-4">
+                            <div v-if="quickAddSectionIndex === sIndex" class="vc-builder-quick-add">
+                                <div class="flex items-center gap-3">
+                                    <input v-model="quickAddQuery" type="text" class="vc-input" placeholder="Find a block for this section...">
+                                    <button @click.stop="closeQuickAdd" class="vc-button vc-button-secondary px-3 py-2">Close</button>
+                                </div>
+                                <div class="vc-builder-quick-grid">
+                                    <button
+                                        v-for="(blockDef, type) in quickAddBlocks"
+                                        :key="`quick-${sIndex}-${type}`"
+                                        @click.stop="insertBlockAt(sIndex, quickAddInsertIndex, type)"
+                                        class="vc-builder-quick-card"
+                                    >
+                                        <span class="vc-builder-quick-card-title">{{ blockDef.name }}</span>
+                                        <span class="vc-builder-quick-card-meta">{{ blockDef.category || 'Block' }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
                                 <div 
                                     v-for="(block, bIndex) in section.blocks" 
                                     :key="block.id"
                                     class="vc-builder-block-shell"
                                     :class="{
                                         'vc-builder-block-active': selectedBlock === bIndex && selectedSection === sIndex,
+                                        'vc-builder-block-selected': isBlockSelected(block.id),
                                         'vc-builder-dragging': isDraggedBlock(sIndex, bIndex),
                                         'vc-builder-drop-target': isBlockDropTarget(sIndex, bIndex)
                                     }"
-                                    @click.stop="selectBlock(sIndex, bIndex)"
+                                    @click.stop="selectBlock(sIndex, bIndex, $event)"
                                     @dragover.prevent="onBlockDragOver(sIndex, bIndex)"
                                     @drop.prevent="onBlockDrop(sIndex, bIndex)"
                                 >
@@ -276,8 +302,10 @@
                                             <span class="vc-builder-badge" :class="{ 'vc-builder-badge-active': selectedBlock === bIndex && selectedSection === sIndex }">
                                                 Block {{ bIndex + 1 }}
                                             </span>
+                                            <span v-if="isBlockSelected(block.id)" class="vc-builder-badge vc-builder-badge-active">Selected</span>
                                         </div>
                                         <div class="vc-builder-block-actions">
+                                            <button @click.stop="toggleBlockSelection(block.id)" class="vc-builder-icon-button" title="Select block">Sel</button>
                                             <button @click.stop="moveBlockUp(sIndex, bIndex)" class="vc-builder-icon-button" title="Move up">Up</button>
                                             <button @click.stop="moveBlockDown(sIndex, bIndex)" class="vc-builder-icon-button" title="Move down">Dn</button>
                                             <button @click.stop="duplicateBlock(sIndex, bIndex)" class="vc-builder-icon-button" title="Duplicate">Cp</button>
@@ -290,6 +318,9 @@
                                         :settings="block.settings"
                                         :editable="false"
                                     />
+                                    <div class="vc-builder-insert-slot" :class="{ 'vc-builder-insert-slot-active': isInsertTarget(sIndex, bIndex + 1) }" @dragover.prevent="onInsertDragOver(sIndex, bIndex + 1)" @drop.prevent="onInsertDrop(sIndex, bIndex + 1)">
+                                        <button @click.stop="openQuickAdd(sIndex, bIndex + 1)" class="vc-builder-insert-button">Insert here</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -615,6 +646,10 @@
             const dropSectionIndex = ref(null);
             const draggedBlock = ref(null);
             const dropBlockTarget = ref(null);
+            const selectedBlockIds = ref([]);
+            const quickAddSectionIndex = ref(null);
+            const quickAddInsertIndex = ref(0);
+            const quickAddQuery = ref('');
 
             // History for undo/redo
             const history = ref([]);
@@ -651,6 +686,20 @@
                         (block.description || '').toLowerCase().includes(query)
                     )
                 );
+            });
+
+            const quickAddBlocks = computed(() => {
+                const entries = Object.entries(allBlocks.value);
+                const query = quickAddQuery.value.trim().toLowerCase();
+                const filtered = !query
+                    ? entries
+                    : entries.filter(([_, block]) =>
+                        block.name.toLowerCase().includes(query) ||
+                        (block.description || '').toLowerCase().includes(query) ||
+                        (block.category || '').toLowerCase().includes(query)
+                    );
+
+                return Object.fromEntries(filtered.slice(0, 8));
             });
 
             const canvasClass = computed(() => {
@@ -691,16 +740,33 @@
                 return dropBlockTarget.value?.sectionIndex === sIndex && dropBlockTarget.value?.blockIndex === bIndex;
             };
 
-            // Methods
-            const addBlock = (type) => {
-                const block = allBlocks.value[type];
-                if (!block) return;
+            const isInsertTarget = (sIndex, insertIndex) => {
+                return dropBlockTarget.value?.sectionIndex === sIndex && dropBlockTarget.value?.blockIndex === insertIndex;
+            };
 
-                const newBlock = {
+            const isBlockSelected = (blockId) => {
+                return selectedBlockIds.value.includes(blockId);
+            };
+
+            const selectedCountForSection = (sIndex) => {
+                return sections.value[sIndex]?.blocks.filter((block) => selectedBlockIds.value.includes(block.id)).length || 0;
+            };
+
+            // Methods
+            const buildBlock = (type) => {
+                const block = allBlocks.value[type];
+                if (!block) return null;
+
+                return {
                     id: generateId(),
                     type,
                     settings: JSON.parse(JSON.stringify(block.default?.settings || block.default || {}))
                 };
+            };
+
+            const addBlock = (type) => {
+                const newBlock = buildBlock(type);
+                if (!newBlock) return;
 
                 if (selectedSection.value !== null) {
                     sections.value[selectedSection.value].blocks.push(newBlock);
@@ -715,15 +781,39 @@
                 saveToHistory();
             };
 
-            const addBlockToSection = (sIndex) => {
+            const insertBlockAt = (sIndex, insertIndex, type) => {
+                const newBlock = buildBlock(type);
+                if (!newBlock) return;
+                sections.value[sIndex].blocks.splice(insertIndex, 0, newBlock);
+                selectBlock(sIndex, insertIndex);
+                closeQuickAdd();
+                saveToHistory();
+            };
+
+            const openQuickAdd = (sIndex, insertIndex) => {
                 selectedSection.value = sIndex;
-                // Could open a modal or dropdown here
+                quickAddSectionIndex.value = sIndex;
+                quickAddInsertIndex.value = insertIndex;
+                quickAddQuery.value = '';
+            };
+
+            const closeQuickAdd = () => {
+                quickAddSectionIndex.value = null;
+                quickAddInsertIndex.value = 0;
+                quickAddQuery.value = '';
+            };
+
+            const addBlockToSection = (sIndex) => {
+                openQuickAdd(sIndex, sections.value[sIndex].blocks.length);
             };
 
             const deleteSection = (sIndex) => {
+                const removedIds = new Set((sections.value[sIndex]?.blocks || []).map((block) => block.id));
                 sections.value.splice(sIndex, 1);
+                selectedBlockIds.value = selectedBlockIds.value.filter((id) => !removedIds.has(id));
                 selectedSection.value = null;
                 selectedBlock.value = null;
+                selectedBlockData.value = null;
                 saveToHistory();
             };
 
@@ -780,6 +870,50 @@
                 copy.id = generateId();
                 sections.value[sIndex].blocks.splice(bIndex + 1, 0, copy);
                 selectBlock(sIndex, bIndex + 1);
+                saveToHistory();
+            };
+
+            const toggleBlockSelection = (blockId) => {
+                if (selectedBlockIds.value.includes(blockId)) {
+                    selectedBlockIds.value = selectedBlockIds.value.filter((id) => id !== blockId);
+                    return;
+                }
+                selectedBlockIds.value = [...selectedBlockIds.value, blockId];
+            };
+
+            const duplicateSelectedBlocks = (sIndex) => {
+                const blocks = sections.value[sIndex].blocks;
+                const selected = blocks
+                    .map((block, index) => ({ block, index }))
+                    .filter(({ block }) => selectedBlockIds.value.includes(block.id));
+
+                if (!selected.length) return;
+
+                let offset = 0;
+                for (const { block, index } of selected) {
+                    const copy = JSON.parse(JSON.stringify(block));
+                    copy.id = generateId();
+                    blocks.splice(index + 1 + offset, 0, copy);
+                    offset++;
+                }
+
+                saveToHistory();
+            };
+
+            const deleteSelectedBlocks = (sIndex) => {
+                const idsToDelete = new Set(
+                    sections.value[sIndex].blocks
+                        .filter((block) => selectedBlockIds.value.includes(block.id))
+                        .map((block) => block.id)
+                );
+                if (!idsToDelete.size) return;
+
+                sections.value[sIndex].blocks = sections.value[sIndex].blocks.filter((block) => !idsToDelete.has(block.id));
+                selectedBlockIds.value = selectedBlockIds.value.filter((id) => !idsToDelete.has(id));
+                if (selectedSection.value === sIndex) {
+                    selectedBlock.value = null;
+                    selectedBlockData.value = null;
+                }
                 saveToHistory();
             };
 
@@ -844,6 +978,11 @@
                 dropBlockTarget.value = { sectionIndex: sIndex, blockIndex: bIndex };
             };
 
+            const onInsertDragOver = (sIndex, insertIndex) => {
+                if (!draggedBlock.value) return;
+                dropBlockTarget.value = { sectionIndex: sIndex, blockIndex: insertIndex };
+            };
+
             const moveDraggedBlock = (targetSectionIndex, targetBlockIndex = null) => {
                 if (!draggedBlock.value) return;
                 const { sectionIndex: fromSectionIndex, blockIndex: fromBlockIndex } = draggedBlock.value;
@@ -875,6 +1014,11 @@
                 moveDraggedBlock(sIndex, bIndex);
             };
 
+            const onInsertDrop = (sIndex, insertIndex) => {
+                if (!draggedBlock.value) return;
+                moveDraggedBlock(sIndex, insertIndex);
+            };
+
             const onSectionBodyDragOver = (sIndex) => {
                 if (!draggedBlock.value) return;
                 dropBlockTarget.value = { sectionIndex: sIndex, blockIndex: sections.value[sIndex].blocks.length };
@@ -894,14 +1038,24 @@
                 selectedSection.value = sIndex;
                 selectedBlock.value = null;
                 selectedBlockData.value = null;
+                closeQuickAdd();
             };
 
-            const selectBlock = (sIndex, bIndex) => {
+            const selectBlock = (sIndex, bIndex, event = null) => {
+                const block = sections.value[sIndex].blocks[bIndex];
+                if (!block) return;
+
+                if (event?.ctrlKey || event?.metaKey) {
+                    toggleBlockSelection(block.id);
+                } else {
+                    selectedBlockIds.value = [block.id];
+                }
+
                 selectedSection.value = sIndex;
                 selectedBlock.value = bIndex;
                 selectedBlockData.value = {
-                    type: sections.value[sIndex].blocks[bIndex].type,
-                    settings: sections.value[sIndex].blocks[bIndex].settings
+                    type: block.type,
+                    settings: block.settings
                 };
             };
 
@@ -1166,13 +1320,16 @@
                 selectedBlockData, saving, showPreview, showRevisions, showTemplates, templates,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
                 autoSaveStatus, autoSaveStatusText, previewHtml, previewBreakpoint,
-                allBlocks, filteredBlocks, blockLabel, sectionCanvasStyle, draggedSectionIndex, dropSectionIndex,
+                allBlocks, filteredBlocks, quickAddBlocks, blockLabel, sectionCanvasStyle, draggedSectionIndex, dropSectionIndex,
+                quickAddSectionIndex, quickAddInsertIndex, quickAddQuery,
                 addBlock, addBlockToSection, deleteSection, duplicateSection, moveSectionUp, moveSectionDown,
                 moveBlockUp, moveBlockDown, duplicateBlock, deleteBlock,
+                insertBlockAt, openQuickAdd, closeQuickAdd, toggleBlockSelection, duplicateSelectedBlocks, deleteSelectedBlocks,
                 selectSection, selectBlock, updateBlockSettings, updateSectionSettings,
                 onSectionDragStart, onSectionDragOver, onSectionDrop, onSectionDragEnd,
                 onBlockDragStart, onBlockDragOver, onBlockDrop, onBlockDragEnd,
-                onSectionBodyDragOver, onSectionBodyDrop, isDraggedBlock, isBlockDropTarget,
+                onSectionBodyDragOver, onSectionBodyDrop, onInsertDragOver, onInsertDrop,
+                isDraggedBlock, isBlockDropTarget, isInsertTarget, isBlockSelected, selectedCountForSection,
                 saveContent, previewContent, undo, redo, restoreRevision, applyTemplate,
                 exportCurrentSections, importSectionsPrompt, generateId, formatDate, countBlocks
             };

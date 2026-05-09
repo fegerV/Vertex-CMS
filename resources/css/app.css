@@ -739,6 +739,11 @@ html[data-theme='dark'] .vc-builder-section-body {
     box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.1), 0 18px 32px rgba(15, 23, 42, 0.08);
 }
 
+.vc-builder-block-selected {
+    border-color: rgba(56, 189, 248, 0.5);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+}
+
 .vc-builder-block-head {
     display: flex;
     align-items: center;
@@ -770,6 +775,93 @@ html[data-theme='dark'] .vc-builder-section-body {
 .vc-builder-drop-target {
     border-color: rgba(45, 212, 191, 0.68) !important;
     box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.16);
+}
+
+.vc-builder-insert-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--vc-text-soft);
+}
+
+.vc-builder-insert-slot::before,
+.vc-builder-insert-slot::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--vc-border-strong);
+}
+
+.vc-builder-insert-button {
+    border: 1px dashed var(--vc-border-strong);
+    border-radius: 9999px;
+    padding: 0.35rem 0.8rem;
+    background: rgba(255, 255, 255, 0.35);
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--vc-text-soft);
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.vc-builder-insert-button:hover,
+.vc-builder-insert-slot-active .vc-builder-insert-button {
+    border-color: rgba(45, 212, 191, 0.6);
+    background: rgba(45, 212, 191, 0.14);
+    color: var(--vc-text);
+}
+
+.vc-builder-quick-add {
+    display: grid;
+    gap: 0.85rem;
+    border: 1px solid rgba(45, 212, 191, 0.35);
+    border-radius: var(--vc-radius-md);
+    background: var(--vc-surface-strong);
+    box-shadow: 0 18px 28px rgba(15, 23, 42, 0.1);
+    padding: 0.9rem;
+}
+
+.vc-builder-quick-grid {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.vc-builder-quick-card {
+    display: grid;
+    gap: 0.2rem;
+    border: 1px solid var(--vc-border);
+    border-radius: 0.9rem;
+    background: var(--vc-surface);
+    padding: 0.8rem;
+    text-align: left;
+    transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.vc-builder-quick-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(45, 212, 191, 0.5);
+    box-shadow: 0 14px 22px rgba(15, 23, 42, 0.08);
+}
+
+.vc-builder-quick-card-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--vc-text);
+}
+
+.vc-builder-quick-card-meta {
+    font-size: 0.74rem;
+    color: var(--vc-text-soft);
+}
+
+.vc-builder-batch-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.3rem;
+    border: 1px solid rgba(45, 212, 191, 0.35);
+    border-radius: 9999px;
+    background: rgba(45, 212, 191, 0.12);
 }
 
 .vc-builder-block-title {

@@ -153,6 +153,8 @@ Acceptance criteria:
 - Template apply workflow.
 - Drag-and-drop reorder для секций и блоков.
 - Inline block actions для перемещения, дублирования и удаления.
+- Visual insertion cues между блоками и section-local quick add palette.
+- Multi-select блоков с batch duplicate/delete внутри секции.
 - Обновлённый light/dark UI для canvas и внутренних control-панелей настроек блоков и секций.
 
 Оценка:
