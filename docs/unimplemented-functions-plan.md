@@ -159,6 +159,7 @@ Acceptance criteria:
 - Action-aware undo/redo history с coalescing для настроек блока и секции.
 - Context menu и command palette для частых builder-команд.
 - Обновлённый light/dark UI для canvas и внутренних control-панелей настроек блоков и секций.
+- Sticky inspector state, локальные block presets/snippets и встроенный media picker прямо из builder.
 
 Оценка:
 

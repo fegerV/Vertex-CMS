@@ -333,27 +333,78 @@
         </div>
     </main>
 
-    <!-- Right Sidebar: Block Settings -->
-    <aside class="vc-builder-sidebar vc-builder-scroll w-96 overflow-y-auto border-l">
-        <div v-if="selectedBlockData" class="p-6">
-            <h3 class="mb-4 text-lg font-semibold text-[var(--vc-text)]">Block Settings</h3>
-            <BlockSettings 
-                :type="selectedBlockData.type"
-                :settings="selectedBlockData.settings"
-                @update="updateBlockSettings"
-            />
-        </div>
-        
-        <div v-else-if="selectedSection !== null" class="p-6">
-            <h3 class="mb-4 text-lg font-semibold text-[var(--vc-text)]">Section Settings</h3>
-            <SectionSettings 
-                :settings="sections[selectedSection].settings"
-                @update="updateSectionSettings"
-            />
+    <!-- Right Sidebar: Inspector -->
+    <aside class="vc-builder-sidebar vc-builder-scroll vc-builder-inspector w-96 overflow-y-auto border-l">
+        <div class="vc-builder-inspector-head">
+            <div>
+                <div class="vc-builder-panel-title">Inspector</div>
+                <h3 class="mt-2 text-lg font-semibold text-[var(--vc-text)]">{{ inspectorTitle }}</h3>
+                <p class="mt-1 text-sm text-[var(--vc-text-muted)]">{{ inspectorDescription }}</p>
+            </div>
+            <button
+                @click="toggleInspectorPinned"
+                class="vc-builder-chip"
+                :class="inspectorPinned ? 'vc-builder-chip-active' : ''"
+                :title="inspectorPinned ? 'Disable sticky inspector state' : 'Keep inspector mode sticky'"
+            >
+                {{ inspectorPinned ? 'Pinned' : 'Pin' }}
+            </button>
         </div>
 
-        <div v-else class="p-6 text-center text-[var(--vc-text-muted)]">
-            <p class="text-sm">Select a block or section to edit</p>
+        <div class="p-6 pt-4">
+            <div v-if="selectedBlockData" class="space-y-5">
+                <BlockSettings 
+                    :type="selectedBlockData.type"
+                    :settings="selectedBlockData.settings"
+                    :media-lookup="mediaLookup"
+                    @update="updateBlockSettings"
+                    @open-media-picker="openMediaPicker"
+                />
+
+                <div class="vc-builder-form-section">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="vc-builder-form-title">Presets</div>
+                            <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Save reusable snippets for this block type.</p>
+                        </div>
+                        <span class="vc-builder-badge">{{ currentBlockPresets.length }}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input v-model="presetDraftName" type="text" class="vc-input" placeholder="Preset name">
+                        <button @click="saveCurrentBlockPreset" class="vc-button vc-button-secondary px-3 py-2">Save</button>
+                    </div>
+                    <div v-if="currentBlockPresets.length" class="vc-builder-preset-list">
+                        <div v-for="preset in currentBlockPresets" :key="preset.id" class="vc-builder-preset-card">
+                            <div>
+                                <div class="vc-builder-command-title">{{ preset.name }}</div>
+                                <div class="vc-builder-command-meta">{{ formatPresetDate(preset.updated_at) }}</div>
+                            </div>
+                            <div class="vc-builder-inline-actions">
+                                <button @click="applyBlockPreset(preset)" class="vc-builder-icon-button" title="Apply preset">Use</button>
+                                <button @click="insertPresetAfterSelection(preset)" class="vc-builder-icon-button" title="Insert preset as new block">Add</button>
+                                <button @click="deleteBlockPreset(preset.id)" class="vc-builder-icon-button text-rose-300" title="Delete preset">Del</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="vc-builder-field-hint">No presets saved for this block yet.</div>
+                </div>
+            </div>
+            
+            <div v-else-if="selectedSection !== null" class="space-y-5">
+                <SectionSettings 
+                    :settings="sections[selectedSection].settings"
+                    @update="updateSectionSettings"
+                />
+            </div>
+
+            <div v-else-if="inspectorPinned" class="vc-builder-empty p-6 text-center text-[var(--vc-text-muted)]">
+                <p class="text-sm font-semibold text-[var(--vc-text)]">Inspector stays pinned</p>
+                <p class="mt-2 text-sm">Select a block or section to continue editing in the same inspector mode.</p>
+            </div>
+
+            <div v-else class="p-6 text-center text-[var(--vc-text-muted)]">
+                <p class="text-sm">Select a block or section to edit</p>
+            </div>
         </div>
     </aside>
 
@@ -406,6 +457,78 @@
                     class="w-full min-h-[500px] border-0"
                     style="background: white;"
                 ></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showMediaPicker" class="vc-builder-modal fixed inset-0 z-60 flex items-center justify-center p-4" @click.self="closeMediaPicker">
+        <div class="vc-builder-modal-card flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden">
+            <div class="flex items-center justify-between gap-4 border-b border-[var(--vc-border)] p-4">
+                <div>
+                    <h3 class="font-semibold text-[var(--vc-text)]">Media picker</h3>
+                    <p class="mt-1 text-sm text-[var(--vc-text-muted)]">Choose a media asset for the current block.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input v-model="mediaPickerQuery" type="text" class="vc-input w-72" placeholder="Search media...">
+                    <button @click="closeMediaPicker" class="vc-button vc-button-secondary px-3 py-2">Close</button>
+                </div>
+            </div>
+            <div class="grid flex-1 min-h-0 gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div class="vc-builder-media-grid-wrap">
+                    <div class="vc-builder-media-grid">
+                        <button
+                            v-for="item in mediaPickerItems"
+                            :key="item.id"
+                            @click="selectMediaItem(item)"
+                            class="vc-builder-media-card"
+                            :class="{ 'vc-builder-media-card-active': mediaPickerSelected?.id === item.id }"
+                        >
+                            <div class="vc-builder-media-thumb">
+                                <img v-if="item.mime_type?.startsWith('image/')" :src="item.url" :alt="item.alt || item.original_filename || 'Media preview'">
+                                <div v-else class="vc-builder-renderer-fallback h-full place-content-center">File</div>
+                            </div>
+                            <div class="space-y-1 text-left">
+                                <div class="text-sm font-semibold text-[var(--vc-text)]">{{ item.title || item.original_filename }}</div>
+                                <div class="text-xs text-[var(--vc-text-soft)]">#{{ item.id }} · {{ item.mime_type }}</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div v-if="!mediaPickerLoading && !mediaPickerItems.length" class="vc-builder-empty m-6 flex min-h-48 items-center justify-center text-center">
+                        <div>
+                            <p class="text-sm font-semibold text-[var(--vc-text)]">No media found</p>
+                            <p class="mt-1 text-sm text-[var(--vc-text-soft)]">Try another search query or upload media in the media library.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-l border-[var(--vc-border)] p-4">
+                    <div v-if="mediaPickerSelected" class="space-y-4">
+                        <div class="vc-builder-form-title">Selected asset</div>
+                        <div class="vc-builder-media-preview">
+                            <img v-if="mediaPickerSelected.mime_type?.startsWith('image/')" :src="mediaPickerSelected.url" :alt="mediaPickerSelected.alt || mediaPickerSelected.original_filename || 'Selected media'">
+                            <div v-else class="vc-builder-renderer-fallback h-56 place-content-center">Preview unavailable</div>
+                        </div>
+                        <div class="vc-builder-settings-card">
+                            <div class="text-sm font-semibold text-[var(--vc-text)]">{{ mediaPickerSelected.title || mediaPickerSelected.original_filename }}</div>
+                            <div class="text-xs text-[var(--vc-text-soft)]">ID: {{ mediaPickerSelected.id }}</div>
+                            <div class="text-xs text-[var(--vc-text-soft)]">{{ mediaPickerSelected.width || 'auto' }} × {{ mediaPickerSelected.height || 'auto' }}</div>
+                            <div v-if="mediaPickerSelected.alt" class="text-xs text-[var(--vc-text-muted)]">{{ mediaPickerSelected.alt }}</div>
+                        </div>
+                        <button @click="applyPickedMedia" class="vc-button vc-button-primary w-full px-3 py-2">Use media</button>
+                    </div>
+                    <div v-else class="vc-builder-empty flex h-full items-center justify-center p-6 text-center">
+                        <div>
+                            <p class="text-sm font-semibold text-[var(--vc-text)]">Select an asset</p>
+                            <p class="mt-1 text-sm text-[var(--vc-text-soft)]">Preview and metadata will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between gap-4 border-t border-[var(--vc-border)] p-4">
+                <div class="text-sm text-[var(--vc-text-muted)]">Page {{ mediaPickerPage }} of {{ mediaPickerLastPage }}</div>
+                <div class="flex items-center gap-2">
+                    <button @click="changeMediaPickerPage(-1)" :disabled="mediaPickerPage <= 1 || mediaPickerLoading" class="vc-button vc-button-secondary px-3 py-2 disabled:opacity-50">Prev</button>
+                    <button @click="changeMediaPickerPage(1)" :disabled="mediaPickerPage >= mediaPickerLastPage || mediaPickerLoading" class="vc-button vc-button-secondary px-3 py-2 disabled:opacity-50">Next</button>
+                </div>
             </div>
         </div>
     </div>
@@ -509,8 +632,8 @@
                 }
             },
             BlockSettings: {
-                props: ['type', 'settings'],
-                emits: ['update'],
+                props: ['type', 'settings', 'mediaLookup'],
+                emits: ['update', 'open-media-picker'],
                 data() {
                     return {
                         localSettings: { ...this.settings }
@@ -539,8 +662,37 @@
                                     <label>{{ field.label }}</label>
                                     <span v-if="field.help" class="vc-builder-field-hint">{{ field.help }}</span>
                                 </div>
+                                <div v-if="isMediaField(field, key)" class="space-y-3">
+                                    <div v-if="mediaPreview(key)" class="vc-builder-media-inline">
+                                        <div class="vc-builder-media-inline-thumb">
+                                            <img
+                                                v-if="mediaPreview(key).mime_type?.startsWith('image/')"
+                                                :src="mediaPreview(key).url"
+                                                :alt="mediaPreview(key).alt || mediaPreview(key).original_filename || field.label"
+                                            >
+                                            <div v-else class="vc-builder-renderer-fallback h-full place-content-center">File</div>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <div class="text-sm font-semibold text-[var(--vc-text)]">{{ mediaPreview(key).title || mediaPreview(key).original_filename }}</div>
+                                            <div class="text-xs text-[var(--vc-text-soft)]">ID: {{ resolveMediaId(key) }}</div>
+                                            <div class="text-xs text-[var(--vc-text-soft)]">{{ mediaPreview(key).mime_type }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <button @click="$emit('open-media-picker', { key, field, blockType: type })" type="button" class="vc-button vc-button-secondary px-3 py-2">
+                                            {{ resolveMediaId(key) ? 'Replace media' : 'Choose media' }}
+                                        </button>
+                                        <button v-if="resolveMediaId(key)" @click="clearMediaField(key)" type="button" class="vc-button vc-button-secondary px-3 py-2">
+                                            Remove
+                                        </button>
+                                    </div>
+                                    <div class="vc-builder-field-hint">
+                                        <span v-if="resolveMediaId(key)">Linked media ID: {{ resolveMediaId(key) }}</span>
+                                        <span v-else>No media selected yet.</span>
+                                    </div>
+                                </div>
                                 <input 
-                                    v-if="field.type === 'text' || field.type === 'color' || field.type === 'number'"
+                                    v-else-if="field.type === 'text' || field.type === 'color' || field.type === 'number'"
                                     :type="field.type"
                                     v-model="localSettings[key]"
                                     :placeholder="field.placeholder"
@@ -577,6 +729,30 @@
                 computed: {
                     blockDef() {
                         return window.availableBlocks?.[this.type];
+                    }
+                },
+                methods: {
+                    isMediaField(field, key) {
+                        return field?.type === 'media' || key === 'media_id';
+                    },
+                    resolveMediaId(key) {
+                        if (key === 'media_id') {
+                            return this.localSettings.media_id || null;
+                        }
+
+                        return this.localSettings[key] || null;
+                    },
+                    mediaPreview(key) {
+                        return this.mediaLookup?.[this.resolveMediaId(key)] || null;
+                    },
+                    clearMediaField(key) {
+                        if (key === 'media_id') {
+                            this.localSettings.media_id = null;
+                            this.localSettings.url = '';
+                            return;
+                        }
+
+                        this.localSettings[key] = null;
                     }
                 }
             },
@@ -672,6 +848,8 @@
             const page = @json($page);
             const config = @json($config);
             const initialSections = @json($page->content_json['sections'] ?? []);
+            const INSPECTOR_STATE_KEY = 'vertexcms.builder.inspector';
+            const PRESETS_STORAGE_KEY = 'vertexcms.builder.block-presets';
 
             // State
             const sections = ref(initialSections);
@@ -703,6 +881,20 @@
             const commandQuery = ref('');
             const commandPaletteInput = ref(null);
             const contextMenu = ref({ visible: false, x: 0, y: 0, items: [] });
+            const inspectorPinned = ref(false);
+            const inspectorMode = ref('block');
+            const presetDraftName = ref('');
+            const blockPresets = ref([]);
+            const mediaLookup = ref({});
+            const showMediaPicker = ref(false);
+            const mediaPickerQuery = ref('');
+            const mediaPickerPage = ref(1);
+            const mediaPickerLastPage = ref(1);
+            const mediaPickerItems = ref([]);
+            const mediaPickerLoading = ref(false);
+            const mediaPickerSelected = ref(null);
+            const mediaPickerTarget = ref(null);
+            const mediaPickerSearchTimer = ref(null);
 
             // History for undo/redo
             const history = ref([]);
@@ -775,9 +967,106 @@
 
             const currentHistoryEntry = computed(() => history.value[historyIndex.value] || null);
             const currentHistoryLabel = computed(() => currentHistoryEntry.value?.label || '');
+            const currentBlockPresets = computed(() => {
+                if (!selectedBlockData.value) return [];
+
+                return blockPresets.value.filter((preset) => preset.type === selectedBlockData.value.type);
+            });
+            const inspectorTitle = computed(() => {
+                if (selectedBlockData.value) {
+                    return `${blockLabel(selectedBlockData.value.type)} settings`;
+                }
+
+                if (selectedSection.value !== null) {
+                    return `Section ${selectedSection.value + 1} settings`;
+                }
+
+                return inspectorPinned.value
+                    ? `${inspectorMode.value === 'section' ? 'Section' : 'Block'} inspector`
+                    : 'Inspector';
+            });
+            const inspectorDescription = computed(() => {
+                if (selectedBlockData.value) {
+                    return 'Tune block content, appearance and reusable presets.';
+                }
+
+                if (selectedSection.value !== null) {
+                    return 'Adjust section spacing, background and CSS hooks.';
+                }
+
+                return inspectorPinned.value
+                    ? 'Inspector mode is pinned between selections.'
+                    : 'Pick a section or block on the canvas to start editing.';
+            });
 
             const blockLabel = (type) => {
                 return allBlocks.value?.[type]?.name || type;
+            };
+
+            const persistInspectorState = () => {
+                localStorage.setItem(INSPECTOR_STATE_KEY, JSON.stringify({
+                    pinned: inspectorPinned.value,
+                    mode: inspectorMode.value,
+                }));
+            };
+
+            const persistBlockPresets = () => {
+                localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(blockPresets.value));
+            };
+
+            const collectReferencedMediaIds = () => {
+                const ids = new Set();
+                const visit = (value, key = null) => {
+                    if (Array.isArray(value)) {
+                        value.forEach((item) => visit(item));
+                        return;
+                    }
+
+                    if (value && typeof value === 'object') {
+                        Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+                            if ((nestedKey === 'media_id' || nestedKey === 'image') && Number.isFinite(Number(nestedValue)) && Number(nestedValue) > 0) {
+                                ids.add(Number(nestedValue));
+                            }
+                            visit(nestedValue, nestedKey);
+                        });
+                        return;
+                    }
+
+                    if ((key === 'media_id' || key === 'image') && Number.isFinite(Number(value)) && Number(value) > 0) {
+                        ids.add(Number(value));
+                    }
+                };
+
+                visit(sections.value);
+
+                return [...ids];
+            };
+
+            const hydrateMediaLookup = async (ids = []) => {
+                const missingIds = ids
+                    .map((id) => Number(id))
+                    .filter((id) => id > 0 && !mediaLookup.value[id]);
+
+                if (!missingIds.length) return;
+
+                try {
+                    const chunks = [];
+                    for (let index = 0; index < missingIds.length; index += 50) {
+                        chunks.push(missingIds.slice(index, index + 50));
+                    }
+
+                    for (const chunk of chunks) {
+                        const response = await fetch(`/admin/api/media?ids[]=${chunk.join('&ids[]=')}&per_page=${chunk.length}`);
+                        const data = await response.json();
+                        const items = data.data || [];
+                        mediaLookup.value = {
+                            ...mediaLookup.value,
+                            ...Object.fromEntries(items.map((item) => [Number(item.id), item])),
+                        };
+                    }
+                } catch (error) {
+                    console.error('Media hydrate error:', error);
+                }
             };
 
             const sectionCanvasStyle = (section) => {
@@ -863,6 +1152,11 @@
                 }
 
                 saveToHistory('Add block');
+            };
+
+            const toggleInspectorPinned = () => {
+                inspectorPinned.value = !inspectorPinned.value;
+                persistInspectorState();
             };
 
             const insertBlockAt = (sIndex, insertIndex, type) => {
@@ -1126,6 +1420,8 @@
                 selectedSection.value = sIndex;
                 selectedBlock.value = null;
                 selectedBlockData.value = null;
+                inspectorMode.value = 'section';
+                persistInspectorState();
                 closeQuickAdd();
             };
 
@@ -1141,6 +1437,8 @@
 
                 selectedSection.value = sIndex;
                 selectedBlock.value = bIndex;
+                inspectorMode.value = 'block';
+                persistInspectorState();
                 selectedBlockData.value = {
                     type: block.type,
                     settings: block.settings
@@ -1150,6 +1448,10 @@
             const updateBlockSettings = (newSettings) => {
                 if (selectedSection.value !== null && selectedBlock.value !== null) {
                     sections.value[selectedSection.value].blocks[selectedBlock.value].settings = newSettings;
+                    selectedBlockData.value = {
+                        type: sections.value[selectedSection.value].blocks[selectedBlock.value].type,
+                        settings: newSettings,
+                    };
                     saveToHistory('Edit block settings', { mergeKey: `block-settings:${selectedSection.value}:${selectedBlock.value}` });
                 }
             };
@@ -1394,6 +1696,172 @@
                 commandQuery.value = '';
             };
 
+            const saveCurrentBlockPreset = () => {
+                if (!selectedBlockData.value) return;
+
+                const name = presetDraftName.value.trim() || `${blockLabel(selectedBlockData.value.type)} preset`;
+                const now = new Date().toISOString();
+                const existingIndex = blockPresets.value.findIndex((preset) =>
+                    preset.type === selectedBlockData.value.type && preset.name.toLowerCase() === name.toLowerCase()
+                );
+                const payload = {
+                    id: existingIndex >= 0 ? blockPresets.value[existingIndex].id : generateId(),
+                    type: selectedBlockData.value.type,
+                    name,
+                    settings: JSON.parse(JSON.stringify(selectedBlockData.value.settings || {})),
+                    updated_at: now,
+                };
+
+                if (existingIndex >= 0) {
+                    blockPresets.value.splice(existingIndex, 1, payload);
+                } else {
+                    blockPresets.value.unshift(payload);
+                }
+
+                presetDraftName.value = '';
+                persistBlockPresets();
+            };
+
+            const applyBlockPreset = (preset) => {
+                if (!selectedBlockData.value || selectedSection.value === null || selectedBlock.value === null) return;
+
+                const mergedSettings = {
+                    ...sections.value[selectedSection.value].blocks[selectedBlock.value].settings,
+                    ...JSON.parse(JSON.stringify(preset.settings || {})),
+                };
+
+                sections.value[selectedSection.value].blocks[selectedBlock.value].settings = mergedSettings;
+                selectedBlockData.value = {
+                    type: sections.value[selectedSection.value].blocks[selectedBlock.value].type,
+                    settings: mergedSettings,
+                };
+                saveToHistory('Apply block preset');
+            };
+
+            const insertPresetAfterSelection = (preset) => {
+                if (selectedSection.value === null) return;
+
+                const insertIndex = selectedBlock.value !== null
+                    ? selectedBlock.value + 1
+                    : sections.value[selectedSection.value].blocks.length;
+
+                const block = {
+                    id: generateId(),
+                    type: preset.type,
+                    settings: JSON.parse(JSON.stringify(preset.settings || {})),
+                };
+
+                sections.value[selectedSection.value].blocks.splice(insertIndex, 0, block);
+                selectBlock(selectedSection.value, insertIndex);
+                saveToHistory('Insert block preset');
+            };
+
+            const deleteBlockPreset = (presetId) => {
+                blockPresets.value = blockPresets.value.filter((preset) => preset.id !== presetId);
+                persistBlockPresets();
+            };
+
+            const formatPresetDate = (value) => {
+                if (!value) return 'Recently updated';
+
+                return new Date(value).toLocaleString();
+            };
+
+            const openMediaPicker = async (payload) => {
+                mediaPickerTarget.value = payload;
+                showMediaPicker.value = true;
+                mediaPickerSelected.value = null;
+                mediaPickerPage.value = 1;
+
+                const currentValue = payload?.key === 'media_id'
+                    ? selectedBlockData.value?.settings?.media_id
+                    : selectedBlockData.value?.settings?.[payload?.key];
+
+                if (currentValue) {
+                    await hydrateMediaLookup([currentValue]);
+                    mediaPickerSelected.value = mediaLookup.value[Number(currentValue)] || null;
+                }
+
+                await loadMediaPickerItems();
+            };
+
+            const closeMediaPicker = () => {
+                showMediaPicker.value = false;
+                mediaPickerSelected.value = null;
+                mediaPickerTarget.value = null;
+            };
+
+            const loadMediaPickerItems = async () => {
+                mediaPickerLoading.value = true;
+                try {
+                    const params = new URLSearchParams({
+                        per_page: '18',
+                        page: String(mediaPickerPage.value),
+                        kind: 'image',
+                    });
+                    if (mediaPickerQuery.value.trim()) {
+                        params.set('q', mediaPickerQuery.value.trim());
+                    }
+
+                    const response = await fetch(`/admin/api/media?${params.toString()}`);
+                    const data = await response.json();
+                    const items = data.data || [];
+                    mediaPickerItems.value = items;
+                    mediaPickerLastPage.value = data.last_page || 1;
+                    mediaLookup.value = {
+                        ...mediaLookup.value,
+                        ...Object.fromEntries(items.map((item) => [Number(item.id), item])),
+                    };
+                } catch (error) {
+                    console.error('Media picker error:', error);
+                    mediaPickerItems.value = [];
+                } finally {
+                    mediaPickerLoading.value = false;
+                }
+            };
+
+            const changeMediaPickerPage = async (step) => {
+                const nextPage = mediaPickerPage.value + step;
+                if (nextPage < 1 || nextPage > mediaPickerLastPage.value) return;
+                mediaPickerPage.value = nextPage;
+                await loadMediaPickerItems();
+            };
+
+            const selectMediaItem = (item) => {
+                mediaPickerSelected.value = item;
+            };
+
+            const applyPickedMedia = () => {
+                if (!mediaPickerSelected.value || selectedSection.value === null || selectedBlock.value === null) return;
+
+                const block = sections.value[selectedSection.value].blocks[selectedBlock.value];
+                const settings = {
+                    ...block.settings,
+                };
+                const targetKey = mediaPickerTarget.value?.key;
+
+                if (targetKey === 'media_id') {
+                    settings.media_id = mediaPickerSelected.value.id;
+                    settings.url = mediaPickerSelected.value.url || settings.url || '';
+                    if (!settings.alt && mediaPickerSelected.value.alt) {
+                        settings.alt = mediaPickerSelected.value.alt;
+                    }
+                } else if (targetKey) {
+                    settings[targetKey] = mediaPickerSelected.value.id;
+                    if ((targetKey === 'image' || targetKey.endsWith('_image')) && !settings.url) {
+                        settings.url = mediaPickerSelected.value.url || '';
+                    }
+                }
+
+                sections.value[selectedSection.value].blocks[selectedBlock.value].settings = settings;
+                selectedBlockData.value = {
+                    type: sections.value[selectedSection.value].blocks[selectedBlock.value].type,
+                    settings,
+                };
+                saveToHistory('Attach media');
+                closeMediaPicker();
+            };
+
             const openCommandPalette = async () => {
                 showCommandPalette.value = true;
                 commandQuery.value = '';
@@ -1600,6 +2068,14 @@
                 }, 120000); // 2 minutes
             }, { deep: true });
 
+            watch(mediaPickerQuery, () => {
+                if (mediaPickerSearchTimer.value) clearTimeout(mediaPickerSearchTimer.value);
+                mediaPickerSearchTimer.value = setTimeout(() => {
+                    mediaPickerPage.value = 1;
+                    loadMediaPickerItems();
+                }, 220);
+            });
+
             watch(contentSearchQuery, (query) => {
                 if (!query) {
                     selectedSection.value = null;
@@ -1623,8 +2099,18 @@
 
             // Lifecycle
             onMounted(() => {
+                try {
+                    const savedInspectorState = JSON.parse(localStorage.getItem(INSPECTOR_STATE_KEY) || '{}');
+                    inspectorPinned.value = Boolean(savedInspectorState.pinned);
+                    inspectorMode.value = savedInspectorState.mode === 'section' ? 'section' : 'block';
+                    blockPresets.value = JSON.parse(localStorage.getItem(PRESETS_STORAGE_KEY) || '[]');
+                } catch (error) {
+                    console.error('Builder local state restore error:', error);
+                }
+
                 saveToHistory('Initial state');
                 loadRevisions();
+                hydrateMediaLookup(collectReferencedMediaIds());
                 document.addEventListener('keydown', handleKeydown);
                 document.addEventListener('click', handleGlobalPointer);
                 
@@ -1647,6 +2133,7 @@
             onBeforeUnmount(() => {
                 document.removeEventListener('keydown', handleKeydown);
                 document.removeEventListener('click', handleGlobalPointer);
+                if (mediaPickerSearchTimer.value) clearTimeout(mediaPickerSearchTimer.value);
             });
 
             return {
@@ -1654,6 +2141,10 @@
                 searchQuery, contentSearchQuery, selectedSection, selectedBlock,
                 selectedBlockData, saving, showPreview, showRevisions, showTemplates, templates,
                 showCommandPalette, commandQuery, commandPaletteInput, contextMenu,
+                inspectorPinned, inspectorMode, inspectorTitle, inspectorDescription, toggleInspectorPinned,
+                presetDraftName, currentBlockPresets, saveCurrentBlockPreset, applyBlockPreset, insertPresetAfterSelection, deleteBlockPreset, formatPresetDate,
+                mediaLookup, showMediaPicker, mediaPickerQuery, mediaPickerPage, mediaPickerLastPage, mediaPickerItems, mediaPickerLoading, mediaPickerSelected,
+                openMediaPicker, closeMediaPicker, selectMediaItem, applyPickedMedia, changeMediaPickerPage,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
                 autoSaveStatus, autoSaveStatusText, currentHistoryLabel, previewHtml, previewBreakpoint,
                 allBlocks, filteredBlocks, quickAddBlocks, blockLabel, sectionCanvasStyle, draggedSectionIndex, dropSectionIndex,
