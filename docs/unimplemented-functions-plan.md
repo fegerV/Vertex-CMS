@@ -155,6 +155,9 @@ Acceptance criteria:
 - Inline block actions для перемещения, дублирования и удаления.
 - Visual insertion cues между блоками и section-local quick add palette.
 - Multi-select блоков с batch duplicate/delete внутри секции.
+- Keyboard shortcuts для основных builder-операций.
+- Action-aware undo/redo history с coalescing для настроек блока и секции.
+- Context menu и command palette для частых builder-команд.
 - Обновлённый light/dark UI для canvas и внутренних control-панелей настроек блоков и секций.
 
 Оценка:

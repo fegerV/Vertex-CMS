@@ -132,6 +132,7 @@
                     <span v-if="autoSaveStatus === 'saved'" class="w-2 h-2 bg-green-500 rounded-full"></span>
                     <span v-if="autoSaveStatus === 'saving'" class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
                     <span>{{ autoSaveStatusText }}</span>
+                    <span v-if="currentHistoryLabel" class="vc-builder-history-note">Last action: {{ currentHistoryLabel }}</span>
                 </div>
 
                 <button 
@@ -201,6 +202,7 @@
                             'vc-builder-drop-target': dropSectionIndex === sIndex && draggedSectionIndex !== null && draggedSectionIndex !== sIndex
                         }"
                         @click="selectSection(sIndex)"
+                        @contextmenu.prevent="openSectionContextMenu(sIndex, $event)"
                         @dragover.prevent="onSectionDragOver(sIndex)"
                         @drop.prevent="onSectionDrop(sIndex)"
                     >
@@ -284,6 +286,7 @@
                                         'vc-builder-drop-target': isBlockDropTarget(sIndex, bIndex)
                                     }"
                                     @click.stop="selectBlock(sIndex, bIndex, $event)"
+                                    @contextmenu.prevent.stop="openBlockContextMenu(sIndex, bIndex, $event)"
                                     @dragover.prevent="onBlockDragOver(sIndex, bIndex)"
                                     @drop.prevent="onBlockDrop(sIndex, bIndex)"
                                 >
@@ -406,12 +409,58 @@
             </div>
         </div>
     </div>
+
+    <div v-if="showCommandPalette" class="vc-builder-modal fixed inset-0 z-60 flex items-start justify-center p-6" @click.self="closeCommandPalette">
+        <div class="vc-builder-modal-card w-full max-w-2xl p-4">
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <input ref="commandPaletteInput" v-model="commandQuery" type="text" class="vc-input" placeholder="Search commands...">
+                    <button @click="closeCommandPalette" class="vc-button vc-button-secondary px-3 py-2">Close</button>
+                </div>
+                <div class="vc-builder-command-list">
+                    <button
+                        v-for="command in filteredCommandItems"
+                        :key="command.id"
+                        @click="executeCommand(command.id)"
+                        class="vc-builder-command-item"
+                    >
+                        <span>
+                            <span class="vc-builder-command-title">{{ command.label }}</span>
+                            <span class="vc-builder-command-meta">{{ command.description }}</span>
+                        </span>
+                        <span v-if="command.shortcut" class="vc-builder-shortcut">{{ command.shortcut }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div
+        v-if="contextMenu.visible"
+        class="vc-builder-context-menu"
+        :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+    >
+        <div class="vc-builder-command-list">
+            <button
+                v-for="item in contextMenu.items"
+                :key="item.id"
+                @click="executeContextCommand(item)"
+                class="vc-builder-command-item"
+            >
+                <span>
+                    <span class="vc-builder-command-title">{{ item.label }}</span>
+                    <span v-if="item.description" class="vc-builder-command-meta">{{ item.description }}</span>
+                </span>
+                <span v-if="item.shortcut" class="vc-builder-shortcut">{{ item.shortcut }}</span>
+            </button>
+        </div>
+    </div>
 </div>
 @endsection
 
 @push('scripts')
 <script type="module">
-    import { createApp, ref, reactive, computed, onMounted, watch } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+    import { createApp, ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
     
     createApp({
         components: {
@@ -650,6 +699,10 @@
             const quickAddSectionIndex = ref(null);
             const quickAddInsertIndex = ref(0);
             const quickAddQuery = ref('');
+            const showCommandPalette = ref(false);
+            const commandQuery = ref('');
+            const commandPaletteInput = ref(null);
+            const contextMenu = ref({ visible: false, x: 0, y: 0, items: [] });
 
             // History for undo/redo
             const history = ref([]);
@@ -720,6 +773,9 @@
                 }
             });
 
+            const currentHistoryEntry = computed(() => history.value[historyIndex.value] || null);
+            const currentHistoryLabel = computed(() => currentHistoryEntry.value?.label || '');
+
             const blockLabel = (type) => {
                 return allBlocks.value?.[type]?.name || type;
             };
@@ -752,6 +808,34 @@
                 return sections.value[sIndex]?.blocks.filter((block) => selectedBlockIds.value.includes(block.id)).length || 0;
             };
 
+            const commandItems = computed(() => {
+                const hasBlock = selectedSection.value !== null && selectedBlock.value !== null;
+                const hasSelection = selectedBlockIds.value.length > 0;
+
+                return [
+                    { id: 'save', label: 'Save changes', description: 'Persist current builder JSON', shortcut: 'Ctrl/Cmd+S' },
+                    { id: 'preview', label: 'Open preview', description: 'Render current page preview', shortcut: 'Ctrl/Cmd+Shift+P' },
+                    { id: 'undo', label: 'Undo last action', description: 'Step back one builder action', shortcut: 'Ctrl/Cmd+Z', disabled: !canUndo.value },
+                    { id: 'redo', label: 'Redo action', description: 'Restore next builder action', shortcut: 'Ctrl/Cmd+Shift+Z', disabled: !canRedo.value },
+                    { id: 'revisions', label: 'Open revisions', description: 'Browse saved revisions', shortcut: 'R' },
+                    { id: 'quick-add', label: 'Quick add in selected section', description: 'Open inline block palette for the current section', shortcut: 'A', disabled: selectedSection.value === null },
+                    { id: 'duplicate-selection', label: 'Duplicate selected blocks', description: 'Duplicate current multi-selection in this section', shortcut: 'Ctrl/Cmd+D', disabled: !hasSelection },
+                    { id: 'delete-selection', label: 'Delete selected blocks', description: 'Delete current multi-selection', shortcut: 'Delete', disabled: !hasSelection },
+                    { id: 'duplicate-block', label: 'Duplicate current block', description: 'Duplicate the focused block', shortcut: 'D', disabled: !hasBlock },
+                    { id: 'delete-block', label: 'Delete current block', description: 'Remove the focused block', shortcut: 'Backspace/Delete', disabled: !hasBlock },
+                ].filter((item) => !item.disabled);
+            });
+
+            const filteredCommandItems = computed(() => {
+                const query = commandQuery.value.trim().toLowerCase();
+                if (!query) return commandItems.value;
+                return commandItems.value.filter((item) =>
+                    item.label.toLowerCase().includes(query) ||
+                    item.description.toLowerCase().includes(query) ||
+                    (item.shortcut || '').toLowerCase().includes(query)
+                );
+            });
+
             // Methods
             const buildBlock = (type) => {
                 const block = allBlocks.value[type];
@@ -778,7 +862,7 @@
                     });
                 }
 
-                saveToHistory();
+                saveToHistory('Add block');
             };
 
             const insertBlockAt = (sIndex, insertIndex, type) => {
@@ -787,7 +871,7 @@
                 sections.value[sIndex].blocks.splice(insertIndex, 0, newBlock);
                 selectBlock(sIndex, insertIndex);
                 closeQuickAdd();
-                saveToHistory();
+                saveToHistory('Insert block');
             };
 
             const openQuickAdd = (sIndex, insertIndex) => {
@@ -814,7 +898,7 @@
                 selectedSection.value = null;
                 selectedBlock.value = null;
                 selectedBlockData.value = null;
-                saveToHistory();
+                saveToHistory('Delete section');
             };
 
             const duplicateSection = (sIndex) => {
@@ -822,7 +906,7 @@
                 section.id = generateId();
                 section.blocks = section.blocks.map(b => ({ ...b, id: generateId() }));
                 sections.value.splice(sIndex + 1, 0, section);
-                saveToHistory();
+                saveToHistory('Duplicate section');
             };
 
             const moveSectionUp = (sIndex) => {
@@ -830,7 +914,7 @@
                     const temp = sections.value[sIndex];
                     sections.value[sIndex] = sections.value[sIndex - 1];
                     sections.value[sIndex - 1] = temp;
-                    saveToHistory();
+                    saveToHistory('Move section up');
                 }
             };
 
@@ -839,7 +923,7 @@
                     const temp = sections.value[sIndex];
                     sections.value[sIndex] = sections.value[sIndex + 1];
                     sections.value[sIndex + 1] = temp;
-                    saveToHistory();
+                    saveToHistory('Move section down');
                 }
             };
 
@@ -850,7 +934,7 @@
                 blocks[bIndex] = blocks[bIndex - 1];
                 blocks[bIndex - 1] = temp;
                 selectBlock(sIndex, bIndex - 1);
-                saveToHistory();
+                saveToHistory('Move block up');
             };
 
             const moveBlockDown = (sIndex, bIndex) => {
@@ -860,7 +944,7 @@
                 blocks[bIndex] = blocks[bIndex + 1];
                 blocks[bIndex + 1] = temp;
                 selectBlock(sIndex, bIndex + 1);
-                saveToHistory();
+                saveToHistory('Move block down');
             };
 
             const duplicateBlock = (sIndex, bIndex) => {
@@ -870,7 +954,7 @@
                 copy.id = generateId();
                 sections.value[sIndex].blocks.splice(bIndex + 1, 0, copy);
                 selectBlock(sIndex, bIndex + 1);
-                saveToHistory();
+                saveToHistory('Duplicate block');
             };
 
             const toggleBlockSelection = (blockId) => {
@@ -897,7 +981,7 @@
                     offset++;
                 }
 
-                saveToHistory();
+                saveToHistory('Duplicate selected blocks');
             };
 
             const deleteSelectedBlocks = (sIndex) => {
@@ -914,11 +998,15 @@
                     selectedBlock.value = null;
                     selectedBlockData.value = null;
                 }
-                saveToHistory();
+                saveToHistory('Delete selected blocks');
             };
 
             const deleteBlock = (sIndex, bIndex) => {
+                const removedId = sections.value[sIndex].blocks[bIndex]?.id;
                 sections.value[sIndex].blocks.splice(bIndex, 1);
+                if (removedId) {
+                    selectedBlockIds.value = selectedBlockIds.value.filter((id) => id !== removedId);
+                }
                 if (selectedSection.value === sIndex && selectedBlock.value === bIndex) {
                     selectedBlock.value = null;
                     selectedBlockData.value = null;
@@ -929,7 +1017,7 @@
                         ? { type: nextBlock.type, settings: nextBlock.settings }
                         : null;
                 }
-                saveToHistory();
+                saveToHistory('Delete block');
             };
 
             const onSectionDragStart = (sIndex, event) => {
@@ -955,7 +1043,7 @@
                 const [section] = sections.value.splice(from, 1);
                 sections.value.splice(sIndex, 0, section);
                 selectSection(sIndex);
-                saveToHistory();
+                saveToHistory('Reorder sections');
                 onSectionDragEnd();
             };
 
@@ -1005,7 +1093,7 @@
 
                 sections.value[targetSectionIndex].blocks.splice(insertIndex, 0, block);
                 selectBlock(targetSectionIndex, insertIndex);
-                saveToHistory();
+                saveToHistory('Reorder blocks');
                 onBlockDragEnd();
             };
 
@@ -1062,25 +1150,46 @@
             const updateBlockSettings = (newSettings) => {
                 if (selectedSection.value !== null && selectedBlock.value !== null) {
                     sections.value[selectedSection.value].blocks[selectedBlock.value].settings = newSettings;
-                    saveToHistory();
+                    saveToHistory('Edit block settings', { mergeKey: `block-settings:${selectedSection.value}:${selectedBlock.value}` });
                 }
             };
 
             const updateSectionSettings = (newSettings) => {
                 if (selectedSection.value !== null) {
                     sections.value[selectedSection.value].settings = newSettings;
-                    saveToHistory();
+                    saveToHistory('Edit section settings', { mergeKey: `section-settings:${selectedSection.value}` });
                 }
             };
 
-            const saveToHistory = () => {
+            const applyHistoryEntry = (entry) => {
+                sections.value = JSON.parse(JSON.stringify(entry.snapshot));
+                selectedSection.value = null;
+                selectedBlock.value = null;
+                selectedBlockData.value = null;
+                selectedBlockIds.value = [];
+                closeQuickAdd();
+                closeContextMenu();
+            };
+
+            const saveToHistory = (label = 'Edit builder', options = {}) => {
+                const { mergeKey = null } = options;
+                const snapshot = JSON.parse(JSON.stringify(sections.value));
+
                 // Remove any future states if we're not at the end
                 history.value = history.value.slice(0, historyIndex.value + 1);
-                // Add current state
-                history.value.push(JSON.parse(JSON.stringify(sections.value)));
+
+                const lastEntry = history.value[history.value.length - 1];
+                if (mergeKey && lastEntry?.mergeKey === mergeKey) {
+                    history.value[history.value.length - 1] = { snapshot, label, mergeKey };
+                    historyIndex.value = history.value.length - 1;
+                    return;
+                }
+
+                history.value.push({ snapshot, label, mergeKey });
                 // Limit history size
                 if (history.value.length > 100) {
                     history.value.shift();
+                    historyIndex.value = history.value.length - 1;
                 } else {
                     historyIndex.value++;
                 }
@@ -1089,14 +1198,14 @@
             const undo = () => {
                 if (canUndo.value) {
                     historyIndex.value--;
-                    sections.value = JSON.parse(JSON.stringify(history.value[historyIndex.value]));
+                    applyHistoryEntry(history.value[historyIndex.value]);
                 }
             };
 
             const redo = () => {
                 if (canRedo.value) {
                     historyIndex.value++;
-                    sections.value = JSON.parse(JSON.stringify(history.value[historyIndex.value]));
+                    applyHistoryEntry(history.value[historyIndex.value]);
                 }
             };
 
@@ -1170,7 +1279,7 @@
                         return;
                     }
                     sections.value = data.sections || [];
-                    saveToHistory();
+                    saveToHistory('Import sections');
                 } catch (e) {
                     alert('Import error');
                 }
@@ -1223,7 +1332,7 @@
                     if (data.ok) {
                         sections.value = data.page.content_json.sections;
                         showRevisions.value = false;
-                        saveToHistory();
+                        saveToHistory('Restore revision');
                     }
                 } catch (e) {
                     alert('Restore error');
@@ -1244,8 +1353,227 @@
                 .then(r => r.json())
                 .then(data => {
                     sections.value = data.page.content_json.sections;
-                    saveToHistory();
+                    saveToHistory('Apply template');
                 });
+            };
+
+            const closeContextMenu = () => {
+                contextMenu.value = { visible: false, x: 0, y: 0, items: [] };
+            };
+
+            const openContextMenu = (items, event) => {
+                contextMenu.value = {
+                    visible: true,
+                    x: event.clientX,
+                    y: event.clientY,
+                    items,
+                };
+            };
+
+            const openSectionContextMenu = (sIndex, event) => {
+                selectSection(sIndex);
+                openContextMenu([
+                    { id: 'quick-add', label: 'Quick add block', description: 'Open section palette', shortcut: 'A', sectionIndex: sIndex },
+                    { id: 'duplicate-section', label: 'Duplicate section', shortcut: '[]', sectionIndex: sIndex },
+                    { id: 'delete-section', label: 'Delete section', shortcut: 'x', sectionIndex: sIndex },
+                ], event);
+            };
+
+            const openBlockContextMenu = (sIndex, bIndex, event) => {
+                selectBlock(sIndex, bIndex);
+                openContextMenu([
+                    { id: 'duplicate-block', label: 'Duplicate block', shortcut: 'D', sectionIndex: sIndex, blockIndex: bIndex },
+                    { id: 'delete-block', label: 'Delete block', shortcut: 'Delete', sectionIndex: sIndex, blockIndex: bIndex },
+                    { id: 'move-block-up', label: 'Move block up', shortcut: 'Alt+Up', sectionIndex: sIndex, blockIndex: bIndex },
+                    { id: 'move-block-down', label: 'Move block down', shortcut: 'Alt+Down', sectionIndex: sIndex, blockIndex: bIndex },
+                ], event);
+            };
+
+            const closeCommandPalette = () => {
+                showCommandPalette.value = false;
+                commandQuery.value = '';
+            };
+
+            const openCommandPalette = async () => {
+                showCommandPalette.value = true;
+                commandQuery.value = '';
+                await nextTick();
+                commandPaletteInput.value?.focus();
+            };
+
+            const executeCommand = async (commandId, payload = {}) => {
+                const targetSection = payload.sectionIndex ?? selectedSection.value;
+                const targetBlock = payload.blockIndex ?? selectedBlock.value;
+
+                switch (commandId) {
+                    case 'save':
+                        await saveContent();
+                        break;
+                    case 'preview':
+                        await previewContent();
+                        break;
+                    case 'undo':
+                        undo();
+                        break;
+                    case 'redo':
+                        redo();
+                        break;
+                    case 'revisions':
+                        showRevisions.value = true;
+                        break;
+                    case 'quick-add':
+                        if (targetSection !== null) {
+                            openQuickAdd(targetSection, sections.value[targetSection].blocks.length);
+                        }
+                        break;
+                    case 'duplicate-selection':
+                        if (targetSection !== null) {
+                            duplicateSelectedBlocks(targetSection);
+                        }
+                        break;
+                    case 'delete-selection':
+                        if (targetSection !== null) {
+                            deleteSelectedBlocks(targetSection);
+                        }
+                        break;
+                    case 'duplicate-block':
+                        if (targetSection !== null && targetBlock !== null) {
+                            duplicateBlock(targetSection, targetBlock);
+                        }
+                        break;
+                    case 'delete-block':
+                        if (targetSection !== null && targetBlock !== null) {
+                            deleteBlock(targetSection, targetBlock);
+                        }
+                        break;
+                    case 'move-block-up':
+                        if (targetSection !== null && targetBlock !== null) {
+                            moveBlockUp(targetSection, targetBlock);
+                        }
+                        break;
+                    case 'move-block-down':
+                        if (targetSection !== null && targetBlock !== null) {
+                            moveBlockDown(targetSection, targetBlock);
+                        }
+                        break;
+                    case 'duplicate-section':
+                        if (targetSection !== null) {
+                            duplicateSection(targetSection);
+                        }
+                        break;
+                    case 'delete-section':
+                        if (targetSection !== null) {
+                            deleteSection(targetSection);
+                        }
+                        break;
+                }
+
+                closeContextMenu();
+                closeCommandPalette();
+            };
+
+            const executeContextCommand = (item) => executeCommand(item.id, item);
+
+            const handleKeydown = async (event) => {
+                const target = event.target;
+                const typingTarget = target && (
+                    ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+                    target.isContentEditable
+                );
+
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+                    event.preventDefault();
+                    await openCommandPalette();
+                    return;
+                }
+
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+                    event.preventDefault();
+                    await saveContent();
+                    return;
+                }
+
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+                    event.preventDefault();
+                    if (event.shiftKey) {
+                        redo();
+                    } else {
+                        undo();
+                    }
+                    return;
+                }
+
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+                    event.preventDefault();
+                    redo();
+                    return;
+                }
+
+                if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'p') {
+                    event.preventDefault();
+                    await previewContent();
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    closeQuickAdd();
+                    closeContextMenu();
+                    closeCommandPalette();
+                    showPreview.value = false;
+                    showRevisions.value = false;
+                    return;
+                }
+
+                if (typingTarget) return;
+
+                if (event.key.toLowerCase() === 'a' && selectedSection.value !== null) {
+                    event.preventDefault();
+                    openQuickAdd(selectedSection.value, sections.value[selectedSection.value].blocks.length);
+                    return;
+                }
+
+                if (event.key.toLowerCase() === 'r') {
+                    event.preventDefault();
+                    showRevisions.value = true;
+                    return;
+                }
+
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {
+                    event.preventDefault();
+                    if (selectedBlockIds.value.length && selectedSection.value !== null) {
+                        duplicateSelectedBlocks(selectedSection.value);
+                    } else if (selectedSection.value !== null && selectedBlock.value !== null) {
+                        duplicateBlock(selectedSection.value, selectedBlock.value);
+                    }
+                    return;
+                }
+
+                if ((event.key === 'Delete' || event.key === 'Backspace') && selectedSection.value !== null) {
+                    event.preventDefault();
+                    if (selectedBlockIds.value.length) {
+                        deleteSelectedBlocks(selectedSection.value);
+                    } else if (selectedBlock.value !== null) {
+                        deleteBlock(selectedSection.value, selectedBlock.value);
+                    }
+                    return;
+                }
+
+                if (event.altKey && event.key === 'ArrowUp' && selectedSection.value !== null && selectedBlock.value !== null) {
+                    event.preventDefault();
+                    moveBlockUp(selectedSection.value, selectedBlock.value);
+                    return;
+                }
+
+                if (event.altKey && event.key === 'ArrowDown' && selectedSection.value !== null && selectedBlock.value !== null) {
+                    event.preventDefault();
+                    moveBlockDown(selectedSection.value, selectedBlock.value);
+                }
+            };
+
+            const handleGlobalPointer = () => {
+                if (contextMenu.value.visible) {
+                    closeContextMenu();
+                }
             };
 
             const loadRevisions = async () => {
@@ -1295,8 +1623,10 @@
 
             // Lifecycle
             onMounted(() => {
-                saveToHistory();
+                saveToHistory('Initial state');
                 loadRevisions();
+                document.addEventListener('keydown', handleKeydown);
+                document.addEventListener('click', handleGlobalPointer);
                 
                 // Load available blocks from server
                 fetch('/admin/api/builder/blocks')
@@ -1314,22 +1644,30 @@
                     });
             });
 
+            onBeforeUnmount(() => {
+                document.removeEventListener('keydown', handleKeydown);
+                document.removeEventListener('click', handleGlobalPointer);
+            });
+
             return {
                 page, config, sections, activeCategory, activeBreakpoint,
                 searchQuery, contentSearchQuery, selectedSection, selectedBlock,
                 selectedBlockData, saving, showPreview, showRevisions, showTemplates, templates,
+                showCommandPalette, commandQuery, commandPaletteInput, contextMenu,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
-                autoSaveStatus, autoSaveStatusText, previewHtml, previewBreakpoint,
+                autoSaveStatus, autoSaveStatusText, currentHistoryLabel, previewHtml, previewBreakpoint,
                 allBlocks, filteredBlocks, quickAddBlocks, blockLabel, sectionCanvasStyle, draggedSectionIndex, dropSectionIndex,
                 quickAddSectionIndex, quickAddInsertIndex, quickAddQuery,
                 addBlock, addBlockToSection, deleteSection, duplicateSection, moveSectionUp, moveSectionDown,
                 moveBlockUp, moveBlockDown, duplicateBlock, deleteBlock,
                 insertBlockAt, openQuickAdd, closeQuickAdd, toggleBlockSelection, duplicateSelectedBlocks, deleteSelectedBlocks,
                 selectSection, selectBlock, updateBlockSettings, updateSectionSettings,
+                openCommandPalette, closeCommandPalette, executeCommand, executeContextCommand,
+                openSectionContextMenu, openBlockContextMenu,
                 onSectionDragStart, onSectionDragOver, onSectionDrop, onSectionDragEnd,
                 onBlockDragStart, onBlockDragOver, onBlockDrop, onBlockDragEnd,
                 onSectionBodyDragOver, onSectionBodyDrop, onInsertDragOver, onInsertDrop,
-                isDraggedBlock, isBlockDropTarget, isInsertTarget, isBlockSelected, selectedCountForSection,
+                isDraggedBlock, isBlockDropTarget, isInsertTarget, isBlockSelected, selectedCountForSection, filteredCommandItems,
                 saveContent, previewContent, undo, redo, restoreRevision, applyTemplate,
                 exportCurrentSections, importSectionsPrompt, generateId, formatDate, countBlocks
             };
