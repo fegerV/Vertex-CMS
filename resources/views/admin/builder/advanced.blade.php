@@ -84,18 +84,23 @@
                         </span>
                     </button>
                     <div class="mt-2 flex items-center gap-2" v-if="tpl.can_edit || tpl.can_delete">
-                        <button v-if="tpl.can_edit" @click="saveSelectedSectionAsTemplate(tpl)" class="vc-builder-icon-button" title="Update template">Upd</button>
+                        <button v-if="tpl.can_edit" @click="syncSectionToTemplate(tpl)" class="vc-builder-icon-button" title="Update template">Upd</button>
                         <button v-if="tpl.can_delete" @click="deleteSharedTemplate(tpl.id)" class="vc-builder-icon-button text-rose-300" title="Delete template">Del</button>
                     </div>
                 </div>
             </div>
             <div v-if="showTemplates" class="mt-3 space-y-2">
+                <input v-model="templateDraftName" type="text" class="vc-input text-xs" placeholder="Template name">
                 <div class="flex items-center gap-2">
+                    <input v-model="templateDraftCategory" type="text" class="vc-input text-xs" placeholder="Category">
                     <select v-model="templateVisibility" class="vc-select text-xs">
                         <option value="shared">Shared</option>
                         <option value="private">Private</option>
                     </select>
-                    <button @click="saveSelectedSectionAsTemplate()" class="vc-button vc-button-secondary px-3 py-2 text-xs">Save Section</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button @click="saveSelectedSectionAsTemplate()" class="vc-button vc-button-secondary flex-1 px-3 py-2 text-xs">Save Section</button>
+                    <button @click="openLibraryManager('templates')" class="vc-button vc-button-secondary px-3 py-2 text-xs">Manage</button>
                 </div>
             </div>
         </div>
@@ -399,7 +404,10 @@
                             <div class="vc-builder-form-title">Presets</div>
                             <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Save reusable snippets for this block type.</p>
                         </div>
-                        <span class="vc-builder-badge">{{ filteredCurrentBlockPresets.length }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="vc-builder-badge">{{ filteredCurrentBlockPresets.length }}</span>
+                            <button @click="openLibraryManager('presets')" class="vc-builder-chip">Manage</button>
+                        </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button @click="presetLibraryScope = 'all'" class="vc-builder-chip" :class="presetLibraryScope === 'all' ? 'vc-builder-chip-active' : ''">All</button>
@@ -473,6 +481,91 @@
                 </div>
             </div>
         </div>
+        </div>
+    </div>
+
+    <div v-if="showLibraryManager" class="vc-builder-modal fixed inset-0 z-60 flex items-center justify-center p-4" @click.self="closeLibraryManager">
+        <div class="vc-builder-modal-card flex h-full max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden">
+            <div class="flex items-center justify-between gap-4 border-b border-[var(--vc-border)] p-4">
+                <div>
+                    <h3 class="font-semibold text-[var(--vc-text)]">Builder Library Manager</h3>
+                    <p class="mt-1 text-sm text-[var(--vc-text-muted)]">Manage shared presets and section templates without leaving the builder.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button @click="libraryManagerTab = 'presets'" class="vc-builder-chip" :class="libraryManagerTab === 'presets' ? 'vc-builder-chip-active' : ''">Presets</button>
+                    <button @click="libraryManagerTab = 'templates'" class="vc-builder-chip" :class="libraryManagerTab === 'templates' ? 'vc-builder-chip-active' : ''">Templates</button>
+                    <button @click="closeLibraryManager" class="vc-button vc-button-secondary px-3 py-2">Close</button>
+                </div>
+            </div>
+            <div class="border-b border-[var(--vc-border)] p-4">
+                <input v-model="librarySearchQuery" type="text" class="vc-input" placeholder="Search library items...">
+            </div>
+            <div class="flex-1 overflow-y-auto p-4">
+                <div v-if="libraryManagerTab === 'presets'" class="space-y-3">
+                    <div v-for="preset in managedPresetLibraryItems" :key="preset.id" class="vc-builder-preset-card">
+                        <div class="min-w-0 flex-1 space-y-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="vc-builder-badge">{{ blockLabel(preset.type) }}</span>
+                                <span class="vc-builder-badge">{{ preset.visibility }}</span>
+                                <span v-if="preset.owner" class="vc-builder-badge">by {{ preset.owner }}</span>
+                            </div>
+                            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
+                                <input v-model="preset.name" type="text" class="vc-input" :disabled="!preset.can_edit">
+                                <select v-model="preset.visibility" class="vc-select" :disabled="!preset.can_edit">
+                                    <option value="shared">Shared</option>
+                                    <option value="private">Private</option>
+                                </select>
+                            </div>
+                            <div class="vc-builder-command-meta">{{ formatPresetDate(preset.updated_at) }} · {{ preset.source || 'shared' }}</div>
+                        </div>
+                        <div class="vc-builder-inline-actions">
+                            <button @click="applyBlockPreset(preset)" :disabled="!selectedBlockData" class="vc-builder-icon-button" title="Apply preset">Use</button>
+                            <button @click="insertPresetAfterSelection(preset)" :disabled="selectedSection === null" class="vc-builder-icon-button" title="Insert preset">Add</button>
+                            <button v-if="preset.can_edit" @click="updateSharedPresetItem(preset)" class="vc-builder-icon-button" title="Save preset metadata">Save</button>
+                            <button v-if="preset.can_delete" @click="deleteBlockPreset(preset.id)" class="vc-builder-icon-button text-rose-300" title="Delete preset">Del</button>
+                        </div>
+                    </div>
+                    <div v-if="!managedPresetLibraryItems.length" class="vc-builder-empty p-6 text-center">
+                        <div>
+                            <p class="text-sm font-semibold text-[var(--vc-text)]">No presets found</p>
+                            <p class="mt-1 text-sm text-[var(--vc-text-soft)]">Try another search query or create a preset from the inspector.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="space-y-3">
+                    <div v-for="template in managedTemplateLibraryItems" :key="template.id" class="vc-builder-preset-card">
+                        <div class="min-w-0 flex-1 space-y-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="vc-builder-badge">{{ template.source || 'shared' }}</span>
+                                <span class="vc-builder-badge">{{ template.visibility || 'shared' }}</span>
+                                <span v-if="template.owner" class="vc-builder-badge">by {{ template.owner }}</span>
+                            </div>
+                            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+                                <input v-model="template.name" type="text" class="vc-input" :disabled="!template.can_edit">
+                                <input v-model="template.category" type="text" class="vc-input" :disabled="!template.can_edit">
+                                <select v-model="template.visibility" class="vc-select" :disabled="!template.can_edit">
+                                    <option value="shared">Shared</option>
+                                    <option value="private">Private</option>
+                                </select>
+                            </div>
+                            <div class="vc-builder-command-meta">{{ template.sections?.length || 0 }} sections · {{ formatPresetDate(template.updated_at) }}</div>
+                        </div>
+                        <div class="vc-builder-inline-actions">
+                            <button @click="applyTemplate(template)" class="vc-builder-icon-button" title="Apply template">Use</button>
+                            <button v-if="template.can_edit" @click="syncSectionToTemplate(template)" :disabled="selectedSection === null" class="vc-builder-icon-button" title="Replace template content from selected section">Sync</button>
+                            <button v-if="template.can_edit" @click="updateSharedTemplateItem(template)" class="vc-builder-icon-button" title="Save template metadata">Save</button>
+                            <button v-if="template.can_delete" @click="deleteSharedTemplate(template.id)" class="vc-builder-icon-button text-rose-300" title="Delete template">Del</button>
+                        </div>
+                    </div>
+                    <div v-if="!managedTemplateLibraryItems.length" class="vc-builder-empty p-6 text-center">
+                        <div>
+                            <p class="text-sm font-semibold text-[var(--vc-text)]">No templates found</p>
+                            <p class="mt-1 text-sm text-[var(--vc-text-soft)]">Save the selected section as a template or switch the library scope.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1073,6 +1166,7 @@
             const showPreview = ref(false);
             const showRevisions = ref(false);
             const showTemplates = ref(false);
+            const showLibraryManager = ref(false);
             const previewHtml = ref('');
             const previewBreakpoint = ref('100%');
             const autoSaveTimer = ref(null);
@@ -1095,7 +1189,11 @@
             const inspectorMode = ref('block');
             const presetDraftName = ref('');
             const presetVisibility = ref('shared');
+            const templateDraftName = ref('');
+            const templateDraftCategory = ref('custom');
             const templateVisibility = ref('shared');
+            const libraryManagerTab = ref('presets');
+            const librarySearchQuery = ref('');
             const presetLibraryScope = ref('all');
             const templateLibraryScope = ref('all');
             const sharedPresets = ref([]);
@@ -1341,6 +1439,31 @@
             });
             const filteredTemplates = computed(() => {
                 return templates.value.filter((template) => matchesLibraryScope(template, templateLibraryScope.value));
+            });
+            const managedPresetLibraryItems = computed(() => {
+                const query = librarySearchQuery.value.trim().toLowerCase();
+
+                return sharedPresets.value.filter((preset) => {
+                    if (!matchesLibraryScope(preset, presetLibraryScope.value)) return false;
+                    if (!query) return true;
+
+                    return preset.name.toLowerCase().includes(query)
+                        || preset.type.toLowerCase().includes(query)
+                        || (preset.owner || '').toLowerCase().includes(query);
+                });
+            });
+            const managedTemplateLibraryItems = computed(() => {
+                const query = librarySearchQuery.value.trim().toLowerCase();
+
+                return templates.value.filter((template) => {
+                    if (!matchesLibraryScope(template, templateLibraryScope.value)) return false;
+                    if (!query) return true;
+
+                    return template.name.toLowerCase().includes(query)
+                        || (template.category || '').toLowerCase().includes(query)
+                        || (template.owner || '').toLowerCase().includes(query)
+                        || (template.source || '').toLowerCase().includes(query);
+                });
             });
             const inspectorTitle = computed(() => {
                 if (selectedBlockData.value) {
@@ -2108,6 +2231,17 @@
                 commandQuery.value = '';
             };
 
+            const openLibraryManager = (tab = 'presets') => {
+                libraryManagerTab.value = tab;
+                showLibraryManager.value = true;
+                librarySearchQuery.value = '';
+            };
+
+            const closeLibraryManager = () => {
+                showLibraryManager.value = false;
+                librarySearchQuery.value = '';
+            };
+
             const loadSharedPresets = async () => {
                 try {
                     const response = await fetch('/admin/pages/builder/presets');
@@ -2216,29 +2350,47 @@
                 }
             };
 
-            const saveSelectedSectionAsTemplate = async (template = null) => {
+            const updateSharedPresetItem = async (preset) => {
+                if (!preset?.can_edit) return;
+
+                try {
+                    const response = await fetch(`/admin/pages/builder/presets/${preset.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                        },
+                        body: JSON.stringify({
+                            name: preset.name,
+                            visibility: preset.visibility,
+                        }),
+                    });
+                    const data = await response.json();
+                    sharedPresets.value = data.presets || sharedPresets.value;
+                    persistBlockPresets();
+                } catch (error) {
+                    console.error('Shared preset metadata update error:', error);
+                }
+            };
+
+            const saveSelectedSectionAsTemplate = async () => {
                 if (selectedSection.value === null || !sections.value[selectedSection.value]) {
                     alert('Select a section first.');
                     return;
                 }
 
-                const name = window.prompt('Template name', template?.name || '');
-                if (!name) return;
+                const name = templateDraftName.value.trim() || `Section ${selectedSection.value + 1} template`;
 
                 const payload = {
                     name,
-                    category: template?.category || 'custom',
+                    category: templateDraftCategory.value.trim() || 'custom',
                     sections: [JSON.parse(JSON.stringify(sections.value[selectedSection.value]))],
-                    visibility: template?.visibility || templateVisibility.value,
+                    visibility: templateVisibility.value,
                 };
-                const url = template?.id && template?.can_edit
-                    ? `/admin/pages/builder/shared-templates/${template.id}`
-                    : '/admin/pages/builder/shared-templates';
-                const method = template?.id && template?.can_edit ? 'PUT' : 'POST';
 
                 try {
-                    const response = await fetch(url, {
-                        method,
+                    const response = await fetch('/admin/pages/builder/shared-templates', {
+                        method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
@@ -2249,6 +2401,61 @@
                     templates.value = data.templates || templates.value;
                 } catch (error) {
                     console.error('Shared template save error:', error);
+                }
+
+                templateDraftName.value = '';
+                templateDraftCategory.value = 'custom';
+            };
+
+            const syncSectionToTemplate = async (template) => {
+                if (selectedSection.value === null || !sections.value[selectedSection.value]) {
+                    alert('Select a section first.');
+                    return;
+                }
+
+                if (!template?.id || !template?.can_edit) return;
+
+                try {
+                    const response = await fetch(`/admin/pages/builder/shared-templates/${template.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                        },
+                        body: JSON.stringify({
+                            name: template.name,
+                            category: template.category,
+                            visibility: template.visibility,
+                            sections: [JSON.parse(JSON.stringify(sections.value[selectedSection.value]))],
+                        }),
+                    });
+                    const data = await response.json();
+                    templates.value = data.templates || templates.value;
+                } catch (error) {
+                    console.error('Shared template sync error:', error);
+                }
+            };
+
+            const updateSharedTemplateItem = async (template) => {
+                if (!template?.can_edit) return;
+
+                try {
+                    const response = await fetch(`/admin/pages/builder/shared-templates/${template.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                        },
+                        body: JSON.stringify({
+                            name: template.name,
+                            category: template.category,
+                            visibility: template.visibility,
+                        }),
+                    });
+                    const data = await response.json();
+                    templates.value = data.templates || templates.value;
+                } catch (error) {
+                    console.error('Shared template metadata update error:', error);
                 }
             };
 
@@ -2505,6 +2712,8 @@
                     closeQuickAdd();
                     closeContextMenu();
                     closeCommandPalette();
+                    closeLibraryManager();
+                    closeMediaPicker();
                     showPreview.value = false;
                     showRevisions.value = false;
                     return;
@@ -2652,10 +2861,10 @@
             return {
                 page, config, sections, activeCategory, activeBreakpoint,
                 searchQuery, contentSearchQuery, selectedSection, selectedBlock,
-                selectedBlockData, saving, showPreview, showRevisions, showTemplates, templates,
+                selectedBlockData, saving, showPreview, showRevisions, showTemplates, showLibraryManager, templates,
                 showCommandPalette, commandQuery, commandPaletteInput, contextMenu,
                 inspectorPinned, inspectorMode, inspectorTitle, inspectorDescription, toggleInspectorPinned,
-                presetDraftName, presetVisibility, templateVisibility, presetLibraryScope, templateLibraryScope, currentBlockPresets, filteredCurrentBlockPresets, filteredTemplates, saveCurrentBlockPreset, applyBlockPreset, insertPresetAfterSelection, deleteBlockPreset, formatPresetDate,
+                presetDraftName, presetVisibility, templateDraftName, templateDraftCategory, templateVisibility, libraryManagerTab, librarySearchQuery, presetLibraryScope, templateLibraryScope, currentBlockPresets, filteredCurrentBlockPresets, filteredTemplates, managedPresetLibraryItems, managedTemplateLibraryItems, openLibraryManager, closeLibraryManager, saveCurrentBlockPreset, applyBlockPreset, insertPresetAfterSelection, updateSharedPresetItem, deleteBlockPreset, formatPresetDate,
                 mediaLookup, showMediaPicker, mediaPickerQuery, mediaPickerPage, mediaPickerLastPage, mediaPickerItems, mediaPickerLoading, mediaPickerSelected,
                 openMediaPicker, closeMediaPicker, selectMediaItem, applyPickedMedia, changeMediaPickerPage,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
@@ -2672,7 +2881,7 @@
                 onBlockDragStart, onBlockDragOver, onBlockDrop, onBlockDragEnd,
                 onSectionBodyDragOver, onSectionBodyDrop, onInsertDragOver, onInsertDrop,
                 isDraggedBlock, isBlockDropTarget, isInsertTarget, isBlockSelected, selectedCountForSection, filteredCommandItems,
-                saveContent, previewContent, undo, redo, restoreRevision, applyTemplate, saveSelectedSectionAsTemplate, deleteSharedTemplate,
+                saveContent, previewContent, undo, redo, restoreRevision, applyTemplate, saveSelectedSectionAsTemplate, syncSectionToTemplate, updateSharedTemplateItem, deleteSharedTemplate,
                 exportCurrentSections, importSectionsPrompt, generateId, formatDate, countBlocks
             };
         }

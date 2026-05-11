@@ -173,13 +173,13 @@ Acceptance criteria базового MVP:
 - Media picker внутри repeater-полей и quick-add library для blocks, presets и visual templates/snippets.
 - Shared preset library на backend settings-repository, visual preview thumbnails и nested drag-and-drop для repeater items.
 - Ownership/visibility rules для builder libraries и shared template library с backend CRUD вместо только встроенных snippets.
+- Встроенный Builder Library Manager для управления preset/template metadata без prompt-flow и без выхода из advanced builder.
 
 Что ещё мешает считать модуль production-ready:
 
 - Нет завершённого runtime/manual QA сценариев редактирования, публикации и публичного рендера.
 - Нет подтверждённого end-to-end прогона на живом PHP runtime в текущем окружении.
 - Нет полноценного автоматизированного покрытия builder UX-сценариев.
-- Library management UX ещё частично опирается на lightweight flows и требует дальнейшей полировки.
 
 Оценка:
 
