@@ -210,6 +210,26 @@ Acceptance criteria:
 - Ошибки имеют стабильный формат.
 - Версия API отражена в ответе.
 
+Статус: `Public API v1 contract частично реализован в коде: pages, menus и site settings отдаются через resources и единый response envelope, добавлен базовый OpenAPI schema draft. Sanctum auth и полный mobile/auth слой ещё не завершены`.
+
+Что закрыто на уровне кода:
+
+- `/api/v1/public/pages`.
+- `/api/v1/public/pages/by-uri` через query- и path-вариант.
+- `/api/v1/public/menus/{location}`.
+- `/api/v1/public/settings/site`.
+- API version в `meta.api_version`.
+- Единый JSON envelope для успешных ответов и ошибок.
+- `PageResource`, `MenuResource`, `MenuItemResource`, `PublicSiteSettingsResource`.
+- Базовый OpenAPI schema draft в `docs/api/openapi-v1.yaml`.
+
+Что ещё не закрыто:
+
+- `token auth через Sanctum` пока не реализован: пакет и auth endpoints ещё не подключены.
+- Нет отдельного `/api/v1/auth/*` и `/api/v1/me`.
+- Нет подтверждённого runtime/manual QA публичного API.
+- Нет автоматизированных API tests на стабильность error contract и pagination contract.
+
 ## Приоритет P4 - AI Module
 
 Цель: добавить AI-помощника для страниц, текста, структуры и SEO.

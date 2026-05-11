@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('api/v1/public')->group(function (): void {
     // Pages
     Route::get('/pages', [FrontendPageApiController::class, 'index']);
-    Route::get('/pages/{page}', [FrontendPageApiController::class, 'show']);
+    Route::get('/pages/by-uri', [FrontendPageApiController::class, 'byUri']);
     Route::get('/pages/by-uri/{uri}', [FrontendPageApiController::class, 'byUri']);
+    Route::get('/pages/{page}', [FrontendPageApiController::class, 'show']);
     
     // Menus
     Route::get('/menus/{location}', [\App\System\Http\Controllers\PublicSettingsApiController::class, 'menu']);
