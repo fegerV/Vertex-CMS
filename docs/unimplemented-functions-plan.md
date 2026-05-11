@@ -124,7 +124,7 @@ Acceptance criteria:
 
 Цель: собрать страницу из JSON-блоков и отрендерить её публично.
 
-Функции:
+Базовый объём MVP:
 
 - Builder schema validation.
 - Блоки Heading, Text, Button, Image, Divider, FAQ, HTML.
@@ -135,14 +135,24 @@ Acceptance criteria:
 - Preview.
 - Renderer partials.
 
-Acceptance criteria:
+Acceptance criteria базового MVP:
 
 - Страница сохраняется как JSON.
 - Неизвестный block type не ломает страницу.
 - HTML-блок проходит sanitization.
 - Блок можно удалить и после сохранения он исчезает.
 
-Статус: `Базовый MVP полностью реализован в коде, advanced builder существенно расширен сверх исходного объёма, но runtime/manual QA и end-to-end подтверждение ещё не завершены`.
+Статус: `Базовый MVP полностью реализован в коде. Advanced builder значительно расширен сверх исходного объёма, но runtime/manual QA и end-to-end подтверждение ещё не завершены`.
+
+Что закрыто на уровне кода:
+
+- JSON-сохранение структуры страницы.
+- Schema validation и нормализация builder content.
+- Публичный renderer с fallback-поведением для неизвестных block types.
+- Sanitization HTML-блоков через backend pipeline.
+- Удаление блоков и сохранение результата без возвращения удалённого контента.
+- Preview перед публикацией.
+- Basic builder и advanced builder для редактирования одной и той же JSON-структуры.
 
 Что уже есть сверх базового MVP:
 
@@ -164,11 +174,19 @@ Acceptance criteria:
 - Shared preset library на backend settings-repository, visual preview thumbnails и nested drag-and-drop для repeater items.
 - Ownership/visibility rules для builder libraries и shared template library с backend CRUD вместо только встроенных snippets.
 
+Что ещё мешает считать модуль production-ready:
+
+- Нет завершённого runtime/manual QA сценариев редактирования, публикации и публичного рендера.
+- Нет подтверждённого end-to-end прогона на живом PHP runtime в текущем окружении.
+- Нет полноценного автоматизированного покрытия builder UX-сценариев.
+- Library management UX ещё частично опирается на lightweight flows и требует дальнейшей полировки.
+
 Оценка:
 
 - Исходные acceptance criteria закрыты на уровне кода.
-- По объёму функций модуль уже сильнее первоначального MVP.
-- До полного закрытия остаётся runtime/manual QA подтверждение сценариев редактирования и публикации.
+- По объёму функций модуль уже заметно сильнее первоначального MVP.
+- Корректнее считать его `advanced builder foundation`, а не просто `MVP`.
+- До полного продуктового закрытия остаётся runtime/manual QA и подтверждение end-to-end сценариев редактирования, сохранения, публикации и публичного рендера.
 
 ## Приоритет P3 - API для мобильных приложений
 

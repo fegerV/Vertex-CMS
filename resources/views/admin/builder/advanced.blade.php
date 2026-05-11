@@ -64,14 +64,24 @@
             </button>
             
             <div v-if="showTemplates" class="mt-3 space-y-2 max-h-40 overflow-y-auto">
+                <div class="flex flex-wrap gap-2 pb-1">
+                    <button @click="templateLibraryScope = 'all'" class="vc-builder-chip" :class="templateLibraryScope === 'all' ? 'vc-builder-chip-active' : ''">All</button>
+                    <button @click="templateLibraryScope = 'mine'" class="vc-builder-chip" :class="templateLibraryScope === 'mine' ? 'vc-builder-chip-active' : ''">My</button>
+                    <button @click="templateLibraryScope = 'shared'" class="vc-builder-chip" :class="templateLibraryScope === 'shared' ? 'vc-builder-chip-active' : ''">Shared</button>
+                    <button @click="templateLibraryScope = 'builtin'" class="vc-builder-chip" :class="templateLibraryScope === 'builtin' ? 'vc-builder-chip-active' : ''">Built-in</button>
+                </div>
                 <div 
-                    v-for="tpl in templates"
+                    v-for="tpl in filteredTemplates"
                     :key="tpl.id"
                     class="vc-builder-card p-2 text-xs"
                 >
                     <button @click="applyTemplate(tpl)" class="block w-full text-left">
                         <span class="font-semibold text-[var(--vc-text)]">{{ tpl.name }}</span>
                         <span class="mt-1 block text-[var(--vc-text-soft)]">{{ tpl.category || tpl.source || 'template' }} · {{ tpl.visibility || 'shared' }}</span>
+                        <span class="mt-1 flex flex-wrap gap-1">
+                            <span class="vc-builder-badge">{{ tpl.source || 'shared' }}</span>
+                            <span v-if="tpl.owner" class="vc-builder-badge">by {{ tpl.owner }}</span>
+                        </span>
                     </button>
                     <div class="mt-2 flex items-center gap-2" v-if="tpl.can_edit || tpl.can_delete">
                         <button v-if="tpl.can_edit" @click="saveSelectedSectionAsTemplate(tpl)" class="vc-builder-icon-button" title="Update template">Upd</button>
@@ -389,7 +399,12 @@
                             <div class="vc-builder-form-title">Presets</div>
                             <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Save reusable snippets for this block type.</p>
                         </div>
-                        <span class="vc-builder-badge">{{ currentBlockPresets.length }}</span>
+                        <span class="vc-builder-badge">{{ filteredCurrentBlockPresets.length }}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button @click="presetLibraryScope = 'all'" class="vc-builder-chip" :class="presetLibraryScope === 'all' ? 'vc-builder-chip-active' : ''">All</button>
+                        <button @click="presetLibraryScope = 'mine'" class="vc-builder-chip" :class="presetLibraryScope === 'mine' ? 'vc-builder-chip-active' : ''">My</button>
+                        <button @click="presetLibraryScope = 'shared'" class="vc-builder-chip" :class="presetLibraryScope === 'shared' ? 'vc-builder-chip-active' : ''">Shared</button>
                     </div>
                     <div class="flex items-center gap-3">
                         <input v-model="presetDraftName" type="text" class="vc-input" placeholder="Preset name">
@@ -399,8 +414,8 @@
                         </select>
                         <button @click="saveCurrentBlockPreset" class="vc-button vc-button-secondary px-3 py-2">Save</button>
                     </div>
-                    <div v-if="currentBlockPresets.length" class="vc-builder-preset-list">
-                        <div v-for="preset in currentBlockPresets" :key="preset.id" class="vc-builder-preset-card">
+                    <div v-if="filteredCurrentBlockPresets.length" class="vc-builder-preset-list">
+                        <div v-for="preset in filteredCurrentBlockPresets" :key="preset.id" class="vc-builder-preset-card">
                             <div>
                                 <div class="vc-builder-command-title">{{ preset.name }}</div>
                                 <div class="vc-builder-command-meta">{{ formatPresetDate(preset.updated_at) }} · {{ preset.visibility }} · {{ preset.owner || 'system' }}</div>
@@ -412,7 +427,7 @@
                             </div>
                         </div>
                     </div>
-                    <div v-else class="vc-builder-field-hint">No presets saved for this block yet.</div>
+                    <div v-else class="vc-builder-field-hint">{{ currentBlockPresets.length ? 'No presets in this scope yet.' : 'No presets saved for this block yet.' }}</div>
                 </div>
             </div>
             
@@ -1081,6 +1096,8 @@
             const presetDraftName = ref('');
             const presetVisibility = ref('shared');
             const templateVisibility = ref('shared');
+            const presetLibraryScope = ref('all');
+            const templateLibraryScope = ref('all');
             const sharedPresets = ref([]);
             const mediaLookup = ref({});
             const showMediaPicker = ref(false);
@@ -1306,10 +1323,24 @@
 
             const currentHistoryEntry = computed(() => history.value[historyIndex.value] || null);
             const currentHistoryLabel = computed(() => currentHistoryEntry.value?.label || '');
+            const matchesLibraryScope = (item, scope) => {
+                if (scope === 'all') return true;
+                if (scope === 'builtin') return item.source === 'builtin';
+                if (scope === 'shared') return item.visibility === 'shared' && item.source !== 'builtin';
+                if (scope === 'mine') return Boolean(item.is_owner);
+
+                return true;
+            };
             const currentBlockPresets = computed(() => {
                 if (!selectedBlockData.value) return [];
 
                 return sharedPresets.value.filter((preset) => preset.type === selectedBlockData.value.type);
+            });
+            const filteredCurrentBlockPresets = computed(() => {
+                return currentBlockPresets.value.filter((preset) => matchesLibraryScope(preset, presetLibraryScope.value));
+            });
+            const filteredTemplates = computed(() => {
+                return templates.value.filter((template) => matchesLibraryScope(template, templateLibraryScope.value));
             });
             const inspectorTitle = computed(() => {
                 if (selectedBlockData.value) {
@@ -2624,7 +2655,7 @@
                 selectedBlockData, saving, showPreview, showRevisions, showTemplates, templates,
                 showCommandPalette, commandQuery, commandPaletteInput, contextMenu,
                 inspectorPinned, inspectorMode, inspectorTitle, inspectorDescription, toggleInspectorPinned,
-                presetDraftName, presetVisibility, templateVisibility, currentBlockPresets, saveCurrentBlockPreset, applyBlockPreset, insertPresetAfterSelection, deleteBlockPreset, formatPresetDate,
+                presetDraftName, presetVisibility, templateVisibility, presetLibraryScope, templateLibraryScope, currentBlockPresets, filteredCurrentBlockPresets, filteredTemplates, saveCurrentBlockPreset, applyBlockPreset, insertPresetAfterSelection, deleteBlockPreset, formatPresetDate,
                 mediaLookup, showMediaPicker, mediaPickerQuery, mediaPickerPage, mediaPickerLastPage, mediaPickerItems, mediaPickerLoading, mediaPickerSelected,
                 openMediaPicker, closeMediaPicker, selectMediaItem, applyPickedMedia, changeMediaPickerPage,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
