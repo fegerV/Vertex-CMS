@@ -126,6 +126,18 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::delete('pages/builder/presets/{presetId}', [AdvancedBuilderController::class, 'destroySharedPreset'])
             ->middleware('vertex.permission:pages.edit')
             ->name('pages.builder.presets.destroy');
+        Route::get('pages/builder/shared-templates', [AdvancedBuilderController::class, 'getSharedTemplates'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.shared-templates.index');
+        Route::post('pages/builder/shared-templates', [AdvancedBuilderController::class, 'storeSharedTemplate'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.shared-templates.store');
+        Route::put('pages/builder/shared-templates/{templateId}', [AdvancedBuilderController::class, 'updateSharedTemplate'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.shared-templates.update');
+        Route::delete('pages/builder/shared-templates/{templateId}', [AdvancedBuilderController::class, 'destroySharedTemplate'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('pages.builder.shared-templates.destroy');
         Route::post('pages/{page}/apply-template', [AdvancedBuilderController::class, 'applyTemplate'])
             ->middleware('vertex.permission:pages.edit')
             ->name('pages.apply-template');

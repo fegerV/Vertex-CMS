@@ -67,10 +67,25 @@
                 <div 
                     v-for="tpl in templates"
                     :key="tpl.id"
-                    @click="applyTemplate(tpl)"
-                    class="vc-builder-card cursor-pointer p-2 text-xs"
+                    class="vc-builder-card p-2 text-xs"
                 >
-                    {{ tpl.name }}
+                    <button @click="applyTemplate(tpl)" class="block w-full text-left">
+                        <span class="font-semibold text-[var(--vc-text)]">{{ tpl.name }}</span>
+                        <span class="mt-1 block text-[var(--vc-text-soft)]">{{ tpl.category || tpl.source || 'template' }} · {{ tpl.visibility || 'shared' }}</span>
+                    </button>
+                    <div class="mt-2 flex items-center gap-2" v-if="tpl.can_edit || tpl.can_delete">
+                        <button v-if="tpl.can_edit" @click="saveSelectedSectionAsTemplate(tpl)" class="vc-builder-icon-button" title="Update template">Upd</button>
+                        <button v-if="tpl.can_delete" @click="deleteSharedTemplate(tpl.id)" class="vc-builder-icon-button text-rose-300" title="Delete template">Del</button>
+                    </div>
+                </div>
+            </div>
+            <div v-if="showTemplates" class="mt-3 space-y-2">
+                <div class="flex items-center gap-2">
+                    <select v-model="templateVisibility" class="vc-select text-xs">
+                        <option value="shared">Shared</option>
+                        <option value="private">Private</option>
+                    </select>
+                    <button @click="saveSelectedSectionAsTemplate()" class="vc-button vc-button-secondary px-3 py-2 text-xs">Save Section</button>
                 </div>
             </div>
         </div>
@@ -378,18 +393,22 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <input v-model="presetDraftName" type="text" class="vc-input" placeholder="Preset name">
+                        <select v-model="presetVisibility" class="vc-select max-w-36">
+                            <option value="shared">Shared</option>
+                            <option value="private">Private</option>
+                        </select>
                         <button @click="saveCurrentBlockPreset" class="vc-button vc-button-secondary px-3 py-2">Save</button>
                     </div>
                     <div v-if="currentBlockPresets.length" class="vc-builder-preset-list">
                         <div v-for="preset in currentBlockPresets" :key="preset.id" class="vc-builder-preset-card">
                             <div>
                                 <div class="vc-builder-command-title">{{ preset.name }}</div>
-                                <div class="vc-builder-command-meta">{{ formatPresetDate(preset.updated_at) }}</div>
+                                <div class="vc-builder-command-meta">{{ formatPresetDate(preset.updated_at) }} · {{ preset.visibility }} · {{ preset.owner || 'system' }}</div>
                             </div>
                             <div class="vc-builder-inline-actions">
                                 <button @click="applyBlockPreset(preset)" class="vc-builder-icon-button" title="Apply preset">Use</button>
                                 <button @click="insertPresetAfterSelection(preset)" class="vc-builder-icon-button" title="Insert preset as new block">Add</button>
-                                <button @click="deleteBlockPreset(preset.id)" class="vc-builder-icon-button text-rose-300" title="Delete preset">Del</button>
+                                <button v-if="preset.can_delete" @click="deleteBlockPreset(preset.id)" class="vc-builder-icon-button text-rose-300" title="Delete preset">Del</button>
                             </div>
                         </div>
                     </div>
@@ -672,7 +691,13 @@
                                     <span v-if="field.help" class="vc-builder-field-hint">{{ field.help }}</span>
                                 </div>
                                 <div v-if="field.type === 'repeater'" class="space-y-3">
-                                    <div v-if="!Array.isArray(localSettings[key]) || localSettings[key].length === 0" class="vc-builder-empty p-4 text-center">
+                                    <div
+                                        v-if="!Array.isArray(localSettings[key]) || localSettings[key].length === 0"
+                                        class="vc-builder-empty p-4 text-center"
+                                        :class="{ 'vc-builder-drop-target': repeaterDropTarget?.key === key }"
+                                        @dragover.prevent="onRepeaterDragOver(key, 0)"
+                                        @drop.prevent="onRepeaterDrop(key, 0)"
+                                    >
                                         <p class="text-sm font-semibold text-[var(--vc-text)]">No items yet</p>
                                         <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Add entries to populate this repeater field.</p>
                                     </div>
@@ -896,22 +921,23 @@
                         }
                     },
                     onRepeaterDragOver(key, itemIndex) {
-                        if (!this.draggedRepeater || this.draggedRepeater.key !== key) return;
+                        if (!this.draggedRepeater) return;
                         this.repeaterDropTarget = { key, itemIndex };
                     },
                     onRepeaterDrop(key, itemIndex) {
-                        if (!this.draggedRepeater || this.draggedRepeater.key !== key || !Array.isArray(this.localSettings[key])) {
+                        if (!this.draggedRepeater || !Array.isArray(this.localSettings[key]) || !Array.isArray(this.localSettings[this.draggedRepeater.key])) {
                             this.onRepeaterDragEnd();
                             return;
                         }
 
+                        const sourceKey = this.draggedRepeater.key;
                         const fromIndex = this.draggedRepeater.itemIndex;
-                        if (fromIndex === itemIndex) {
+                        if (sourceKey === key && fromIndex === itemIndex) {
                             this.onRepeaterDragEnd();
                             return;
                         }
 
-                        const [item] = this.localSettings[key].splice(fromIndex, 1);
+                        const [item] = this.localSettings[sourceKey].splice(fromIndex, 1);
                         this.localSettings[key].splice(itemIndex, 0, item);
                         this.onRepeaterDragEnd();
                     },
@@ -1053,6 +1079,8 @@
             const inspectorPinned = ref(false);
             const inspectorMode = ref('block');
             const presetDraftName = ref('');
+            const presetVisibility = ref('shared');
+            const templateVisibility = ref('shared');
             const sharedPresets = ref([]);
             const mediaLookup = ref({});
             const showMediaPicker = ref(false);
@@ -2037,6 +2065,16 @@
                 }
             };
 
+            const loadSharedTemplates = async () => {
+                try {
+                    const response = await fetch('/admin/pages/builder/shared-templates');
+                    const data = await response.json();
+                    templates.value = data.data || [];
+                } catch (error) {
+                    console.error('Shared templates load error:', error);
+                }
+            };
+
             const saveCurrentBlockPreset = async () => {
                 if (!selectedBlockData.value) return;
 
@@ -2048,6 +2086,7 @@
                     type: selectedBlockData.value.type,
                     name,
                     settings: JSON.parse(JSON.stringify(selectedBlockData.value.settings || {})),
+                    visibility: presetVisibility.value,
                 };
                 const url = existingPreset
                     ? `/admin/pages/builder/presets/${existingPreset.id}`
@@ -2120,6 +2159,57 @@
                     persistBlockPresets();
                 } catch (error) {
                     console.error('Shared preset delete error:', error);
+                }
+            };
+
+            const saveSelectedSectionAsTemplate = async (template = null) => {
+                if (selectedSection.value === null || !sections.value[selectedSection.value]) {
+                    alert('Select a section first.');
+                    return;
+                }
+
+                const name = window.prompt('Template name', template?.name || '');
+                if (!name) return;
+
+                const payload = {
+                    name,
+                    category: template?.category || 'custom',
+                    sections: [JSON.parse(JSON.stringify(sections.value[selectedSection.value]))],
+                    visibility: template?.visibility || templateVisibility.value,
+                };
+                const url = template?.id && template?.can_edit
+                    ? `/admin/pages/builder/shared-templates/${template.id}`
+                    : '/admin/pages/builder/shared-templates';
+                const method = template?.id && template?.can_edit ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(url, {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                        },
+                        body: JSON.stringify(payload),
+                    });
+                    const data = await response.json();
+                    templates.value = data.templates || templates.value;
+                } catch (error) {
+                    console.error('Shared template save error:', error);
+                }
+            };
+
+            const deleteSharedTemplate = async (templateId) => {
+                try {
+                    const response = await fetch(`/admin/pages/builder/shared-templates/${templateId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                        },
+                    });
+                    const data = await response.json();
+                    templates.value = data.templates || templates.value.filter((template) => template.id !== templateId);
+                } catch (error) {
+                    console.error('Shared template delete error:', error);
                 }
             };
 
@@ -2485,6 +2575,7 @@
                 saveToHistory('Initial state');
                 loadRevisions();
                 loadSharedPresets();
+                loadSharedTemplates();
                 hydrateMediaLookup(collectReferencedMediaIds());
                 document.addEventListener('keydown', handleKeydown);
                 document.addEventListener('click', handleGlobalPointer);
@@ -2495,13 +2586,6 @@
                     .then(data => {
                         allBlocks.value = data.blocks || {};
                         window.availableBlocks = allBlocks.value;
-                    });
-                
-                // Load templates
-                fetch('/admin/pages/templates')
-                    .then(r => r.json())
-                    .then(data => {
-                        templates.value = data.templates || [];
                     });
             });
 
@@ -2517,7 +2601,7 @@
                 selectedBlockData, saving, showPreview, showRevisions, showTemplates, templates,
                 showCommandPalette, commandQuery, commandPaletteInput, contextMenu,
                 inspectorPinned, inspectorMode, inspectorTitle, inspectorDescription, toggleInspectorPinned,
-                presetDraftName, currentBlockPresets, saveCurrentBlockPreset, applyBlockPreset, insertPresetAfterSelection, deleteBlockPreset, formatPresetDate,
+                presetDraftName, presetVisibility, templateVisibility, currentBlockPresets, saveCurrentBlockPreset, applyBlockPreset, insertPresetAfterSelection, deleteBlockPreset, formatPresetDate,
                 mediaLookup, showMediaPicker, mediaPickerQuery, mediaPickerPage, mediaPickerLastPage, mediaPickerItems, mediaPickerLoading, mediaPickerSelected,
                 openMediaPicker, closeMediaPicker, selectMediaItem, applyPickedMedia, changeMediaPickerPage,
                 breakpoints, revisions, canUndo, canRedo, canvasClass, categories,
@@ -2534,7 +2618,7 @@
                 onBlockDragStart, onBlockDragOver, onBlockDrop, onBlockDragEnd,
                 onSectionBodyDragOver, onSectionBodyDrop, onInsertDragOver, onInsertDrop,
                 isDraggedBlock, isBlockDropTarget, isInsertTarget, isBlockSelected, selectedCountForSection, filteredCommandItems,
-                saveContent, previewContent, undo, redo, restoreRevision, applyTemplate,
+                saveContent, previewContent, undo, redo, restoreRevision, applyTemplate, saveSelectedSectionAsTemplate, deleteSharedTemplate,
                 exportCurrentSections, importSectionsPrompt, generateId, formatDate, countBlocks
             };
         }
