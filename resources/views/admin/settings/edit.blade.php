@@ -6,6 +6,7 @@
 
 @section('content')
     @php($canEditSettings = auth()->user()?->hasPermission('settings.edit'))
+    @php($canManageAiKeys = $canManageAiKeys ?? false)
 
     <div class="mx-auto max-w-6xl">
         @unless ($canEditSettings)
@@ -41,6 +42,8 @@
                                     $segments = explode('.', $key);
                                     $inputName = 'settings['.implode('][', $segments).']';
                                     $oldKey = 'settings.'.implode('.', $segments);
+                                    $isAiSecretField = str_starts_with($key, 'ai.') && ($field['secret'] ?? false);
+                                    $fieldDisabled = (! $canEditSettings) || ($isAiSecretField && ! $canManageAiKeys);
                                 @endphp
                                 <label class="block {{ in_array($field['input'], ['textarea'], true) ? 'md:col-span-2' : '' }}">
                                     <span class="mb-2 block text-sm font-semibold text-[var(--vc-text)]">{{ $field['label'] }}</span>
@@ -50,6 +53,7 @@
                                             name="{{ $inputName }}"
                                             rows="4"
                                             class="vc-textarea"
+                                            @disabled($fieldDisabled)
                                         >{{ old($oldKey, $values[$key] ?? '') }}</textarea>
                                     @elseif ($field['input'] === 'checkbox')
                                         <span class="vc-checkbox-row">
@@ -59,11 +63,12 @@
                                                 value="1"
                                                 @checked(old($oldKey, $values[$key] ?? false))
                                                 class="rounded border-slate-300"
+                                                @disabled($fieldDisabled)
                                             >
                                             <span class="text-sm text-[var(--vc-text-muted)]">Включено</span>
                                         </span>
                                     @elseif ($field['input'] === 'select')
-                                        <select name="{{ $inputName }}" class="vc-select">
+                                        <select name="{{ $inputName }}" class="vc-select" @disabled($fieldDisabled)>
                                             @foreach ($field['options'] as $optionValue => $optionLabel)
                                                 <option value="{{ $optionValue }}" @selected(old($oldKey, $values[$key] ?? '') == $optionValue)>{{ $optionLabel }}</option>
                                             @endforeach
@@ -75,7 +80,14 @@
                                             value="{{ $field['secret'] ?? false ? '' : old($oldKey, $values[$key] ?? '') }}"
                                             @if ($field['secret'] ?? false) placeholder="{{ ! empty($values[$key]) ? 'Сохранённый ключ скрыт' : 'Введите ключ' }}" @endif
                                             class="vc-input"
+                                            @disabled($fieldDisabled)
                                         >
+                                    @endif
+
+                                    @if ($isAiSecretField && ! $canManageAiKeys)
+                                        <span class="mt-2 block text-xs text-[var(--vc-text-muted)]">
+                                            Editing AI keys requires permission `ai.manage_keys`.
+                                        </span>
                                     @endif
 
                                     @error($key)

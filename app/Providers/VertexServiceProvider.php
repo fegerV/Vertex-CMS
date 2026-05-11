@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\AI\Services\AiDraftService;
+use App\AI\Services\AiProviderRegistry;
 use App\Builder\Services\PageRenderer;
 use App\Content\Services\PageService;
 use App\Core\Services\InstallationService;
@@ -22,6 +24,8 @@ class VertexServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(SettingsService::class);
+        $this->app->singleton(AiProviderRegistry::class);
+        $this->app->singleton(AiDraftService::class);
         $this->app->singleton(InstallationService::class);
         $this->app->singleton(DatabaseConnectionService::class);
         $this->app->singleton(EnvironmentFileService::class);

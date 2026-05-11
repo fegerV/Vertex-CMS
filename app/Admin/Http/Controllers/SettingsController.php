@@ -25,6 +25,7 @@ class SettingsController extends Controller
         return view('admin.settings.edit', [
             'groups' => SettingCatalog::groups(),
             'values' => $this->settings->allMasked(),
+            'canManageAiKeys' => request()->user()?->hasPermission('ai.manage_keys') ?? false,
         ]);
     }
 
@@ -36,10 +37,18 @@ class SettingsController extends Controller
         )->validate();
 
         $payload = $this->normalizeBooleanValues($request, $payload);
+        $payload = $this->filterRestrictedAiFields($request, $payload);
 
         $this->settings->setMany($payload);
+
+        $secretKeys = collect(array_keys($payload))
+            ->intersect(SettingCatalog::secretKeys())
+            ->values()
+            ->all();
+
         $this->activityLog->record('settings.edit', 'settings', null, 'Settings updated.', [
-            'keys' => array_keys($payload),
+            'keys' => array_values(array_diff(array_keys($payload), $secretKeys)),
+            'secret_keys_updated' => count($secretKeys),
         ], $request);
 
         return redirect()
@@ -63,6 +72,21 @@ class SettingsController extends Controller
                 $payload[$key] = array_key_exists($key, $rawSettings)
                     ? filter_var($rawSettings[$key], FILTER_VALIDATE_BOOLEAN)
                     : false;
+            }
+        }
+
+        return $payload;
+    }
+
+    private function filterRestrictedAiFields(Request $request, array $payload): array
+    {
+        if ($request->user()?->hasPermission('ai.manage_keys')) {
+            return $payload;
+        }
+
+        foreach (SettingCatalog::secretKeys() as $secretKey) {
+            if (str_starts_with($secretKey, 'ai.')) {
+                unset($payload[$secretKey]);
             }
         }
 

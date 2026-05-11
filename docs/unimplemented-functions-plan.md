@@ -257,6 +257,26 @@ Acceptance criteria:
 - AI не сохраняет изменения без подтверждения.
 - Secret keys не попадают в logs и responses.
 
+Статус: `основной P4 flow реализован в коде: encrypted AI settings, provider registry, permission-aware AI panel, draft-only generation endpoints и AI activity logs уже есть. Реальная интеграция с внешними LLM provider SDK и runtime QA ещё не завершены`.
+
+Что закрыто на уровне кода:
+
+- AI settings catalog с encrypted provider keys, включая `ai.custom_api_key`.
+- Restriction layer для AI secret key editing через permission `ai.manage_keys`.
+- Provider registry endpoint `GET /admin/api/ai/providers`.
+- Draft-generation endpoint `POST /admin/api/ai/chat` для `text`, `faq`, `cta`, `seo` и `builder`.
+- Permission-aware AI panel на create/edit page screens для пользователей с `ai.use`.
+- Apply-only UX: AI обновляет только поля формы, но не сохраняет страницу.
+- AI activity logs без вывода secret values в metadata.
+- Settings activity log больше не детализирует AI secret keys.
+
+Что ещё не закрыто:
+
+- Нет живой интеграции с external provider SDK (`openai-php/client`, Anthropic SDK, Ollama и т.д.).
+- Генерация пока остаётся internal draft engine, а не runtime-вызовом внешней модели.
+- Нет отдельного admin UI для AI-specific log review; пока используются общие system logs.
+- Нет runtime/manual QA и automated tests для AI panel и admin API contract.
+
 ## Приоритет P5 - PWA, themes, taxonomy
 
 Цель: подготовить продукт к более широким сценариям сайтов.

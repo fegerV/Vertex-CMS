@@ -60,6 +60,7 @@ class SettingCatalog
                     'ai.openai_api_key' => ['label' => 'OpenAI API key', 'type' => 'encrypted', 'input' => 'password', 'secret' => true, 'rules' => ['nullable', 'string', 'max:255']],
                     'ai.anthropic_api_key' => ['label' => 'Anthropic API key', 'type' => 'encrypted', 'input' => 'password', 'secret' => true, 'rules' => ['nullable', 'string', 'max:255']],
                     'ai.custom_api_base' => ['label' => 'Custom API base URL', 'type' => 'string', 'input' => 'url', 'rules' => ['nullable', 'url', 'max:500']],
+                    'ai.custom_api_key' => ['label' => 'Custom API key', 'type' => 'encrypted', 'input' => 'password', 'secret' => true, 'rules' => ['nullable', 'string', 'max:255']],
                 ],
             ],
             'pwa' => [

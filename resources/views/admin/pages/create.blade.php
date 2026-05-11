@@ -15,6 +15,6 @@
             </form>
         </div>
 
-        @include('admin.pages.partials.ai-assistant')
+        @includeWhen(auth()->user()?->hasPermission('ai.use'), 'admin.pages.partials.ai-assistant')
     </div>
 @endsection

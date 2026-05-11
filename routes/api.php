@@ -1,5 +1,6 @@
 <?php
 
+use App\AI\Http\Controllers\AiController;
 use App\Builder\Http\Controllers\BuilderApiController;
 use App\Content\Http\Controllers\PageApiController;
 use App\Media\Http\Controllers\MediaApiController;
@@ -19,6 +20,8 @@ Route::delete('/media/{media}', [MediaApiController::class, 'destroy']);
 
 Route::get('/builder/blocks', [BuilderApiController::class, 'blocks']);
 Route::post('/builder/render-preview', [BuilderApiController::class, 'renderPreview']);
+Route::get('/ai/providers', [AiController::class, 'providers']);
+Route::post('/ai/chat', [AiController::class, 'chat']);
 
 Route::get('/system/info', [SystemApiController::class, 'info']);
 Route::post('/cache/clear', [SystemApiController::class, 'clearCache']);
