@@ -2,11 +2,17 @@
 
 namespace App\Builder\Services;
 
+use App\Theme\Services\ThemeManager;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class PageRenderer
 {
+    public function __construct(
+        private readonly ThemeManager $themes,
+    ) {
+    }
+
     public function render(?array $content): HtmlString
     {
         $sections = $content['sections'] ?? [];
@@ -40,6 +46,19 @@ class PageRenderer
     {
         $type = Str::of($block['type'] ?? 'unknown')->lower()->value();
         $settings = $block['settings'] ?? $block;
+        $override = $this->themes->blockView($type);
+
+        if ($override) {
+            $html = $type === 'html'
+                ? $this->html($settings)
+                : null;
+
+            return view($override, [
+                'block' => $block,
+                'settings' => $settings,
+                'html' => $html,
+            ])->render();
+        }
 
         return match ($type) {
             'heading' => $this->heading($settings),

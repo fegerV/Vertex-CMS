@@ -17,6 +17,7 @@ use App\System\Services\DatabaseConnectionService;
 use App\System\Services\EnvironmentFileService;
 use App\System\Services\InstallerRunner;
 use App\System\Services\SystemInfoService;
+use App\Theme\Services\ThemeManager;
 use Illuminate\Support\ServiceProvider;
 
 class VertexServiceProvider extends ServiceProvider
@@ -37,6 +38,7 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(MediaService::class);
         $this->app->singleton(CacheService::class);
         $this->app->singleton(SystemInfoService::class);
+        $this->app->singleton(ThemeManager::class);
     }
 
     public function boot(RouteRegistrar $routes): void

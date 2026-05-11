@@ -5,6 +5,7 @@ namespace App\Content\Services;
 use App\Core\Services\SlugService;
 use App\Models\Page;
 use App\Models\PageRevision;
+use App\Models\Term;
 use App\Models\User;
 use App\Seo\Services\SeoMetaService;
 use App\System\Services\ActivityLogService;
@@ -33,6 +34,7 @@ class PageService
         ]);
 
         $this->seoMeta->updateFor($page, $payload);
+        $this->syncTerms($page, $payload['term_ids'] ?? []);
         $page->load('seoMeta');
         $this->createRevision($page, $user);
         $this->activityLog->record('pages.create', 'page', $page->id, "Page \"{$page->title}\" created.");
@@ -50,6 +52,7 @@ class PageService
         ])->save();
 
         $this->seoMeta->updateFor($page, $payload);
+        $this->syncTerms($page, $payload['term_ids'] ?? []);
         $page->load('seoMeta');
         $this->createRevision($page, $user);
         $this->activityLog->record('pages.edit', 'page', $page->id, "Page \"{$page->title}\" updated.");
@@ -213,6 +216,16 @@ class PageService
             'custom_fields_json',
             'published_at',
         ]);
+    }
+
+    private function syncTerms(Page $page, array $termIds): void
+    {
+        $validTermIds = Term::query()
+            ->whereIn('id', $termIds)
+            ->pluck('id')
+            ->all();
+
+        $page->terms()->sync($validTermIds);
     }
 
     public function normalizeCustomFieldsPayload(mixed $fields): array

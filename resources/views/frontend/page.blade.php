@@ -50,5 +50,14 @@
             </section>
         @endif
     </main>
+    @if (config_value('pwa.enabled', false))
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('{{ route('frontend.service-worker') }}').catch(() => {});
+                });
+            }
+        </script>
+    @endif
 </body>
 </html>

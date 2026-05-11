@@ -1,0 +1,11 @@
+{
+  "name": "Default",
+  "slug": "default",
+  "version": "0.1.0",
+  "core_constraint": "^0.1",
+  "supports": {
+    "pwa": true,
+    "builder": true,
+    "responsive": true
+  }
+}

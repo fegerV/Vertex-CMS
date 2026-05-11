@@ -21,6 +21,13 @@ class PageResource extends JsonResource
             'custom_fields' => collect($this->custom_fields_json ?? [])
                 ->mapWithKeys(fn (array $field) => [$field['key'] => $field['value'] ?? null])
                 ->all(),
+            'terms' => $this->whenLoaded('terms', fn () => $this->terms->map(fn ($term) => [
+                'id' => $term->id,
+                'name' => $term->name,
+                'slug' => $term->slug,
+                'taxonomy' => $term->taxonomy?->slug,
+                'archive_url' => url("/taxonomy/{$term->taxonomy?->slug}/{$term->slug}"),
+            ])->values()->all()),
             'published_at' => $this->published_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

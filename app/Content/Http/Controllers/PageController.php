@@ -6,6 +6,7 @@ use App\Content\Services\PageService;
 use App\Http\Controllers\Controller;
 use App\Models\CustomFieldGroup;
 use App\Models\Page;
+use App\Models\Taxonomy;
 use App\Seo\Services\SeoMetaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class PageController extends Controller
             ]),
             'fieldGroups' => $this->fieldGroupsForTemplate('default'),
             'allFieldGroups' => CustomFieldGroup::query()->orderBy('name')->get(),
+            'taxonomies' => Taxonomy::query()->with('terms')->orderBy('name')->get(),
             'parentPages' => Page::query()->orderBy('title')->get(),
             'statuses' => PageService::STATUSES,
             'robotsOptions' => SeoMetaService::ROBOTS,
@@ -54,9 +56,10 @@ class PageController extends Controller
     public function edit(Page $page): View
     {
         return view('admin.pages.edit', [
-            'page' => $page->load('seoMeta'),
+            'page' => $page->load(['seoMeta', 'terms']),
             'fieldGroups' => $this->fieldGroupsForTemplate($page->template ?: 'default'),
             'allFieldGroups' => CustomFieldGroup::query()->orderBy('name')->get(),
+            'taxonomies' => Taxonomy::query()->with('terms')->orderBy('name')->get(),
             'parentPages' => Page::query()
                 ->whereKeyNot($page->id)
                 ->orderBy('title')
@@ -94,6 +97,8 @@ class PageController extends Controller
             'template' => ['nullable', 'string', 'max:255'],
             'content_json' => ['nullable', 'string'],
             'custom_fields_json' => ['nullable', 'string'],
+            'term_ids' => ['nullable', 'array'],
+            'term_ids.*' => ['integer', Rule::exists('terms', 'id')],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:500'],
             'seo_canonical_url' => ['nullable', 'url', 'max:500'],

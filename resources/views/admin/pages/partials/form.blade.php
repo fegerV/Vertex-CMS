@@ -95,6 +95,9 @@
     ])->values()->all();
     $currentTemplate = old('template', $page->template ?: 'default');
     $seo = $page->seoMeta;
+    $selectedTermIds = collect(old('term_ids', $page->terms?->pluck('id')->all() ?? []))
+        ->map(fn ($id) => (string) $id)
+        ->all();
 @endphp
 
 <section class="space-y-5 border-t border-slate-100 pt-5">
@@ -146,6 +149,55 @@
         <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
     @enderror
 </section>
+
+@if (($taxonomies ?? collect())->isNotEmpty())
+    <section class="space-y-5 border-t border-slate-100 pt-5">
+        <div>
+            <h2 class="text-lg font-semibold">Taxonomy</h2>
+            <p class="mt-1 text-sm text-slate-500">Attach categories and tags to make the page available in term archives and the public taxonomy API.</p>
+        </div>
+
+        <div class="grid gap-5 lg:grid-cols-2">
+            @foreach ($taxonomies as $taxonomy)
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div class="mb-3">
+                        <h3 class="text-sm font-semibold text-slate-900">{{ $taxonomy->name }}</h3>
+                        <p class="text-xs text-slate-500">Slug: {{ $taxonomy->slug }}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        @forelse ($taxonomy->terms as $term)
+                            <label class="flex items-start gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    name="term_ids[]"
+                                    value="{{ $term->id }}"
+                                    @checked(in_array((string) $term->id, $selectedTermIds, true))
+                                    class="mt-0.5 rounded border-slate-300"
+                                >
+                                <span>
+                                    <span class="block font-medium text-slate-900">{{ $term->name }}</span>
+                                    @if ($term->description)
+                                        <span class="block text-xs text-slate-500">{{ $term->description }}</span>
+                                    @endif
+                                </span>
+                            </label>
+                        @empty
+                            <p class="text-sm text-slate-500">No terms available in this taxonomy yet.</p>
+                        @endforelse
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        @error('term_ids')
+            <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+        @enderror
+        @error('term_ids.*')
+            <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+        @enderror
+    </section>
+@endif
 
 <section class="space-y-5 border-t border-slate-100 pt-5">
     <div>

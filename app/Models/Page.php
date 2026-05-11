@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -45,6 +46,11 @@ class Page extends Model
     public function seoMeta(): MorphOne
     {
         return $this->morphOne(SeoMeta::class, 'entity');
+    }
+
+    public function terms(): MorphToMany
+    {
+        return $this->morphToMany(Term::class, 'termable');
     }
 
     public function isPublished(): bool

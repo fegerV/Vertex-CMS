@@ -5,6 +5,7 @@ use App\Content\Http\Controllers\FrontendPageApiController;
 use App\Seo\Http\Controllers\RobotsController;
 use App\Seo\Http\Controllers\SitemapController;
 use App\System\Http\Controllers\PublicSettingsApiController;
+use App\Taxonomy\Http\Controllers\PublicTaxonomyApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api/v1/public')->middleware('throttle:api-public')->group(function (): void {
@@ -19,6 +20,10 @@ Route::prefix('api/v1/public')->middleware('throttle:api-public')->group(functio
     
     // Settings
     Route::get('/settings/site', [PublicSettingsApiController::class, 'site']);
+
+    // Taxonomy
+    Route::get('/taxonomies', [PublicTaxonomyApiController::class, 'index']);
+    Route::get('/taxonomies/{taxonomy}/terms/{term}/pages', [PublicTaxonomyApiController::class, 'termPages']);
     
     // SEO
     Route::get('/sitemap.xml', [SitemapController::class, 'index']);

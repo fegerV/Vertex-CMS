@@ -16,7 +16,7 @@ class FrontendPageApiController extends Controller
         abort_unless(config_value('api.public_enabled', true), 403, 'Public API is disabled.');
 
         $pages = Page::query()
-            ->with('seoMeta')
+            ->with(['seoMeta', 'terms.taxonomy'])
             ->where('status', 'published')
             ->where(fn ($query) => $query->whereNull('published_at')->orWhere('published_at', '<=', now()))
             ->orderBy('uri')
@@ -34,7 +34,7 @@ class FrontendPageApiController extends Controller
         abort_unless($page->isPublished(), 404, 'Page not found or not published.');
 
         return ApiResponse::success(
-            PageResource::make($page->load('seoMeta'))->resolve($request)
+            PageResource::make($page->load(['seoMeta', 'terms.taxonomy']))->resolve($request)
         );
     }
 
@@ -47,7 +47,7 @@ class FrontendPageApiController extends Controller
         $normalizedUri = $normalizedUri === '' ? '/' : '/'.ltrim($normalizedUri, '/');
 
         $page = Page::query()
-            ->with('seoMeta')
+            ->with(['seoMeta', 'terms.taxonomy'])
             ->where('uri', $normalizedUri)
             ->where('status', 'published')
             ->where(fn ($query) => $query->whereNull('published_at')->orWhere('published_at', '<=', now()))
