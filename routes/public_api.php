@@ -28,12 +28,12 @@ Route::prefix('api/v1/public')->middleware('throttle:api-public')->group(functio
 Route::prefix('api/v1')->group(function (): void {
     Route::prefix('auth')->group(function (): void {
         Route::post('/login', [ApiAuthController::class, 'login'])->middleware('throttle:api-login');
-        Route::middleware(['auth', 'throttle:api-authenticated'])->group(function (): void {
+        Route::middleware(['auth:sanctum', 'throttle:api-authenticated'])->group(function (): void {
             Route::post('/logout', [ApiAuthController::class, 'logout']);
         });
     });
 
-    Route::middleware(['auth', 'throttle:api-authenticated'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'throttle:api-authenticated'])->group(function (): void {
         Route::get('/me', [ApiAuthController::class, 'me']);
     });
 });

@@ -6,9 +6,10 @@ use App\Auth\Http\Resources\AuthUserResource;
 use App\Http\Controllers\Controller;
 use App\Support\Api\ApiResponse;
 use App\System\Services\ActivityLogService;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class ApiAuthController extends Controller
@@ -23,40 +24,42 @@ class ApiAuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'remember' => ['nullable', 'boolean'],
+            'device_name' => ['nullable', 'string', 'max:120'],
         ]);
 
-        $remember = (bool) ($credentials['remember'] ?? false);
+        $user = User::query()
+            ->where('email', $credentials['email'])
+            ->where('status', 'active')
+            ->with('roles.permissions')
+            ->first();
 
-        if (! Auth::attempt([
-            'email' => $credentials['email'],
-            'password' => $credentials['password'],
-            'status' => 'active',
-        ], $remember)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],
             ]);
         }
-
-        $request->session()->regenerate();
-
-        $user = $request->user();
         $user->forceFill(['last_login_at' => now()])->save();
+        $abilities = $user->apiAbilities();
+        $deviceName = trim((string) ($credentials['device_name'] ?? 'mobile-client')) ?: 'mobile-client';
+        $token = $user->createToken($deviceName, $abilities);
 
         $this->activityLog->record(
             'api.auth.login',
             'user',
             $user->id,
-            'API user signed in.',
-            ['remember' => $remember, 'mode' => 'session'],
+            'API bearer token issued.',
+            ['mode' => 'sanctum', 'device_name' => $deviceName, 'abilities' => $abilities],
             $request,
         );
 
         return ApiResponse::success([
             'user' => AuthUserResource::make($user->load('roles.permissions'))->resolve($request),
             'auth' => [
-                'mode' => 'session',
-                'guard' => 'web',
+                'mode' => 'bearer',
+                'guard' => 'sanctum',
+                'token_type' => 'Bearer',
+                'access_token' => $token->plainTextToken,
+                'abilities' => $abilities,
             ],
         ]);
     }
@@ -77,15 +80,13 @@ class ApiAuthController extends Controller
                 'api.auth.logout',
                 'user',
                 $user->id,
-                'API user signed out.',
-                ['mode' => 'session'],
+                'API bearer token revoked.',
+                ['mode' => 'sanctum'],
                 $request,
             );
         }
 
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->user()?->currentAccessToken()?->delete();
 
         return ApiResponse::success([
             'logged_out' => true,

@@ -11,7 +11,7 @@ class RouteRegistrar
         Route::middleware('web')->group(base_path('routes/install.php'));
         Route::middleware('web')->group(base_path('routes/admin.php'));
         Route::middleware('web')->group(base_path('routes/web.php'));
-        Route::middleware('web')->group(base_path('routes/public_api.php'));
+        Route::middleware('api')->group(base_path('routes/public_api.php'));
         Route::prefix('admin/api')->middleware(['web', 'auth'])->group(base_path('routes/api.php'));
     }
 }

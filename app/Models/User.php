@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    use HasApiTokens;
+
     protected $fillable = [
         'name',
         'email',
@@ -42,5 +45,21 @@ class User extends Authenticatable
         return $this->roles()
             ->whereHas('permissions', fn ($query) => $query->whereIn('slug', $permissions))
             ->exists();
+    }
+
+    public function apiAbilities(): array
+    {
+        $roles = $this->roles()->with('permissions')->get();
+
+        if ($roles->contains(fn (Role $role) => $role->slug === 'super-admin')) {
+            return ['*'];
+        }
+
+        return $roles
+            ->flatMap(fn (Role $role) => $role->permissions->pluck('slug'))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 }

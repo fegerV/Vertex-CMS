@@ -3,12 +3,18 @@ info:
   title: VertexCMS Public API
   version: v1
   description: Public API contract for mobile clients and external integrations.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
 servers:
   - url: /api/v1
 paths:
   /auth/login:
     post:
-      summary: Sign in to the authenticated API session
+      summary: Issue a Sanctum bearer token
       requestBody:
         required: true
         content:
@@ -22,8 +28,8 @@ paths:
                   format: email
                 password:
                   type: string
-                remember:
-                  type: boolean
+                device_name:
+                  type: string
       responses:
         '200':
           description: Authenticated session payload
@@ -39,7 +45,9 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
   /auth/logout:
     post:
-      summary: Sign out from the authenticated API session
+      summary: Revoke current Sanctum bearer token
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Logout response
@@ -50,6 +58,8 @@ paths:
   /me:
     get:
       summary: Get current authenticated user
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Current user
@@ -116,7 +126,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PublicSettingsResponse'
-components:
   schemas:
     ApiMeta:
       type: object
@@ -206,10 +215,19 @@ components:
               properties:
                 mode:
                   type: string
-                  example: session
+                  example: bearer
                 guard:
                   type: string
-                  example: web
+                  example: sanctum
+                token_type:
+                  type: string
+                  example: Bearer
+                access_token:
+                  type: string
+                abilities:
+                  type: array
+                  items:
+                    type: string
         meta:
           $ref: '#/components/schemas/ApiMeta'
     LogoutResponse:

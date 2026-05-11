@@ -210,7 +210,7 @@ Acceptance criteria:
 - Ошибки имеют стабильный формат.
 - Версия API отражена в ответе.
 
-Статус: `Public API v1 contract частично реализован в коде: pages, menus, site settings, session-based auth endpoints и /api/v1/me отдаются через resources и единый response envelope, добавлен базовый OpenAPI schema draft. Sanctum token auth ещё не завершён`.
+Статус: `Public API v1 contract существенно продвинут в коде: public endpoints, bearer-oriented auth surface, /api/v1/me, единый response envelope и базовый OpenAPI schema draft уже собраны. Фактическая установка Sanctum package в это окружение и runtime QA ещё не завершены`.
 
 Что закрыто на уровне кода:
 
@@ -218,16 +218,18 @@ Acceptance criteria:
 - `/api/v1/public/pages/by-uri` через query- и path-вариант.
 - `/api/v1/public/menus/{location}`.
 - `/api/v1/public/settings/site`.
-- `/api/v1/auth/login`, `/api/v1/auth/logout`, `/api/v1/me` как промежуточный session-based auth layer.
+- `/api/v1/auth/login`, `/api/v1/auth/logout`, `/api/v1/me` как bearer-oriented auth surface.
 - API version в `meta.api_version`.
 - Единый JSON envelope для успешных ответов и ошибок.
 - Rate limiting для public, authenticated и login endpoints.
 - `PageResource`, `MenuResource`, `MenuItemResource`, `PublicSiteSettingsResource`, `AuthUserResource`.
+- Sanctum-ready user model, guard config, `personal_access_tokens` migration и `auth:sanctum` routing.
 - Базовый OpenAPI schema draft в `docs/api/openapi-v1.yaml`.
 
 Что ещё не закрыто:
 
-- `token auth через Sanctum` пока не реализован: пакет и bearer-token layer ещё не подключены.
+- Пакет `laravel/sanctum` добавлен в `composer.json`, но не установлен в текущем окружении, потому что здесь нет `composer`.
+- `composer.lock` не обновлён автоматически в этой среде.
 - Нет подтверждённого runtime/manual QA публичного API.
 - Нет автоматизированных API tests на стабильность error contract, auth contract и pagination contract.
 
