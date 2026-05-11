@@ -6,6 +6,57 @@ info:
 servers:
   - url: /api/v1
 paths:
+  /auth/login:
+    post:
+      summary: Sign in to the authenticated API session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                remember:
+                  type: boolean
+      responses:
+        '200':
+          description: Authenticated session payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthLoginResponse'
+        '422':
+          description: Validation or credentials error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/logout:
+    post:
+      summary: Sign out from the authenticated API session
+      responses:
+        '200':
+          description: Logout response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+  /me:
+    get:
+      summary: Get current authenticated user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
   /public/pages:
     get:
       summary: List published pages
@@ -99,6 +150,76 @@ components:
             details:
               type: object
               additionalProperties: true
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              slug:
+                type: string
+        permissions:
+          type: array
+          items:
+            type: string
+    AuthUserResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AuthUser'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    AuthLoginResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/AuthUser'
+            auth:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  example: session
+                guard:
+                  type: string
+                  example: web
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    LogoutResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            logged_out:
+              type: boolean
         meta:
           $ref: '#/components/schemas/ApiMeta'
     Page:

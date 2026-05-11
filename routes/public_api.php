@@ -1,12 +1,13 @@
 <?php
 
+use App\Auth\Http\Controllers\ApiAuthController;
 use App\Content\Http\Controllers\FrontendPageApiController;
 use App\Seo\Http\Controllers\RobotsController;
 use App\Seo\Http\Controllers\SitemapController;
 use App\System\Http\Controllers\PublicSettingsApiController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('api/v1/public')->group(function (): void {
+Route::prefix('api/v1/public')->middleware('throttle:api-public')->group(function (): void {
     // Pages
     Route::get('/pages', [FrontendPageApiController::class, 'index']);
     Route::get('/pages/by-uri', [FrontendPageApiController::class, 'byUri']);
@@ -22,6 +23,19 @@ Route::prefix('api/v1/public')->group(function (): void {
     // SEO
     Route::get('/sitemap.xml', [SitemapController::class, 'index']);
     Route::get('/robots.txt', [RobotsController::class, 'index']);
+});
+
+Route::prefix('api/v1')->group(function (): void {
+    Route::prefix('auth')->group(function (): void {
+        Route::post('/login', [ApiAuthController::class, 'login'])->middleware('throttle:api-login');
+        Route::middleware(['auth', 'throttle:api-authenticated'])->group(function (): void {
+            Route::post('/logout', [ApiAuthController::class, 'logout']);
+        });
+    });
+
+    Route::middleware(['auth', 'throttle:api-authenticated'])->group(function (): void {
+        Route::get('/me', [ApiAuthController::class, 'me']);
+    });
 });
 
 

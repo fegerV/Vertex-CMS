@@ -210,7 +210,7 @@ Acceptance criteria:
 - Ошибки имеют стабильный формат.
 - Версия API отражена в ответе.
 
-Статус: `Public API v1 contract частично реализован в коде: pages, menus и site settings отдаются через resources и единый response envelope, добавлен базовый OpenAPI schema draft. Sanctum auth и полный mobile/auth слой ещё не завершены`.
+Статус: `Public API v1 contract частично реализован в коде: pages, menus, site settings, session-based auth endpoints и /api/v1/me отдаются через resources и единый response envelope, добавлен базовый OpenAPI schema draft. Sanctum token auth ещё не завершён`.
 
 Что закрыто на уровне кода:
 
@@ -218,17 +218,18 @@ Acceptance criteria:
 - `/api/v1/public/pages/by-uri` через query- и path-вариант.
 - `/api/v1/public/menus/{location}`.
 - `/api/v1/public/settings/site`.
+- `/api/v1/auth/login`, `/api/v1/auth/logout`, `/api/v1/me` как промежуточный session-based auth layer.
 - API version в `meta.api_version`.
 - Единый JSON envelope для успешных ответов и ошибок.
-- `PageResource`, `MenuResource`, `MenuItemResource`, `PublicSiteSettingsResource`.
+- Rate limiting для public, authenticated и login endpoints.
+- `PageResource`, `MenuResource`, `MenuItemResource`, `PublicSiteSettingsResource`, `AuthUserResource`.
 - Базовый OpenAPI schema draft в `docs/api/openapi-v1.yaml`.
 
 Что ещё не закрыто:
 
-- `token auth через Sanctum` пока не реализован: пакет и auth endpoints ещё не подключены.
-- Нет отдельного `/api/v1/auth/*` и `/api/v1/me`.
+- `token auth через Sanctum` пока не реализован: пакет и bearer-token layer ещё не подключены.
 - Нет подтверждённого runtime/manual QA публичного API.
-- Нет автоматизированных API tests на стабильность error contract и pagination contract.
+- Нет автоматизированных API tests на стабильность error contract, auth contract и pagination contract.
 
 ## Приоритет P4 - AI Module
 
