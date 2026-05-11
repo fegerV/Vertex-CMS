@@ -55,6 +55,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LogoutResponse'
+  /auth/tokens:
+    get:
+      summary: List active Sanctum tokens for the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenListResponse'
+  /auth/tokens/{tokenId}:
+    delete:
+      summary: Revoke one Sanctum token owned by the current user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: tokenId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Token deletion response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteTokenResponse'
   /me:
     get:
       summary: Get current authenticated user
@@ -199,9 +229,41 @@ paths:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/AuthUser'
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/AuthUser'
+            token:
+              oneOf:
+                - $ref: '#/components/schemas/AuthToken'
+                - type: 'null'
         meta:
           $ref: '#/components/schemas/ApiMeta'
+    AuthToken:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        abilities:
+          type: array
+          items:
+            type: string
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        current:
+          type: boolean
     AuthLoginResponse:
       type: object
       properties:
@@ -230,6 +292,15 @@ paths:
                     type: string
         meta:
           $ref: '#/components/schemas/ApiMeta'
+    AuthTokenListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthToken'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
     LogoutResponse:
       type: object
       properties:
@@ -237,6 +308,20 @@ paths:
           type: object
           properties:
             logged_out:
+              type: boolean
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    DeleteTokenResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            deleted:
+              type: boolean
+            token_id:
+              type: integer
+            current:
               type: boolean
         meta:
           $ref: '#/components/schemas/ApiMeta'

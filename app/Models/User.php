@@ -50,14 +50,52 @@ class User extends Authenticatable
     public function apiAbilities(): array
     {
         $roles = $this->roles()->with('permissions')->get();
+        $permissionSlugs = $roles
+            ->flatMap(fn (Role $role) => $role->permissions->pluck('slug'))
+            ->filter()
+            ->unique()
+            ->values();
 
         if ($roles->contains(fn (Role $role) => $role->slug === 'super-admin')) {
             return ['*'];
         }
 
-        return $roles
-            ->flatMap(fn (Role $role) => $role->permissions->pluck('slug'))
-            ->filter()
+        $scopes = collect();
+
+        if ($permissionSlugs->contains(fn (string $slug) => str_starts_with($slug, 'pages.'))) {
+            $scopes->push('content:read');
+        }
+
+        if ($permissionSlugs->contains(fn (string $slug) => in_array($slug, ['pages.create', 'pages.edit', 'pages.delete'], true))) {
+            $scopes->push('content:write');
+        }
+
+        if ($permissionSlugs->contains(fn (string $slug) => in_array($slug, ['media.view', 'media.upload', 'media.edit', 'media.delete'], true))) {
+            $scopes->push('media:read');
+        }
+
+        if ($permissionSlugs->contains(fn (string $slug) => in_array($slug, ['media.upload', 'media.edit', 'media.delete'], true))) {
+            $scopes->push('media:write');
+        }
+
+        if ($permissionSlugs->contains('settings.view')) {
+            $scopes->push('settings:read');
+        }
+
+        if ($permissionSlugs->contains('settings.edit')) {
+            $scopes->push('settings:write');
+        }
+
+        if ($permissionSlugs->contains('system.view')) {
+            $scopes->push('system:read');
+        }
+
+        if ($permissionSlugs->contains(fn (string $slug) => str_contains($slug, 'seo'))) {
+            $scopes->push('seo:read');
+        }
+
+        return $scopes
+            ->merge($permissionSlugs)
             ->unique()
             ->values()
             ->all();

@@ -2,6 +2,7 @@
 
 namespace App\Auth\Http\Controllers;
 
+use App\Auth\Http\Resources\AuthTokenResource;
 use App\Auth\Http\Resources\AuthUserResource;
 use App\Http\Controllers\Controller;
 use App\Support\Api\ApiResponse;
@@ -66,8 +67,23 @@ class ApiAuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        return ApiResponse::success([
+            'user' => AuthUserResource::make($request->user()->load('roles.permissions'))->resolve($request),
+            'token' => $request->user()->currentAccessToken()
+                ? AuthTokenResource::make($request->user()->currentAccessToken())->resolve($request)
+                : null,
+        ]);
+    }
+
+    public function tokens(Request $request): JsonResponse
+    {
+        $tokens = $request->user()
+            ->tokens()
+            ->latest('id')
+            ->get();
+
         return ApiResponse::success(
-            AuthUserResource::make($request->user()->load('roles.permissions'))->resolve($request)
+            AuthTokenResource::collection($tokens)->resolve($request)
         );
     }
 
@@ -90,6 +106,33 @@ class ApiAuthController extends Controller
 
         return ApiResponse::success([
             'logged_out' => true,
+        ]);
+    }
+
+    public function destroyToken(Request $request, int $tokenId): JsonResponse
+    {
+        $token = $request->user()
+            ->tokens()
+            ->whereKey($tokenId)
+            ->firstOrFail();
+
+        $isCurrent = (int) optional($request->user()->currentAccessToken())->id === (int) $token->id;
+
+        $this->activityLog->record(
+            'api.auth.token.delete',
+            'user',
+            $request->user()->id,
+            'API bearer token revoked by owner.',
+            ['token_id' => $token->id, 'current' => $isCurrent],
+            $request,
+        );
+
+        $token->delete();
+
+        return ApiResponse::success([
+            'deleted' => true,
+            'token_id' => $tokenId,
+            'current' => $isCurrent,
         ]);
     }
 }

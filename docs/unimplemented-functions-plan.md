@@ -219,11 +219,13 @@ Acceptance criteria:
 - `/api/v1/public/menus/{location}`.
 - `/api/v1/public/settings/site`.
 - `/api/v1/auth/login`, `/api/v1/auth/logout`, `/api/v1/me` как bearer-oriented auth surface.
+- `/api/v1/auth/tokens` и revoke текущих/старых токенов пользователем.
 - API version в `meta.api_version`.
 - Единый JSON envelope для успешных ответов и ошибок.
 - Rate limiting для public, authenticated и login endpoints.
 - `PageResource`, `MenuResource`, `MenuItemResource`, `PublicSiteSettingsResource`, `AuthUserResource`.
 - Sanctum-ready user model, guard config, `personal_access_tokens` migration и `auth:sanctum` routing.
+- Token abilities/scopes и self-service token management endpoints.
 - Базовый OpenAPI schema draft в `docs/api/openapi-v1.yaml`.
 
 Что ещё не закрыто:
