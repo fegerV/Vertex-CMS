@@ -300,7 +300,7 @@ Acceptance criteria:
 - Term можно привязать к странице.
 - API может вернуть страницы по term.
 
-Статус: `основной P5 vertical slice реализован в коде: manifest, service worker, offline route, theme metadata/fallback и базовый taxonomy layer с page-term attachment, term archives и public taxonomy API уже собраны. Runtime QA, миграции и расширенный admin UI taxonomy ещё не завершены`.
+Статус: `основной P5 vertical slice реализован в коде: manifest, service worker, offline route, theme metadata/fallback и taxonomy layer с page-term attachment, term archives, public taxonomy API и admin CRUD для taxonomies/terms уже собраны. Runtime QA и миграции ещё не завершены`.
 
 Что закрыто на уровне кода:
 
@@ -315,10 +315,10 @@ Acceptance criteria:
 - Привязка term к странице прямо из page edit/create form.
 - Public term archive route `/taxonomy/{taxonomy}/{term}`.
 - Public taxonomy API, включая страницы по term.
+- Admin CRUD для taxonomies и terms: отдельные index/create/edit flow, nested term management, archive/meta fields и permission-aware вход из админки.
 
 Что ещё не закрыто:
 
-- Нет полноценного admin CRUD для taxonomies и terms.
 - Нет SEO/meta editor для term archives и term-specific sitemap entries.
 - Нет runtime/manual QA PWA offline behavior и taxonomy archive flow.
 - Нет automated tests для theme fallback, service worker route и taxonomy API contract.

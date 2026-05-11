@@ -12,6 +12,8 @@ use App\Content\Http\Controllers\PageController;
 use App\Media\Http\Controllers\MediaController;
 use App\Seo\Http\Controllers\RedirectController;
 use App\System\Http\Controllers\SystemController;
+use App\Taxonomy\Http\Controllers\AdminTaxonomyController;
+use App\Taxonomy\Http\Controllers\AdminTermController;
 use Illuminate\Support\Facades\Route;
 
 Route::name('admin.')->prefix('admin')->group(function (): void {
@@ -187,6 +189,41 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::delete('seo/redirects/{redirect}', [RedirectController::class, 'destroy'])
             ->middleware('vertex.permission:seo.edit')
             ->name('redirects.destroy');
+
+        Route::get('taxonomies', [AdminTaxonomyController::class, 'index'])
+            ->middleware('vertex.permission:taxonomy.view')
+            ->name('taxonomies.index');
+        Route::get('taxonomies/create', [AdminTaxonomyController::class, 'create'])
+            ->middleware('vertex.permission:taxonomy.create')
+            ->name('taxonomies.create');
+        Route::post('taxonomies', [AdminTaxonomyController::class, 'store'])
+            ->middleware('vertex.permission:taxonomy.create')
+            ->name('taxonomies.store');
+        Route::get('taxonomies/{taxonomy}/edit', [AdminTaxonomyController::class, 'edit'])
+            ->middleware('vertex.permission:taxonomy.edit')
+            ->name('taxonomies.edit');
+        Route::put('taxonomies/{taxonomy}', [AdminTaxonomyController::class, 'update'])
+            ->middleware('vertex.permission:taxonomy.edit')
+            ->name('taxonomies.update');
+        Route::delete('taxonomies/{taxonomy}', [AdminTaxonomyController::class, 'destroy'])
+            ->middleware('vertex.permission:taxonomy.delete')
+            ->name('taxonomies.destroy');
+
+        Route::get('taxonomies/{taxonomy}/terms/create', [AdminTermController::class, 'create'])
+            ->middleware('vertex.permission:taxonomy.create')
+            ->name('taxonomies.terms.create');
+        Route::post('taxonomies/{taxonomy}/terms', [AdminTermController::class, 'store'])
+            ->middleware('vertex.permission:taxonomy.create')
+            ->name('taxonomies.terms.store');
+        Route::get('taxonomies/{taxonomy}/terms/{term}/edit', [AdminTermController::class, 'edit'])
+            ->middleware('vertex.permission:taxonomy.edit')
+            ->name('taxonomies.terms.edit');
+        Route::put('taxonomies/{taxonomy}/terms/{term}', [AdminTermController::class, 'update'])
+            ->middleware('vertex.permission:taxonomy.edit')
+            ->name('taxonomies.terms.update');
+        Route::delete('taxonomies/{taxonomy}/terms/{term}', [AdminTermController::class, 'destroy'])
+            ->middleware('vertex.permission:taxonomy.delete')
+            ->name('taxonomies.terms.destroy');
 
         Route::get('system/info', [SystemController::class, 'info'])
             ->middleware('vertex.permission:system.view')

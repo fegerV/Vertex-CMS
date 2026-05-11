@@ -13,47 +13,50 @@
             [
                 'section' => 'Workspace',
                 'items' => [
-                    ['label' => 'Обзор', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access', 'description' => 'Сводка и активность', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />'],
-                    ['label' => 'Страницы', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view', 'description' => 'Контент и публикации', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />'],
-                    ['label' => 'Медиа', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view', 'description' => 'Файлы и изображения', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z" />'],
+                    ['label' => 'РћР±Р·РѕСЂ', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access', 'description' => 'РЎРІРѕРґРєР° Рё Р°РєС‚РёРІРЅРѕСЃС‚СЊ', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />'],
+                    ['label' => 'РЎС‚СЂР°РЅРёС†С‹', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view', 'description' => 'РљРѕРЅС‚РµРЅС‚ Рё РїСѓР±Р»РёРєР°С†РёРё', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />'],
+                    ['label' => 'РњРµРґРёР°', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view', 'description' => 'Р¤Р°Р№Р»С‹ Рё РёР·РѕР±СЂР°Р¶РµРЅРёСЏ', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z" />'],
                 ],
             ],
             [
                 'section' => 'Management',
                 'items' => [
-                    ['label' => 'Пользователи', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'description' => 'Аккаунты и доступ', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0z" />'],
-                    ['label' => 'Роли', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'description' => 'Наборы разрешений', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />'],
-                    ['label' => 'Настройки', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'description' => 'Сайт, API, AI и PWA', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />'],
+                    ['label' => 'РџРѕР»СЊР·РѕРІР°С‚РµР»Рё', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'description' => 'РђРєРєР°СѓРЅС‚С‹ Рё РґРѕСЃС‚СѓРї', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0z" />'],
+                    ['label' => 'Р РѕР»Рё', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'description' => 'РќР°Р±РѕСЂС‹ СЂР°Р·СЂРµС€РµРЅРёР№', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />'],
+                    ['label' => 'РўР°РєСЃРѕРЅРѕРјРёРё', 'route' => 'admin.taxonomies.index', 'active' => 'admin.taxonomies.*', 'permission' => 'taxonomy.view', 'description' => 'Р СѓР±СЂРёРєРё, С‚РµРіРё Рё Р°СЂС…РёРІС‹', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6h9m-9 4.5h9m-9 4.5h5.25M6 3.75h12A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75Z" />'],
+                    ['label' => 'РќР°СЃС‚СЂРѕР№РєРё', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'description' => 'РЎР°Р№С‚, API, AI Рё PWA', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />'],
                 ],
             ],
             [
                 'section' => 'Operations',
                 'items' => [
-                    ['label' => 'Система', 'route' => 'admin.system.info', 'active' => 'admin.system.info', 'permission' => 'system.view', 'description' => 'Среда и модули', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.83-5.83m0 0a2.968 2.968 0 0 1 0-4.183L15.75 6m-2.25 8.25a2.968 2.968 0 0 1-4.183 0L3.75 8.25" />'],
-                    ['label' => 'Кеш', 'route' => 'admin.system.cache', 'active' => 'admin.system.cache*', 'permission' => 'system.view', 'description' => 'Состояние и очистка', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />'],
-                    ['label' => 'Логи', 'route' => 'admin.system.logs', 'active' => 'admin.system.logs', 'permission' => 'system.view', 'description' => 'Аудит действий', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3z" />'],
+                    ['label' => 'РЎРёСЃС‚РµРјР°', 'route' => 'admin.system.info', 'active' => 'admin.system.info', 'permission' => 'system.view', 'description' => 'РЎСЂРµРґР° Рё РјРѕРґСѓР»Рё', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.83-5.83m0 0a2.968 2.968 0 0 1 0-4.183L15.75 6m-2.25 8.25a2.968 2.968 0 0 1-4.183 0L3.75 8.25" />'],
+                    ['label' => 'РљРµС€', 'route' => 'admin.system.cache', 'active' => 'admin.system.cache*', 'permission' => 'system.view', 'description' => 'РЎРѕСЃС‚РѕСЏРЅРёРµ Рё РѕС‡РёСЃС‚РєР°', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />'],
+                    ['label' => 'Р›РѕРіРё', 'route' => 'admin.system.logs', 'active' => 'admin.system.logs', 'permission' => 'system.view', 'description' => 'РђСѓРґРёС‚ РґРµР№СЃС‚РІРёР№', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3z" />'],
                 ],
             ],
         ];
 
         $segments = request()->segments();
         $translations = [
-            'admin' => 'Панель управления',
-            'pages' => 'Страницы',
-            'media' => 'Медиа',
-            'users' => 'Пользователи',
-            'roles' => 'Роли',
-            'settings' => 'Настройки',
-            'system' => 'Система',
-            'info' => 'Информация',
-            'cache' => 'Кеш',
-            'logs' => 'Логи',
-            'create' => 'Создать',
-            'edit' => 'Редактировать',
-            'builder' => 'Конструктор',
-            'revisions' => 'Версии',
-            'redirects' => 'Перенаправления',
-            'custom-field-groups' => 'Группы полей',
+            'admin' => 'РџР°РЅРµР»СЊ СѓРїСЂР°РІР»РµРЅРёСЏ',
+            'pages' => 'РЎС‚СЂР°РЅРёС†С‹',
+            'media' => 'РњРµРґРёР°',
+            'users' => 'РџРѕР»СЊР·РѕРІР°С‚РµР»Рё',
+            'roles' => 'Р РѕР»Рё',
+            'settings' => 'РќР°СЃС‚СЂРѕР№РєРё',
+            'taxonomies' => 'РўР°РєСЃРѕРЅРѕРјРёРё',
+            'terms' => 'РўРµСЂРјРёРЅС‹',
+            'system' => 'РЎРёСЃС‚РµРјР°',
+            'info' => 'РРЅС„РѕСЂРјР°С†РёСЏ',
+            'cache' => 'РљРµС€',
+            'logs' => 'Р›РѕРіРё',
+            'create' => 'РЎРѕР·РґР°С‚СЊ',
+            'edit' => 'Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ',
+            'builder' => 'РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ',
+            'revisions' => 'Р’РµСЂСЃРёРё',
+            'redirects' => 'РџРµСЂРµРЅР°РїСЂР°РІР»РµРЅРёСЏ',
+            'custom-field-groups' => 'Р“СЂСѓРїРїС‹ РїРѕР»РµР№',
         ];
     @endphp
 
@@ -81,7 +84,7 @@
                 </div>
 
                 <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-300">
-                    <p class="font-semibold text-slate-100">{{ $user?->name ?? 'Администратор' }}</p>
+                    <p class="font-semibold text-slate-100">{{ $user?->name ?? 'РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ' }}</p>
                     <p class="mt-1 text-slate-400">{{ $user?->email }}</p>
                 </div>
             </div>
@@ -129,7 +132,7 @@
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         </button>
                         <div>
-                            <h1 class="text-xl font-semibold tracking-tight text-[var(--vc-text)] sm:text-2xl">@yield('page_title', 'Панель управления')</h1>
+                            <h1 class="text-xl font-semibold tracking-tight text-[var(--vc-text)] sm:text-2xl">@yield('page_title', 'РџР°РЅРµР»СЊ СѓРїСЂР°РІР»РµРЅРёСЏ')</h1>
                             @hasSection('page_subtitle')
                                 <p class="mt-1 text-sm text-[var(--vc-text-muted)]">@yield('page_subtitle')</p>
                             @endif
@@ -139,18 +142,18 @@
                     <div class="flex items-center gap-2 sm:gap-3">
                         <button type="button" data-theme-toggle class="vc-button vc-button-secondary vc-theme-toggle px-3 py-2">
                             <svg data-theme-icon class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
-                            <span data-theme-label class="hidden sm:inline">Светлая тема</span>
+                            <span data-theme-label class="hidden sm:inline">РЎРІРµС‚Р»Р°СЏ С‚РµРјР°</span>
                         </button>
 
                         <a href="{{ url('/') }}" target="_blank" class="vc-button vc-button-secondary hidden px-3 py-2 sm:inline-flex">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            <span>Перейти на сайт</span>
+                            <span>РџРµСЂРµР№С‚Рё РЅР° СЃР°Р№С‚</span>
                         </a>
 
                         <form method="POST" action="{{ route('admin.logout') }}">
                             @csrf
                             <button class="vc-button vc-button-secondary px-3 py-2">
-                                Выйти
+                                Р’С‹Р№С‚Рё
                             </button>
                         </form>
                     </div>
