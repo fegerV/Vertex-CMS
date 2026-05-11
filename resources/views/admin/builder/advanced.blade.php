@@ -1204,9 +1204,24 @@
                     )
                     .slice(0, 8);
             });
+            const sharedQuickAddTemplateItems = computed(() => {
+                const query = quickAddQuery.value.trim().toLowerCase();
+
+                return templates.value
+                    .filter((item) => !query
+                        || item.name.toLowerCase().includes(query)
+                        || (item.category || item.source || '').toLowerCase().includes(query)
+                    )
+                    .slice(0, 8)
+                    .map((item) => ({
+                        ...item,
+                        kind: 'template',
+                        meta: `${item.category || item.source || 'template'} · ${item.visibility || 'shared'}`,
+                    }));
+            });
             const quickAddItems = computed(() => {
                 if (quickAddMode.value === 'presets') return quickAddPresetItems.value;
-                if (quickAddMode.value === 'templates') return quickAddTemplateItems.value;
+                if (quickAddMode.value === 'templates') return sharedQuickAddTemplateItems.value;
 
                 return Object.entries(quickAddBlocks.value).map(([type, blockDef]) => ({
                     id: `block-${type}`,
@@ -1216,6 +1231,14 @@
                     type,
                 }));
             });
+            const templateBlocksFromItem = (item) => {
+                return (item.sections || [])
+                    .flatMap((section) => section.blocks || [])
+                    .map((block) => ({
+                        type: block.type,
+                        settings: JSON.parse(JSON.stringify(block.settings || {})),
+                    }));
+            };
             const renderPreviewBlocks = (blocks) => {
                 if (!Array.isArray(blocks) || blocks.length === 0) {
                     return '<div class="vc-builder-renderer-fallback"><strong>Empty</strong><span>No preview available.</span></div>';
@@ -1256,7 +1279,7 @@
                 }
 
                 if (item.kind === 'template') {
-                    return renderPreviewBlocks(item.blocks || []);
+                    return renderPreviewBlocks(templateBlocksFromItem(item));
                 }
 
                 const block = buildBlock(item.type);
@@ -1498,7 +1521,7 @@
             };
 
             const insertTemplateBlocksAt = (sIndex, insertIndex, template) => {
-                const blocks = (template.blocks || []).map((block) => ({
+                const blocks = templateBlocksFromItem(template).map((block) => ({
                     id: generateId(),
                     type: block.type,
                     settings: JSON.parse(JSON.stringify(block.settings || {})),

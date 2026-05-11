@@ -162,6 +162,7 @@ Acceptance criteria:
 - Sticky inspector state, локальные block presets/snippets и встроенный media picker прямо из builder.
 - Media picker внутри repeater-полей и quick-add library для blocks, presets и visual templates/snippets.
 - Shared preset library на backend settings-repository, visual preview thumbnails и nested drag-and-drop для repeater items.
+- Ownership/visibility rules для builder libraries и shared template library с backend CRUD вместо только встроенных snippets.
 
 Оценка:
 
