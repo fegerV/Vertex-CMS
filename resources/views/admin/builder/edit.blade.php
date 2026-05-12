@@ -425,7 +425,6 @@
 @endsection
 
 @push('scripts')
-<script src="{{ mix('js/app.js') }}"></script>
 <script>
     const { createApp, ref, reactive, computed, onMounted } = Vue;
     
