@@ -9,6 +9,9 @@ use App\Content\Services\PageService;
 use App\Core\Services\InstallationService;
 use App\Core\Services\SettingsService;
 use App\Core\Support\RouteRegistrar;
+use App\Modules\Services\ModuleManager;
+use App\Modules\Support\ModuleCatalog;
+use App\Modules\Support\ModuleManifestLoader;
 use App\Media\Services\MediaService;
 use App\Seo\Services\SeoMetaService;
 use App\System\Console\Commands\ProcessEmailQueue;
@@ -22,6 +25,7 @@ use App\System\Services\MaintenanceService;
 use App\System\Services\SystemInfoService;
 use App\System\Services\TelegramWidgetService;
 use App\Theme\Services\ThemeManager;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\ServiceProvider;
 
 class VertexServiceProvider extends ServiceProvider
@@ -46,6 +50,19 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(CacheService::class);
         $this->app->singleton(SystemInfoService::class);
         $this->app->singleton(ThemeManager::class);
+        $this->app->singleton(ModuleManifestLoader::class, function ($app) {
+            return new ModuleManifestLoader(
+                $app->make(Filesystem::class),
+                config('modules.scan_paths', []),
+                config('modules.core_modules', [])
+            );
+        });
+        $this->app->singleton(ModuleCatalog::class, function ($app) {
+            return new ModuleCatalog(
+                $app->make(ModuleManifestLoader::class)->loadAll()
+            );
+        });
+        $this->app->singleton(ModuleManager::class);
     }
 
     public function boot(RouteRegistrar $routes): void

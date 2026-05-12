@@ -85,21 +85,33 @@
 
 <section class="vc-panel vc-panel-muted p-5 vc-form-section">
     <div>
-        <h2 class="text-lg font-semibold text-[var(--vc-text)]">Контент JSON</h2>
-        <p class="mt-1 text-sm text-[var(--vc-text-muted)]">Базовое содержимое страницы в структурированном JSON. Для сложной сборки удобнее перейти в builder после первого сохранения.</p>
+        <h2 class="text-lg font-semibold text-[var(--vc-text)]">Page Builder</h2>
+        <p class="mt-1 text-sm text-[var(--vc-text-muted)]">The visual builder now syncs directly with the backend block registry. Use the raw JSON editor only for advanced/manual adjustments.</p>
     </div>
 
-<label class="vc-field">
-    <span class="vc-field-label">Содержимое страницы</span>
-    <textarea
-        name="content_json"
-        rows="12"
-        class="vc-textarea font-mono text-sm"
-    >{{ old('content_json', json_encode($page->content_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
-    @error('content_json')
-        <span class="vc-field-error">{{ $message }}</span>
-    @enderror
-</label>
+    <div
+        data-vc-page-builder-prototype
+        data-input-target="content_json_input"
+        data-initial-value="{{ e(json_encode($page->content_json, JSON_UNESCAPED_UNICODE)) }}"
+        class="mt-5"
+    ></div>
+
+    <details class="mt-5 rounded-2xl border border-[var(--vc-border)] bg-[var(--vc-surface)] p-4">
+        <summary class="cursor-pointer text-sm font-semibold text-[var(--vc-text)]">Raw content JSON</summary>
+
+        <label class="vc-field mt-4">
+            <span class="vc-field-label">Page content payload</span>
+            <textarea
+                id="content_json_input"
+                name="content_json"
+                rows="12"
+                class="vc-textarea font-mono text-sm"
+            >{{ old('content_json', json_encode($page->content_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
+            @error('content_json')
+                <span class="vc-field-error">{{ $message }}</span>
+            @enderror
+        </label>
+    </details>
 </section>
 
 @php
@@ -336,19 +348,6 @@
         <span>Включать страницу в sitemap.xml</span>
     </label>
 </section>
-
-<div class="vc-toolbar">
-    @if ($page->exists)
-        <p class="vc-toolbar-text">Публичный URI: {{ $page->uri }}</p>
-    @else
-        <p class="vc-toolbar-text">Публичный URI будет сгенерирован автоматически после первого сохранения.</p>
-    @endif
-
-    <button type="submit" class="vc-button vc-button-primary">
-        Сохранить страницу
-    </button>
-</div>
-</div>
 
 @once
     @push('scripts')
@@ -740,3 +739,4 @@
         </script>
     @endpush
 @endonce
+

@@ -1,0 +1,47 @@
+{
+  "module": {
+    "id": "vertex-forms",
+    "name": "Forms",
+    "tier": "builtin",
+    "activation": "admin_toggle",
+    "version": "1.0.0",
+    "description": "Advanced form builder with calculator, conditional logic, multi-page, file uploads, analytics, import/export. Similar to WP Gravity Forms.",
+    "icon": "form-input",
+    "author": "VertexCMS Team",
+    "category": "interactive",
+    "permissions": [
+      "forms.create",
+      "forms.edit",
+      "forms.delete",
+      "forms.view_submissions",
+      "forms.view_analytics",
+      "forms.import_export",
+      "forms.manage_settings"
+    ],
+    "dependencies": {
+      "core": "^0.1",
+      "vertex-media": "^0.1",
+      "vertex-seo": "^0.1"
+    },
+    "routes": {
+      "admin": "/admin/forms",
+      "public": "/forms"
+    },
+    "assets": {
+      "js": [
+        "resources/js/admin/forms/builder/FormBuilder.vue"
+      ],
+      "css": []
+    },
+    "ui": {
+      "registration": [],
+      "inertia": false
+    },
+    "providers": [
+      "Vertex\\Forms\\VertexFormsServiceProvider"
+    ],
+    "requires": [],
+    "auto_install": false,
+    "status": "stable"
+  }
+}

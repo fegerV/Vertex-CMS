@@ -53,10 +53,10 @@
          @endif
      </main>
 
-     <!-- Telegram Widget -->
-     @if (config_value('telegram.enabled', false))
-         <script>
-             window.telegramWidgetConfig = @json([
+      <!-- Telegram Widget -->
+      @if (config_value('telegram.enabled', false))
+          <script>
+             window.telegramWidgetConfig = {!! json_encode([
                  'enabled' => true,
                  'username' => config_value('telegram.username', ''),
                  'widget_style' => config_value('telegram.widget_style', 'floating'),
@@ -67,10 +67,10 @@
                  'message_prefill' => config_value('telegram.message_prefill', null),
                  'bot_token' => config_value('telegram.bot_token', null),
                  'chat_id' => config_value('telegram.chat_id', null),
-             ]);
-         </script>
-         <div id="telegram-widget"></div>
-     @endif
+             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!};
+          </script>
+          <div id="telegram-widget"></div>
+      @endif
 
      @if (config_value('pwa.enabled', false))
          <script>

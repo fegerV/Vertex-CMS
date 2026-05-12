@@ -7,11 +7,11 @@ VertexCMS MVP v0.1 is a Laravel-oriented CMS skeleton for building pages with a 
 This repository now contains:
 
 - a Laravel-style project structure;
-- VertexCMS module folders under `app/`;
-- route files for public, admin, API, and installer flows;
-- starter migrations, models, controllers, middleware, and services;
-- placeholder admin/frontend/installer views;
-- baseline frontend tooling files for Vite, Vue 3, and Tailwind-ready assets.
+- working CMS foundations for installer, auth, RBAC, pages, media, SEO, API, AI, PWA, taxonomy, analytics, and the JSON page builder;
+- a tier-based module architecture foundation with builtin module manifests and registry classes;
+- route files for public, admin, API, installer, and module-owned surfaces;
+- migrations, models, controllers, middleware, services, and builder rendering infrastructure;
+- frontend tooling for Vite, Vue 3, Tailwind, and a registry-driven TipTap/Vue page-builder prototype.
 
 ## Local bootstrap
 
@@ -28,13 +28,21 @@ The current machine does not have `php` or `composer`, so the app could not be f
 9. Start Vite with `npm run dev`.
 10. Start the app with `php artisan serve`.
 
+## Current stage
+
+VertexCMS is no longer just an MVP skeleton. The repo is now at an `advanced foundation` stage:
+
+- backend and rendering contracts for the page builder are implemented and tested;
+- the Vue/TipTap builder is present as a normalized prototype, not yet the primary production editor;
+- module loading is moving from manual wiring toward manifest-driven discovery.
+
 ## Next recommended slice
 
-1. Replace placeholder controllers with full Inertia responses.
-2. Wire RBAC policies and middleware into route groups.
-3. Implement the installer persistence flow and `.env` writer.
-4. Build the first admin layout and auth screens.
-5. Add request classes and form validation for all admin modules.
+1. Complete module bootstrap cleanup and provider discovery.
+2. Run the full Laravel test suite again and record the refreshed status.
+3. Integrate the Vue builder registry into the main admin builder flow.
+4. Replace prototype block editors with production inspector components.
+5. Continue runtime/manual QA across installer, builder, API, and module screens.
 
 ## Documentation
 
@@ -47,3 +55,7 @@ The current machine does not have `php` or `composer`, so the app could not be f
 - [API Strategy](docs/architecture/api-strategy.md)
 - [AI Module](docs/architecture/ai-module.md)
 - [PWA, Theme, Taxonomy](docs/architecture/pwa-theme-taxonomy.md)
+- [Page Builder Architecture](docs/architecture/page-builder.md)
+- [Module Tiers](docs/architecture/module-tiers.md)
+- [Current Status](docs/status/current-status.md)
+- [Builder Prototype QA](docs/status/builder-prototype-qa.md)

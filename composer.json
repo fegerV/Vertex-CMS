@@ -19,7 +19,8 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "app/"
+            "App\\": "app/",
+            "Vertex\\Forms\\": "modules/vertex-forms/src/"
         },
         "files": [
             "app/Core/Support/helpers.php"

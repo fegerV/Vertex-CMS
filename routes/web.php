@@ -15,6 +15,14 @@ Route::get('/manifest.webmanifest', [PwaManifestController::class, 'index'])->na
 Route::get('/service-worker.js', [PwaController::class, 'serviceWorker'])->name('frontend.service-worker');
 Route::get('/offline', [PwaController::class, 'offline'])->name('frontend.offline');
 Route::get('/taxonomy/{taxonomy}/{term}', [FrontendTermArchiveController::class, 'show'])->name('frontend.term-archive');
+
+// Public Form Endpoints (vertex-forms module) - must be BEFORE catch-all route
+Route::prefix('forms')->name('public.forms.')->group(function () {
+    require base_path('modules/vertex-forms/routes/web.php');
+});
+
+// Catch-all page route (must be last)
 Route::get('/{uri}', [FrontendPageController::class, 'show'])
     ->where('uri', '.*')
     ->name('frontend.page');
+
