@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(EnsureInstalled::class);
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin', 'admin/*') ? route('admin.login') : null);
 
         $middleware->alias([
             'vertex.not_installed' => EnsureNotInstalled::class,

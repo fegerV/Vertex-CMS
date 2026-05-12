@@ -20,10 +20,12 @@ class MediaService
     public function upload(UploadedFile $file, User $user, array $metadata = []): Media
     {
         $extension = strtolower($file->getClientOriginalExtension());
+        $originalFilename = $file->getClientOriginalName();
+        $mimeType = $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream';
 
         if (! in_array($extension, config('vertex.uploads.allowed_extensions'), true)) {
             throw ValidationException::withMessages([
-                'file' => 'File extension is not allowed.',
+                'file' => 'Недопустимый тип файла.',
             ]);
         }
 
@@ -46,8 +48,8 @@ class MediaService
             'disk' => 'public',
             'folder_id' => $metadata['folder_id'] ?? null,
             'filename' => $filename,
-            'original_filename' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
+            'original_filename' => $originalFilename,
+            'mime_type' => $mimeType,
             'extension' => $extension,
             'size' => File::size($target),
             'width' => $width,

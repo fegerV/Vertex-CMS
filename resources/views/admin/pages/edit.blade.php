@@ -6,15 +6,26 @@
 
 @section('content')
     <div class="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div>
-            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <a href="{{ route('admin.pages.index') }}" class="text-sm text-slate-600 hover:text-slate-950">Назад к страницам</a>
-                <a href="{{ route('admin.pages.builder', $page) }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-white">
-                    Открыть Builder
-                </a>
+        <div class="vc-page-editor">
+            <div class="vc-toolbar vc-toolbar-sticky">
+                <div class="vc-toolbar-meta">
+                    <a href="{{ route('admin.pages.index') }}" class="text-sm text-[var(--vc-text-soft)] transition hover:text-[var(--vc-text)]">Назад к страницам</a>
+                    <span class="vc-toolbar-title">{{ $page->title }}</span>
+                    <span class="vc-toolbar-text">Редактируйте структуру страницы, SEO и таксономии. Для визуальной сборки откройте builder.</span>
+                </div>
+
+                <div class="vc-chip-row">
+                    <span class="vc-chip">Статус: {{ $page->status }}</span>
+                    <a href="{{ route('admin.pages.builder', $page) }}" class="vc-button vc-button-secondary">
+                        Открыть builder
+                    </a>
+                    <button form="page-editor-form" class="vc-button vc-button-primary vc-button-large" type="submit">
+                        Сохранить страницу
+                    </button>
+                </div>
             </div>
 
-            <form method="POST" action="{{ route('admin.pages.update', $page) }}" class="space-y-5 rounded-lg border border-slate-200 bg-white p-6">
+            <form id="page-editor-form" method="POST" action="{{ route('admin.pages.update', $page) }}" class="vc-form-surface space-y-6">
                 @csrf
                 @method('PUT')
                 @include('admin.pages.partials.form')
@@ -24,4 +35,3 @@
         @includeWhen(auth()->user()?->hasPermission('ai.use'), 'admin.pages.partials.ai-assistant')
     </div>
 @endsection
-
