@@ -3,6 +3,7 @@
 use App\Core\Http\Middleware\EnsureInstalled;
 use App\Core\Http\Middleware\EnsureNotInstalled;
 use App\Core\Http\Middleware\RequirePermission;
+use App\System\Http\Middleware\CheckMaintenanceMode;
 use App\Support\Api\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -20,11 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(EnsureInstalled::class);
+        $middleware->append(CheckMaintenanceMode::class);
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin', 'admin/*') ? route('admin.login') : null);
 
         $middleware->alias([
             'vertex.not_installed' => EnsureNotInstalled::class,
             'vertex.permission' => RequirePermission::class,
+            'maintenance.check' => CheckMaintenanceMode::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

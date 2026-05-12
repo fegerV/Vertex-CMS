@@ -72,13 +72,18 @@
                                 <label class="vc-field {{ $fieldInput === 'textarea' ? 'md:col-span-2' : '' }}">
                                     <span class="vc-field-label">{{ $field['label'] }}</span>
 
-                                    @if ($fieldInput === 'textarea')
-                                        <textarea
-                                            name="{{ $inputName }}"
-                                            rows="4"
-                                            class="vc-textarea"
-                                            @disabled($fieldDisabled)
-                                        >{{ $fieldValue }}</textarea>
+                                @if ($fieldInput === 'textarea')
+                                    @php
+                                        $displayValue = ($fieldType === 'json' && is_array($fieldValue))
+                                            ? json_encode($fieldValue, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+                                            : $fieldValue;
+                                    @endphp
+                                    <textarea
+                                        name="{{ $inputName }}"
+                                        rows="4"
+                                        class="vc-textarea"
+                                        @disabled($fieldDisabled)
+                                    >{{ $displayValue }}</textarea>
                                     @elseif ($fieldInput === 'checkbox')
                                         <span class="vc-checkbox-row">
                                             <input

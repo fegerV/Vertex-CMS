@@ -9,6 +9,7 @@ use App\Builder\Http\Controllers\AdvancedBuilderController;
 use App\Builder\Http\Controllers\PageBuilderController;
 use App\Content\Http\Controllers\CustomFieldGroupController;
 use App\Content\Http\Controllers\PageController;
+use App\Core\Http\Middleware\SetAdminLocale;
 use App\Media\Http\Controllers\MediaController;
 use App\Seo\Http\Controllers\RedirectController;
 use App\System\Http\Controllers\SystemController;
@@ -22,7 +23,7 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:5,15');
     });
 
-    Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function (): void {
+    Route::middleware(['auth', 'vertex.permission:admin.access', SetAdminLocale::class])->group(function (): void {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
 

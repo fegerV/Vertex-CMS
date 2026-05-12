@@ -19,7 +19,7 @@
                     @click="addBlock(type)"
                     class="vc-builder-card block-item cursor-pointer p-3"
                 >
-                    <div class="font-medium text-sm text-[var(--vc-text)]">{{ block.name }}</div>
+                    <div class="font-medium text-sm text-[var(--vc-text)]">@{{ block.name }}</div>
                     <div class="mt-1 text-xs text-[var(--vc-text-muted)]">Нажми чтобы добавить</div>
                 </div>
             </template>
@@ -41,8 +41,8 @@
             <div class="vc-panel vc-panel-strong mb-6 p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-lg font-semibold text-[var(--vc-text)]">{{ page.title }}</h2>
-                        <p class="mt-1 text-sm text-[var(--vc-text-muted)]">URI: {{ page.uri }} | Статус: {{ page.status }}</p>
+                        <h2 class="text-lg font-semibold text-[var(--vc-text)]">@{{ page.title }}</h2>
+                        <p class="mt-1 text-sm text-[var(--vc-text-muted)]">URI: @{{ page.uri }} | Статус: @{{ page.status }}</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button 
@@ -117,17 +117,17 @@
                                 :style="headingStyle(block.settings)"
                                 contenteditable="false"
                             >
-                                {{ block.settings.text || 'Заголовок' }}
+                                @{{ block.settings.text || 'Заголовок' }}
                             </component>
                             <div class="vc-builder-meta mt-2">
-                                Заголовок ({{ block.settings.level || 'h2' }})
+                                Заголовок (@{{ block.settings.level || 'h2' }})
                             </div>
                         </template>
 
                         <!-- Text Block -->
                         <template v-else-if="block.type === 'text'">
                             <div class="vc-text" :style="textStyle(block.settings)">
-                                {{ block.settings.text || 'Текстовый блок...' }}
+                                 @{{ block.settings.text || 'Текстовый блок...' }}
                             </div>
                             <div class="vc-builder-meta mt-2">Текст</div>
                         </template>
@@ -136,11 +136,11 @@
                         <template v-else-if="block.type === 'button'">
                             <div class="inline-block">
                                 <a 
-                                    class="vc-button vc-button-{{ block.settings.style || 'primary' }}"
+                                    class="vc-button vc-button-@{{ block.settings.style || 'primary' }}"
                                     :href="block.settings.url || '#'"
                                     :target="block.settings.target || '_self'"
                                 >
-                                    {{ block.settings.text || 'Кнопка' }}
+                                     @{{ block.settings.text || 'Кнопка' }}
                                 </a>
                             </div>
                             <div class="vc-builder-meta mt-2">Кнопка</div>
@@ -160,8 +160,8 @@
                                     :key="i"
                                     class="vc-faq-item"
                                 >
-                                    <summary class="cursor-pointer font-medium">{{ item.question || 'Вопрос?' }}</summary>
-                                    <div class="mt-2 text-[var(--vc-text-muted)]">{{ item.answer || 'Ответ...' }}</div>
+                                     <summary class="cursor-pointer font-medium">@{{ item.question || 'Вопрос?' }}</summary>
+                                     <div class="mt-2 text-[var(--vc-text-muted)]">@{{ item.answer || 'Ответ...' }}</div>
                                 </details>
                             </div>
                             <div class="vc-builder-meta mt-2">FAQ</div>
@@ -227,7 +227,7 @@
                                 type="color"
                             >
                         </div>
-                        <span class="vc-builder-field-hint">{{ selectedBlock.settings.color || '#111827' }}</span>
+                         <span class="vc-builder-field-hint">@{{ selectedBlock.settings.color || '#111827' }}</span>
                     </div>
                 </div>
                 <div class="vc-builder-field">
@@ -263,7 +263,7 @@
                                 type="color"
                             >
                         </div>
-                        <span class="vc-builder-field-hint">{{ selectedBlock.settings.color || '#374151' }}</span>
+                         <span class="vc-builder-field-hint">@{{ selectedBlock.settings.color || '#374151' }}</span>
                     </div>
                 </div>
                 <div class="vc-builder-field">
@@ -390,7 +390,7 @@
             <!-- Common Block Settings -->
             <div class="vc-builder-form-section">
                 <div class="vc-builder-form-title">Действия</div>
-                <div class="vc-builder-field-hint">Тип блока: {{ selectedBlock.type }}</div>
+                 <div class="vc-builder-field-hint">Тип блока: @{{ selectedBlock.type }}</div>
                 <button 
                     @click="duplicateBlock"
                     class="vc-button vc-button-secondary w-full justify-center px-4 py-3"

@@ -37,6 +37,7 @@ class SettingsController extends Controller
         )->validate());
 
         $payload = $this->normalizeBooleanValues($request, $payload);
+        $payload = $this->normalizeJsonValues($request, $payload);
         $payload = $this->filterRestrictedAiFields($request, $payload);
 
         $this->settings->setMany($payload);
@@ -72,6 +73,28 @@ class SettingsController extends Controller
                 $payload[$key] = array_key_exists($key, $rawSettings)
                     ? filter_var($rawSettings[$key], FILTER_VALIDATE_BOOLEAN)
                     : false;
+            }
+        }
+
+        return $payload;
+    }
+
+    private function normalizeJsonValues(Request $request, array $payload): array
+    {
+        $rawSettings = Arr::dot($request->input('settings', []));
+
+        foreach (SettingCatalog::definitions() as $key => $definition) {
+            if (($definition['type'] ?? null) === 'json') {
+                if (! array_key_exists($key, $rawSettings)) {
+                    continue;
+                }
+                $value = $rawSettings[$key];
+                if (is_string($value) && trim($value) === '') {
+                    $payload[$key] = [];
+                } elseif (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    $payload[$key] = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                }
             }
         }
 
