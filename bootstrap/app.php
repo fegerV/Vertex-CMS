@@ -12,7 +12,6 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $exception): bool {
+        $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $exception): bool {
             return ApiResponse::isApiRequest($request);
         });
 
@@ -56,7 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::error('forbidden', $exception->getMessage() ?: 'This action is forbidden.', status: 403);
         });
 
-        $exceptions->render(function (Throwable $exception, Request $request) {
+        $exceptions->render(function (\Throwable $exception, Request $request) {
             if (! ApiResponse::isApiRequest($request)) {
                 return null;
             }

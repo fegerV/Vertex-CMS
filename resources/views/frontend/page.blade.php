@@ -36,7 +36,9 @@
             {!! json_encode($seo->schema_json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
         </script>
     @endif
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if (! app()->runningUnitTests())
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
 </head>
 <body class="bg-white text-slate-950">
     <main class="vc-page">

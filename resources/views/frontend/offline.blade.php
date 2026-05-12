@@ -7,7 +7,9 @@
     @if (config_value('pwa.enabled', false))
         <meta name="theme-color" content="{{ config_value('pwa.theme_color', '#020617') }}">
     @endif
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if (! app()->runningUnitTests())
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
 </head>
 <body class="bg-white text-slate-950">
     <main class="vc-page">

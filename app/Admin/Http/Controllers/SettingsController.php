@@ -31,10 +31,10 @@ class SettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $payload = Validator::make(
-            Arr::dot($request->input('settings', [])),
+        $payload = Arr::dot(Validator::make(
+            $request->input('settings', []),
             $this->rules()
-        )->validate();
+        )->validate());
 
         $payload = $this->normalizeBooleanValues($request, $payload);
         $payload = $this->filterRestrictedAiFields($request, $payload);

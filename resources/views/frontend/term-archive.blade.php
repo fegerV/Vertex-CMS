@@ -15,7 +15,9 @@
     @endif
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ $meta['canonical'] }}">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if (! app()->runningUnitTests())
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
 </head>
 <body class="bg-white text-slate-950">
     <main class="vc-page">

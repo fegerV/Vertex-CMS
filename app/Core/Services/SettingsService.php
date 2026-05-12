@@ -68,8 +68,13 @@ class SettingsService
         $all = $this->all();
 
         return collect(SettingCatalog::publicSiteKeys())
-            ->mapWithKeys(fn (string $key) => [$key => $all[$key] ?? null])
-            ->all();
+            ->reduce(function (array $carry, string $key) use ($all): array {
+                [$group, $setting] = explode('.', $key, 2);
+                $carry[$group] ??= [];
+                $carry[$group][$setting] = $all[$key] ?? null;
+
+                return $carry;
+            }, []);
     }
 
     public function forgetCache(): void

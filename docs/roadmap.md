@@ -29,7 +29,8 @@ VertexCMS должна стать современной CMS с открытым
 - `v0.3` реализован как draft-first AI module: encrypted settings, provider registry, AI panel в page editor, generation flow для text/FAQ/CTA/SEO/builder draft и AI activity logs уже есть. Живая интеграция с внешними LLM provider SDK ещё впереди.
 - `v0.4` и `v0.5` уже имеют реальную кодовую основу: PWA manifest, service worker, offline page, theme fallback, taxonomy models, admin CRUD, public term archives, taxonomy API, term archive SEO/meta и sitemap inclusion уже собраны.
 - Privacy-first analytics foundation уже начата раньше formal `v0.7`: есть cookieless traffic aggregation и admin analytics dashboard для pages и term archives.
-- Основной незакрытый слой для уже написанных модулей: runtime/manual QA, миграции в живой среде и automated tests. Это ограничение среды и верификации, а не отсутствие архитектуры или UI.
+- Automated test suite поднят в локальном portable PHP runtime и зафиксирован в зелёном состоянии на `2026-05-12`: `35 tests`, `236 assertions`. Покрыты P0, P2, P3, P4 и P5 contract-сценарии.
+- Основной незакрытый слой для уже написанных модулей: runtime/manual QA и прогон миграций в живой среде. Это ограничение верификации, а не отсутствие архитектуры или UI.
 
 ## Версия v0.1 - MVP Foundation
 

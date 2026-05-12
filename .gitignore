@@ -13,6 +13,9 @@
 /storage/framework/testing/*
 /storage/framework/views/*
 /storage/app/*.sqlite
+/storage/app/installed.lock
 /bootstrap/cache/*.php
+/tools/
+/database/*.sqlite
 !.gitkeep
 

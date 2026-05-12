@@ -10,6 +10,7 @@ use App\System\Http\Resources\MenuResource;
 use App\System\Http\Resources\PublicSiteSettingsResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class PublicSettingsApiController extends Controller
 {
@@ -35,11 +36,15 @@ class PublicSettingsApiController extends Controller
             return ApiResponse::error('api_disabled', 'Public API is disabled.', status: 403);
         }
 
-        $menu = Menu::query()
+        $menuQuery = Menu::query()
             ->where('location', $location)
-            ->where('is_active', true)
-            ->with(['items' => fn ($q) => $q->orderBy('sort_order')])
-            ->first();
+            ->with(['items' => fn ($q) => $q->orderBy('sort_order')]);
+
+        if (Schema::hasColumn('menus', 'is_active')) {
+            $menuQuery->where('is_active', true);
+        }
+
+        $menu = $menuQuery->first();
 
         return ApiResponse::success(
             $menu

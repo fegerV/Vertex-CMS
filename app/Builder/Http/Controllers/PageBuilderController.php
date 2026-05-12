@@ -98,8 +98,8 @@ class PageBuilderController extends Controller
             'content' => ['required', 'array'],
         ]);
 
-        $sections = $payload['content'] ?? [];
-        
+        $sections = $this->builder->normalizeSections($payload['content'] ?? []);
+
         $html = $this->renderer->render([
             'version' => '1.0',
             'layout' => 'default',

@@ -2,13 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Role;
 use App\Models\Setting;
-use App\Models\User;
-use Database\Seeders\RolesAndPermissionsSeeder;
-use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AdminAccessControlTest extends TestCase
@@ -19,8 +14,7 @@ class AdminAccessControlTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(RolesAndPermissionsSeeder::class);
-        $this->seed(SettingsSeeder::class);
+        $this->seedCore();
         $this->markApplicationAsInstalled();
     }
 
@@ -90,32 +84,5 @@ class AdminAccessControlTest extends TestCase
         $this->actingAs($viewer)->get('/admin/system/info')->assertForbidden();
         $this->actingAs($viewer)->get('/admin/system/logs')->assertForbidden();
         $this->actingAs($viewer)->get('/admin/system/cache')->assertForbidden();
-    }
-
-    private function makeUserWithRole(string $roleSlug): User
-    {
-        $user = User::query()->create([
-            'name' => ucfirst($roleSlug).' User',
-            'email' => $roleSlug.'@example.com',
-            'password' => Hash::make('password'),
-            'status' => 'active',
-        ]);
-
-        $role = Role::query()->where('slug', $roleSlug)->firstOrFail();
-        $user->roles()->sync([$role->id]);
-
-        return $user;
-    }
-
-    private function markApplicationAsInstalled(): void
-    {
-        $path = config('vertex.install_lock_path');
-        $directory = dirname($path);
-
-        if (! is_dir($directory)) {
-            mkdir($directory, 0777, true);
-        }
-
-        file_put_contents($path, json_encode(['installed_at' => now()->toISOString()]));
     }
 }

@@ -21,12 +21,17 @@
 - Custom fields foundation: `custom_fields_json`, field groups, reusable presets, apply/save/update/delete preset workflow, template/scope rules.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
+Automated verification на 2026-05-12:
+
+- `phpunit.xml` проходит в локальном portable PHP runtime: `35 tests`, `236 assertions`.
+- Покрыты P0 public page flow, P2 builder contract, P3 public/auth API v1, P4 AI module и P5 taxonomy/PWA contract-сценарии.
+- Manual QA checklist вынесен отдельно в `docs/manual-qa.md`.
+
 Не проверено end-to-end:
 
-- `composer install` пока блокируется сетевой политикой PHP-процесса к Packagist.
-- Laravel runtime не запускался через `artisan serve`.
-- Миграции не прогонялись на реальной БД.
-- PHP lint локально не выполнен, потому что `php` отсутствует в PATH текущего окружения.
+- Нужен прогон сценариев в браузере и на реальном web runtime.
+- Миграции и сиды нужно отдельно прогнать на целевой БД/окружении.
+- Интеграции с внешними AI provider SDK ещё не подтверждены живыми ключами.
 
 ## Статус P0
 
@@ -180,7 +185,7 @@ Acceptance criteria базового MVP:
 
 - Нет завершённого runtime/manual QA сценариев редактирования, публикации и публичного рендера.
 - Нет подтверждённого end-to-end прогона на живом PHP runtime в текущем окружении.
-- Нет полноценного автоматизированного покрытия builder UX-сценариев.
+- Contract-тесты builder save/preview/render уже есть, но drag-and-drop, command palette и library UX всё ещё требуют manual QA.
 
 Оценка:
 
@@ -233,8 +238,7 @@ Acceptance criteria:
 
 - Пакет `laravel/sanctum` добавлен в `composer.json`, но не установлен в текущем окружении, потому что здесь нет `composer`.
 - `composer.lock` не обновлён автоматически в этой среде.
-- Нет подтверждённого runtime/manual QA публичного API.
-- Нет автоматизированных API tests на стабильность error contract, auth contract и pagination contract.
+- Public/auth API contract покрыт automated tests, но bearer flow всё ещё нужно отдельно прогнать на живом runtime после полного Sanctum bootstrap.
 
 ## Приоритет P4 - AI Module
 
@@ -258,7 +262,7 @@ Acceptance criteria:
 - AI не сохраняет изменения без подтверждения.
 - Secret keys не попадают в logs и responses.
 
-Статус: `основной P4 flow реализован в коде: encrypted AI settings, provider registry, permission-aware AI panel, draft-only generation endpoints и AI activity logs уже есть. Реальная интеграция с внешними LLM provider SDK и runtime QA ещё не завершены`.
+Статус: `основной P4 flow реализован в коде и покрыт automated tests: encrypted AI settings, provider registry, permission-aware AI panel, draft-only generation endpoints и AI activity logs уже есть. Реальная интеграция с внешними LLM provider SDK и runtime QA ещё не завершены`.
 
 Что закрыто на уровне кода:
 
@@ -276,7 +280,8 @@ Acceptance criteria:
 - Нет живой интеграции с external provider SDK (`openai-php/client`, Anthropic SDK, Ollama и т.д.).
 - Генерация пока остаётся internal draft engine, а не runtime-вызовом внешней модели.
 - Нет отдельного admin UI для AI-specific log review; пока используются общие system logs.
-- Нет runtime/manual QA и automated tests для AI panel и admin API contract.
+- Automated coverage добавлено для AI settings security, provider listing, draft-only generation и stable error contract.
+- Остаётся runtime/manual QA UI-панели и живая проверка с внешним provider SDK.
 
 ## Приоритет P5 - PWA, themes, taxonomy
 
@@ -323,8 +328,8 @@ Acceptance criteria:
 Что ещё не закрыто:
 
 - Нет term archive OG/schema editor и более глубоких sitemap signals вроде priority/changefreq.
-- Нет runtime/manual QA PWA offline behavior и taxonomy archive flow.
-- Нет automated tests для theme fallback, service worker route и taxonomy API contract.
+- Есть automated tests для manifest/offline/taxonomy API contract.
+- Остаётся runtime/manual QA service worker install/offline behavior, theme fallback и term archive UX.
 
 ## Ближайший порядок реализации
 
