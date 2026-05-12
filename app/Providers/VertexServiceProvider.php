@@ -11,9 +11,11 @@ use App\Core\Services\SettingsService;
 use App\Core\Support\RouteRegistrar;
 use App\Media\Services\MediaService;
 use App\Seo\Services\SeoMetaService;
+use App\System\Console\Commands\ProcessEmailQueue;
 use App\System\Services\ActivityLogService;
 use App\System\Services\CacheService;
 use App\System\Services\DatabaseConnectionService;
+use App\System\Services\EmailService;
 use App\System\Services\EnvironmentFileService;
 use App\System\Services\InstallerRunner;
 use App\System\Services\MaintenanceService;
@@ -33,6 +35,7 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(EnvironmentFileService::class);
         $this->app->singleton(InstallerRunner::class);
         $this->app->singleton(ActivityLogService::class);
+        $this->app->singleton(EmailService::class);
         $this->app->singleton(MaintenanceService::class);
         $this->app->singleton(PageService::class);
         $this->app->singleton(SeoMetaService::class);
@@ -48,5 +51,12 @@ class VertexServiceProvider extends ServiceProvider
         require_once app_path('Builder/Config/blocks.php');
 
         $routes->register();
+
+        // Register console commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ProcessEmailQueue::class,
+            ]);
+        }
     }
 }
