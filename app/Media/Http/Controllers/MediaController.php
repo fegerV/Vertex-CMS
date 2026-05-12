@@ -20,6 +20,7 @@ class MediaController extends Controller
     {
         return view('admin.media.index', [
             'items' => Media::query()->latest()->paginate(24),
+            'folders' => \App\Models\MediaFolder::withCount('media')->orderBy('name')->get(),
         ]);
     }
 

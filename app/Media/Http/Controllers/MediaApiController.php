@@ -26,6 +26,7 @@ class MediaApiController extends Controller
             'ids.*' => ['integer'],
             'kind' => ['nullable', 'string', 'max:50'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:60'],
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
 
         $query = Media::query()->latest();
@@ -45,6 +46,10 @@ class MediaApiController extends Controller
             });
         }
 
+        if ($request->filled('folder_id')) {
+            $query->where('folder_id', $request->integer('folder_id'));
+        }
+
         if ($request->input('kind') === 'image') {
             $query->where('mime_type', 'like', 'image/%');
         }
@@ -61,9 +66,10 @@ class MediaApiController extends Controller
                     'original_filename' => $media->original_filename,
                     'mime_type' => $media->mime_type,
                     'extension' => $media->extension,
+                    'size' => $media->size,
                     'width' => $media->width,
                     'height' => $media->height,
-                    'size' => $media->size,
+                    'folder_id' => $media->folder_id,
                 ])
         );
     }
@@ -92,9 +98,12 @@ class MediaApiController extends Controller
             'alt' => ['nullable', 'string', 'max:255'],
             'title' => ['nullable', 'string', 'max:255'],
             'caption' => ['nullable', 'string', 'max:1000'],
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
 
-        return response()->json(['ok' => true, 'data' => $this->media->update($media, $payload)]);
+        $updated = $this->media->update($media, $payload);
+
+        return response()->json(['ok' => true, 'data' => $updated]);
     }
 
     public function destroy(Media $media): JsonResponse
@@ -104,5 +113,21 @@ class MediaApiController extends Controller
         $this->media->delete($media);
 
         return response()->json(['ok' => true]);
+    }
+
+    public function move(Request $request, Media $media): JsonResponse
+    {
+        abort_unless($request->user()?->hasPermission('media.edit'), 403);
+
+        $data = $request->validate([
+            'folder_id' => ['nullable', 'exists:media_folders,id'],
+        ]);
+
+        $this->media->move($media, $data['folder_id'] ?? null);
+
+        return response()->json(['ok' => true, 'data' => [
+            'id' => $media->id,
+            'folder_id' => $media->folder_id,
+        ]]);
     }
 }

@@ -72,11 +72,14 @@ class MediaService
 
     public function update(Media $media, array $payload): Media
     {
-        $media->forceFill([
-            'alt' => $payload['alt'] ?? null,
-            'title' => $payload['title'] ?? null,
-            'caption' => $payload['caption'] ?? null,
-        ])->save();
+        $allowed = ['alt', 'title', 'caption', 'folder_id'];
+        foreach ($allowed as $field) {
+            if (array_key_exists($field, $payload)) {
+                $media->$field = $payload[$field];
+            }
+        }
+
+        $media->save();
 
         $this->activityLog->record('media.edit', 'media', $media->id, "Media \"{$media->original_filename}\" updated.");
 
@@ -90,6 +93,22 @@ class MediaService
         if (File::exists($path)) {
             File::delete($path);
         }
+
+        $this->activityLog->record('media.delete', 'media', $media->id, "Media \"{$media->original_filename}\" deleted.");
+
+        $media->delete();
+    }
+
+    public function move(Media $media, ?int $folderId): Media
+    {
+        $media->folder_id = $folderId;
+        $media->save();
+
+        $this->activityLog->record('media.move', 'media', $media->id, "Media \"{$media->original_filename}\" moved to folder {$folderId}.");
+
+        return $media;
+    }
+}
 
         $this->activityLog->record('media.delete', 'media', $media->id, "Media \"{$media->original_filename}\" deleted.");
 

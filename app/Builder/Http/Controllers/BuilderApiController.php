@@ -17,7 +17,8 @@ class BuilderApiController extends Controller
     public function blocks(): JsonResponse
     {
         $blocks = collect(BlockRegistry::all())
-            ->map(function (array $block): array {
+            ->map(function (array $block, string $type): array {
+                $block['type'] = $type;
                 $block['fields'] = collect($block['fields'] ?? [])
                     ->map(function (array $field): array {
                         if (($field['type'] ?? null) === 'select' && is_array($field['options'] ?? null)) {
@@ -36,6 +37,7 @@ class BuilderApiController extends Controller
 
                 return $block;
             })
+            ->values()
             ->all();
 
         return response()->json([
