@@ -46,6 +46,9 @@ class RolesAndPermissionsSeeder extends Seeder
              'settings.edit',
              'system.view',
              'cache.clear',
+             'mail.view',
+             'mail.edit',
+             'mail.delete',
          ];
 
         foreach ($permissions as $permission) {
@@ -90,6 +93,9 @@ class RolesAndPermissionsSeeder extends Seeder
                 'ai.view_logs',
                 'settings.view',
                 'settings.edit',
+                'mail.view',
+                'mail.edit',
+                'mail.delete',
             ],
             'editor' => [
                 'admin.access',

@@ -71,6 +71,17 @@ class SettingsSeeder extends Seeder
             ['group_name' => 'mail', 'setting_key' => 'retry_attempts', 'setting_value' => '3', 'type' => 'integer'],
             ['group_name' => 'mail', 'setting_key' => 'log_all', 'setting_value' => '1', 'type' => 'boolean'],
             ['group_name' => 'mail', 'setting_key' => 'attach_assets', 'setting_value' => '0', 'type' => 'boolean'],
+            // Telegram widget
+            ['group_name' => 'telegram', 'setting_key' => 'enabled', 'setting_value' => '0', 'type' => 'boolean'],
+            ['group_name' => 'telegram', 'setting_key' => 'username', 'setting_value' => '', 'type' => 'string'],
+            ['group_name' => 'telegram', 'setting_key' => 'bot_token', 'setting_value' => '', 'type' => 'string'],
+            ['group_name' => 'telegram', 'setting_key' => 'chat_id', 'setting_value' => '', 'type' => 'string'],
+            ['group_name' => 'telegram', 'setting_key' => 'widget_style', 'setting_value' => 'floating', 'type' => 'string'],
+            ['group_name' => 'telegram', 'setting_key' => 'widget_position', 'setting_value' => 'bottom-right', 'type' => 'string'],
+            ['group_name' => 'telegram', 'setting_key' => 'greeting', 'setting_value' => '', 'type' => 'string'],
+            ['group_name' => 'telegram', 'setting_key' => 'color', 'setting_value' => '#0088cc', 'type' => 'string'],
+            ['group_name' => 'telegram', 'setting_key' => 'show_online_status', 'setting_value' => '0', 'type' => 'boolean'],
+            ['group_name' => 'telegram', 'setting_key' => 'message_prefill', 'setting_value' => '', 'type' => 'string'],
          ];
 
         foreach ($defaults as $setting) {

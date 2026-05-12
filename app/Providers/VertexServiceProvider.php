@@ -20,6 +20,7 @@ use App\System\Services\EnvironmentFileService;
 use App\System\Services\InstallerRunner;
 use App\System\Services\MaintenanceService;
 use App\System\Services\SystemInfoService;
+use App\System\Services\TelegramWidgetService;
 use App\Theme\Services\ThemeManager;
 use Illuminate\Support\ServiceProvider;
 
@@ -36,6 +37,7 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(InstallerRunner::class);
         $this->app->singleton(ActivityLogService::class);
         $this->app->singleton(EmailService::class);
+        $this->app->singleton(TelegramWidgetService::class);
         $this->app->singleton(MaintenanceService::class);
         $this->app->singleton(PageService::class);
         $this->app->singleton(SeoMetaService::class);
