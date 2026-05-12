@@ -20,3 +20,24 @@
 ### Upcoming
 - Full end-to-end verification of the "Install -> Create -> Publish" flow.
 - Integration of the modernized UI with the new block templates.
+
+## [2026-05-13] Module System + Builder Registry Pass
+
+### Completed
+- **Module tiers foundation**: Added config-driven tier metadata for `core`, `builtin`, and `marketplace` modules, plus loader/catalog/manager classes for `module.json` discovery. (Engineer)
+- **Security module planning slice**: Added architecture and rollout docs for `vertex-security` plus a module skeleton for future runtime integration. (Engineer)
+- **Builder architecture formalized**: Documented `TipTap + JSON block builder + Blade renderer` as the target page-builder stack. (Engineer)
+- **Vue builder prototype normalized**: Replaced the exploratory prototype with a registry-driven version that no longer depends on missing `pinia` or `sortablejs` packages and can mount from the main JS bundle. (Engineer)
+- **Builder registry API contract**: Extended `/admin/api/builder/blocks` with normalized editor metadata and added a feature test for the contract. (Engineer)
+
+### In Progress
+- **Full module bootstrap cleanup**: Manifest-driven loading is partially in place, but final provider/runtime activation still needs another pass. (Engineer)
+- **Production builder integration**: The improved Vue/TipTap prototype exists, but is not yet the default admin page-builder runtime. (UI Engineer)
+
+### Verification
+- PHP syntax checks passed for the new module registry and builder registry related files.
+- Isolated module manifest discovery confirmed detection of `vertex-core`, `vertex-auth`, `vertex-content`, `vertex-forms`, and `vertex-security`.
+- `BuilderContractTest` passed: `4 tests`, `29 assertions`.
+- `BuilderRegistryApiTest` passed: `1 test`, `339 assertions`.
+- `npm run build` passed with the updated Vue/TipTap prototype.
+- Full Laravel test suite still needs rerun after the remaining bootstrap cleanup.

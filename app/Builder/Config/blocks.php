@@ -423,31 +423,222 @@ $blocks = [
     ],
 
     'form' => [
-        'name' => 'Форма',
+        'name' => 'Форма (универсальный конструктор)',
         'category' => 'dynamic',
         'icon' => 'form',
-        'description' => 'Контактная форма с валидацией',
+        'description' => 'Мощный конструктор форм: калькулятор, условия, мультиязычность, файлы, оплата',
         'default' => [
             'type' => 'form',
             'settings' => [
-                'title' => 'Свяжитесь с нами',
-                'description' => 'Оставьте ваши контакты, и мы свяжемся с вами',
+                // Mode: 'existing' (select from DB) or 'inline' (built in page)
+                'mode' => 'existing',
+                'form_id' => null,  // Reference to Form model
+
+                // Inline form definition (if mode=inline)
+                'title' => 'Универсальная форма',
+                'description' => 'Оставьте заявку',
                 'fields' => [
-                    ['type' => 'text', 'name' => 'name', 'label' => 'Имя', 'required' => true],
-                    ['type' => 'email', 'name' => 'email', 'label' => 'Email', 'required' => true],
-                    ['type' => 'textarea', 'name' => 'message', 'label' => 'Сообщение', 'required' => true],
+                    [
+                        'type' => 'text',
+                        'name' => 'name',
+                        'label' => 'Ваше имя',
+                        'required' => true,
+                        'placeholder' => 'Иван Иванов',
+                    ],
+                    [
+                        'type' => 'email',
+                        'name' => 'email',
+                        'label' => 'Email',
+                        'required' => true,
+                        'placeholder' => 'example@mail.ru',
+                    ],
+                    [
+                        'type' => 'calculator',
+                        'name' => 'total',
+                        'label' => 'Итого',
+                        'formula' => '{quantity} * {price}',
+                        'depends_on' => ['quantity', 'price'],
+                        'prefix' => '₽',
+                        'suffix' => ' руб.',
+                        'precision' => 2,
+                        'live' => true,
+                        'readonly' => true,
+                    ],
                 ],
+
+                // Form settings
                 'button_text' => 'Отправить',
-                'success_message' => 'Сообщение успешно отправлено!',
-                'action_url' => '/api/contact',
+                'submit_label' => 'Отправить',
+                'success_message' => 'Спасибо! Мы свяжемся с вами в течение 24 часов.',
+                'error_message' => 'Ошибка при отправке. Попробуйте позже.',
+                'action_url' => '', // auto-generated if empty
+                'method' => 'POST',
+
+                // Behavior
+                'multipage' => false,
+                'show_progress' => true,
+                'show_page_titles' => false,
+                'ajax' => true,
+                'redirect_url' => '',
+                'refresh_on_success' => false,
+
+                // Validation & anti-spam
+                'enable_honeypot' => true,
+                'enable_recaptcha' => false,
+                'recaptcha_version' => 'v2',
+
+                // Notifications
+                'notify_admin' => true,
+                'admin_emails' => '',
+                'notify_user' => false,
+                'user_email_field' => 'email',
+                'user_email_subject' => 'Спасибо за заявку!',
+                'user_email_template' => 'form_confirmation',
+
+                // Calculator specific
+                'tax_enabled' => false,
+                'tax_rate' => 0,
+                'currency' => '₽',
+                'currency_position' => 'before', // before/after
+                'thousand_separator' => ' ',
+                'decimal_separator' => '.',
+
+                // Styling
+                'theme' => 'default',
+                'custom_css' => '',
+                'layout' => 'vertical', // vertical, horizontal, inline
+                'label_position' => 'top', // top, left, inside
+                'show_labels' => true,
+                'show_placeholders' => true,
+                'required_mark' => true,
             ],
         ],
         'fields' => [
+            // General
+            'mode' => ['type' => 'select', 'label' => 'Режим', 'options' => [
+                'existing' => 'Выбрать existing форму',
+                'inline' => 'Создать форму здесь (inline)'
+            ]],
+            'form_id' => ['type' => 'select', 'label' => 'Существующая форма', 'options' => '\\Vertex\\Forms\\Models\\Form::all()->pluck("name","id")->toArray()', 'depends_on' => ['mode' => 'existing']],
             'title' => ['type' => 'text', 'label' => 'Заголовок формы'],
             'description' => ['type' => 'textarea', 'label' => 'Описание', 'rows' => 3],
-            'button_text' => ['type' => 'text', 'label' => 'Текст на кнопке'],
-            'success_message' => ['type' => 'text', 'label' => 'Сообщение об успехе'],
-            'action_url' => ['type' => 'text', 'label' => 'URL отправки формы'],
+            'submit_label' => ['type' => 'text', 'label' => 'Текст кнопки', 'default' => 'Отправить'],
+            'success_message' => ['type' => 'textarea', 'label' => 'Сообщение об успехе', 'rows' => 2],
+            'error_message' => ['type' => 'textarea', 'label' => 'Сообщение об ошибке', 'rows' => 2],
+
+            // Fields inline editor
+            'fields' => [
+                'type' => 'repeater',
+                'label' => 'Поля формы',
+                'depends_on' => ['mode' => 'inline'],
+                'fields' => [
+                    ['type' => 'text', 'key' => 'name', 'label' => 'Имя поля (name)', 'required' => true, 'placeholder' => 'field_name'],
+                    ['type' => 'text', 'key' => 'label', 'label' => 'Подпись (label)', 'required' => true],
+                    ['type' => 'select', 'key' => 'type', 'label' => 'Тип', 'options' => [
+                        'text' => 'Текст',
+                        'email' => 'Email',
+                        'number' => 'Число',
+                        'textarea' => 'Текстовая область',
+                        'select' => 'Выпадающий список',
+                        'radio' => 'Радио-кнопки',
+                        'checkbox' => 'Чекбокс',
+                        'checkbox_group' => 'Группа чекбоксов',
+                        'file' => 'Файл',
+                        'date' => 'Дата',
+                        'time' => 'Время',
+                        'hidden' => 'Скрытое поле',
+                        'calculator' => 'Калькулятор',
+                        'heading' => 'Заголовок секции',
+                        'divider' => 'Разделитель',
+                        'html' => 'HTML-содержимое',
+                    ]],
+                    ['type' => 'toggle', 'key' => 'required', 'label' => 'Обязательное'],
+                    ['type' => 'text', 'key' => 'placeholder', 'label' => 'Placeholder'],
+                    ['type' => 'text', 'key' => 'default_value', 'label' => 'Значение по умолчанию'],
+                    ['type' => 'help', 'key' => 'help_text', 'label' => 'Подсказка'],
+                    ['type' => 'select', 'key' => 'width', 'label' => 'Ширина', 'options' => ['full' => 'Полная', 'half' => 'Половина', 'third' => 'Треть']],
+                ],
+            ],
+
+            // Calculator options
+            'calculator_options' => [
+                'type' => 'repeater',
+                'label' => 'Поля калькулятора',
+                'depends_on' => ['mode' => 'inline'],
+                'fields' => [
+                    ['type' => 'text', 'key' => 'name', 'label' => 'Имя калькулятора'],
+                    ['type' => 'select', 'key' => 'type', 'label' => 'Тип вывода', 'options' => ['total' => 'Итого', 'subtotal' => 'Промежуточный', 'tax' => 'Налог', 'discount' => 'Скидка']],
+                    ['type' => 'textarea', 'key' => 'formula', 'label' => 'Формула (например: {qty} * {price} + {shipping})', 'rows' => 2],
+                    ['type' => 'text', 'key' => 'prefix', 'label' => 'Префикс (например: $)'],
+                    ['type' => 'text', 'key' => 'suffix', 'label' => 'Суффикс (например: руб.)'],
+                    ['type' => 'number', 'key' => 'precision', 'label' => 'Точность (знаков после запятой)', 'default' => 2],
+                    ['type' => 'toggle', 'key' => 'live', 'label' => 'Рассчитывать в реальном времени'],
+                ],
+            ],
+
+            // Conditions
+            'enable_conditions' => ['type' => 'toggle', 'label' => 'Включить условную логику'],
+            'conditions' => [
+                'type' => 'repeater',
+                'label' => 'Условия видимости',
+                'depends_on' => ['enable_conditions' => true],
+                'fields' => [
+                    ['type' => 'select', 'key' => 'depends_on', 'label' => 'Поле-условие', 'options' => 'dynamic_fields'],
+                    ['type' => 'select', 'key' => 'operator', 'label' => 'Оператор', 'options' => [
+                        'equals' => 'равно',
+                        'not_equals' => 'не равно',
+                        'contains' => 'содержит',
+                        'greater_than' => 'больше',
+                        'less_than' => 'меньше',
+                        'is_empty' => 'пусто',
+                        'is_not_empty' => 'не пусто',
+                    ]],
+                    ['type' => 'text', 'key' => 'value', 'label' => 'Значение'],
+                    ['type' => 'select', 'key' => 'action', 'label' => 'Действие', 'options' => [
+                        'show' => 'Показать поле',
+                        'hide' => 'Скрыть поле',
+                    ]],
+                ],
+            ],
+
+            // Multi-page
+            'multipage' => ['type' => 'toggle', 'label' => 'Многостраничная форма'],
+            'page_titles' => ['type' => 'text', 'label' => 'Названия страниц (через запятую)', 'depends_on' => ['multipage' => true]],
+
+            // Anti-spam
+            'enable_honeypot' => ['type' => 'toggle', 'label' => 'Включить honeypot', 'default' => true],
+            'enable_recaptcha' => ['type' => 'toggle', 'label' => 'Включить reCAPTCHA'],
+            'recaptcha_version' => ['type' => 'select', 'label' => 'Версия reCAPTCHA', 'options' => ['v2' => 'reCAPTCHA v2', 'v3' => 'reCAPTCHA v3'], 'depends_on' => ['enable_recaptcha' => true]],
+
+            // Limits
+            'entry_limit' => ['type' => 'number', 'label' => 'Максимум отправок (0 = без лимита)'],
+            'daily_limit' => ['type' => 'number', 'label' => 'Лимит в сутки на IP (0 = без лимита)'],
+            'available_from' => ['type' => 'datetime', 'label' => 'Доступна с'],
+            'available_to' => ['type' => 'datetime', 'label' => 'Доступна до'],
+
+            // Notifications
+            'notify_admin' => ['type' => 'toggle', 'label' => 'Уведомлять администратора', 'default' => true],
+            'admin_emails' => ['type' => 'textarea', 'label' => 'Email администраторов (через запятую)', 'depends_on' => ['notify_admin' => true]],
+            'notify_user' => ['type' => 'toggle', 'label' => 'Отправлять подтверждение пользователю'],
+            'user_email_field' => ['type' => 'select', 'label' => 'Поле с email пользователя', 'depends_on' => ['notify_user' => true]],
+            'user_email_subject' => ['type' => 'text', 'label' => 'Тема письма пользователю', 'depends_on' => ['notify_user' => true]],
+            'user_email_template' => ['type' => 'select', 'label' => 'Шаблон письма', 'depends_on' => ['notify_user' => true], 'options' => ['form_confirmation' => 'Подтверждение заявки']],
+
+            // Calculator-specific
+            'tax_enabled' => ['type' => 'toggle', 'label' => 'Включить налог'],
+            'tax_rate' => ['type' => 'number', 'label' => 'Ставка налога (%)', 'depends_on' => ['tax_enabled' => true], 'step' => 0.1],
+            'currency' => ['type' => 'text', 'label' => 'Валюта', 'default' => '₽'],
+            'currency_position' => ['type' => 'select', 'label' => 'Позиция валюты', 'options' => ['before' => 'До суммы', 'after' => 'После суммы']],
+            'thousand_separator' => ['type' => 'text', 'label' => 'Разделитель тысяч', 'default' => ' '],
+            'decimal_separator' => ['type' => 'text', 'label' => 'Разделитель дробной части', 'default' => '.'],
+
+            // Styling
+            'theme' => ['type' => 'select', 'label' => 'Тема оформления', 'options' => ['default' => 'Стандартная', 'minimal' => 'Минималистичная', 'card' => 'Карточки']],
+            'layout' => ['type' => 'select', 'label' => 'Макет полей', 'options' => ['vertical' => 'Вертикальный', 'horizontal' => 'Горизонтальный', 'inline' => 'В одну строку']],
+            'label_position' => ['type' => 'select', 'label' => 'Позиция подписи', 'options' => ['top' => 'Сверху', 'left' => 'Слева', 'inside' => 'Внутри']],
+            'show_labels' => ['type' => 'toggle', 'label' => 'Показывать подписи', 'default' => true],
+            'required_mark' => ['type' => 'toggle', 'label' => 'Показывать * обязательных', 'default' => true],
+            'custom_css' => ['type' => 'textarea', 'label' => 'Дополнительный CSS', 'rows' => 3],
         ],
     ],
 

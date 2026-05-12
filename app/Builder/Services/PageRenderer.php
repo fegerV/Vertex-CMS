@@ -2,6 +2,8 @@
 
 namespace App\Builder\Services;
 
+use Vertex\Forms\Services\FormService;
+use Vertex\Forms\Models\Form;
 use App\Theme\Services\ThemeManager;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
@@ -10,6 +12,7 @@ class PageRenderer
 {
     public function __construct(
         private readonly ThemeManager $themes,
+        private readonly FormService $formService,
     ) {
     }
 
@@ -49,9 +52,11 @@ class PageRenderer
         $override = $this->themes->blockView($type);
 
         if ($override) {
-            $html = $type === 'html'
-                ? $this->html($settings)
-                : null;
+            $html = match ($type) {
+                'html' => $this->html($settings),
+                'form' => $this->form($settings),
+                default => null,
+            };
 
             return view($override, [
                 'block' => $block,
@@ -67,6 +72,7 @@ class PageRenderer
             'divider' => '<hr class="vc-divider">',
             'faq' => $this->faq($settings),
             'html' => $this->html($settings),
+            'form' => $this->form($settings),
             default => '<!-- Unknown VertexCMS block: '.e($type).' -->',
         };
     }
@@ -126,6 +132,40 @@ class PageRenderer
         $html = preg_replace('/\son\w+=(["\']).*?\1/i', '', $html) ?? $html;
 
         return str_ireplace(['javascript:', 'data:'], '', $html);
+    }
+
+    /**
+     * Render form block on frontend
+     */
+    private function form(array $settings): string
+    {
+        $formId = $settings['form_id'] ?? null;
+        $form = null;
+
+        // Try to get existing form by ID
+        if ($formId) {
+            $form = Form::query()->find($formId);
+        }
+
+        // If no form found, render placeholder
+        if (!$form) {
+            return '<div class="vc-form-placeholder">[Форма не найдена]</div>';
+        }
+
+        // Render form Vue component with data attributes
+        $formConfig = $this->formService->renderForm($form);
+        $actionUrl = route('public.forms.submit', $form->slug);
+        $nonce = csrf_token();
+        $uniqueId = 'form_'.$form->id.'_'.Str::random(8);
+
+        return view('forms::blocks.form', [
+            'form' => $form,
+            'formConfig' => $formConfig,
+            'actionUrl' => $actionUrl,
+            'nonce' => $nonce,
+            'uniqueId' => $uniqueId,
+            'settings' => $settings,
+        ])->render();
     }
 
     private function style(array $values): string

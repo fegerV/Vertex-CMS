@@ -238,7 +238,7 @@ export default defineComponent({
 }
 .tg-pos-bottom-right .tg-chat-window,
 .tg-pos-bottom-left .tg-chat-window {
-  // aligned to button edge automatically via CSS logic
+  /* aligned to button edge automatically via CSS logic */
 }
 .tg-pos-bottom-right .tg-chat-window { right: 20px; }
 .tg-pos-bottom-left .tg-chat-window { left: 20px; }

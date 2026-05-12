@@ -37,3 +37,7 @@ Route::post('/ai/chat', [AiController::class, 'chat']);
 Route::get('/system/info', [SystemApiController::class, 'info']);
 Route::post('/cache/clear', [SystemApiController::class, 'clearCache']);
 
+if (file_exists(base_path('modules/vertex-forms/routes/api.php'))) {
+    require base_path('modules/vertex-forms/routes/api.php');
+}
+
