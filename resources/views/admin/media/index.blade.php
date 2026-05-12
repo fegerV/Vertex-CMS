@@ -106,7 +106,7 @@
                 </div>
 
                 <!-- Media cards -->
-                <div v-for="item in items" :key="item.id" class="group relative aspect-video rounded-lg border border-[var(--vc-border)] bg-[var(--vc-surface-strong)] overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" @click="openMediaPreview(item)">
+                <div v-for="item in items" :key="item.id" class="group relative aspect-video rounded-lg border border-[var(--vc-border)] bg-[var(--vc-surface-strong)] overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" @click="previewMedia = item">
                     <!-- Preview -->
                     <div class="w-full h-full flex items-center justify-center bg-[var(--vc-surface-muted)]">
                         <img v-if="isImage(item)" :src="item.url" :alt="item.alt" class="max-w-full max-h-full object-cover" loading="lazy">
