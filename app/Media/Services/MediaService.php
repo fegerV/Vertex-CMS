@@ -108,12 +108,6 @@ class MediaService
 
         return $media;
     }
-}
-
-        $this->activityLog->record('media.delete', 'media', $media->id, "Media \"{$media->original_filename}\" deleted.");
-
-        $media->delete();
-    }
 
     private function sanitizeSvg(string $svg): string
     {
@@ -134,4 +128,5 @@ class MediaService
         return $size ? [$size[0], $size[1]] : [null, null];
     }
 }
+
 
