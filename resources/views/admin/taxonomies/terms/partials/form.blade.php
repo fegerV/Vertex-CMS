@@ -55,6 +55,33 @@
         <span class="mb-2 block text-sm font-semibold text-[var(--vc-text)]">SEO description</span>
         <textarea name="seo_description" rows="4" class="vc-textarea">{{ old('seo_description', $term->seo_json['description'] ?? '') }}</textarea>
     </label>
+
+    <label class="block sm:col-span-2">
+        <span class="mb-2 block text-sm font-semibold text-[var(--vc-text)]">Canonical URL</span>
+        <input type="url" name="seo_canonical_url" value="{{ old('seo_canonical_url', $term->seo_json['canonical_url'] ?? '') }}" class="vc-input">
+    </label>
+
+    <label class="block">
+        <span class="mb-2 block text-sm font-semibold text-[var(--vc-text)]">Robots</span>
+        <select name="seo_robots" class="vc-select">
+            @foreach (\App\Seo\Services\SeoMetaService::ROBOTS as $robots)
+                <option value="{{ $robots }}" @selected(old('seo_robots', $term->seo_json['robots'] ?? 'index, follow') === $robots)>
+                    {{ $robots }}
+                </option>
+            @endforeach
+        </select>
+    </label>
+
+    <label class="flex items-center gap-3 rounded-2xl border border-[var(--vc-border)] bg-[var(--vc-panel-muted)] px-4 py-3 sm:col-span-2">
+        <input
+            type="checkbox"
+            name="seo_include_in_sitemap"
+            value="1"
+            @checked(old('seo_include_in_sitemap', $term->seo_json['include_in_sitemap'] ?? true))
+            class="rounded border-slate-300"
+        >
+        <span class="text-sm font-medium text-[var(--vc-text)]">Include term archive in sitemap.xml</span>
+    </label>
 </div>
 
 <div class="flex justify-end">

@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $term->name }} | {{ config_value('site.name', 'VertexCMS') }}</title>
+    <title>{{ $meta['title'] }}</title>
+    @if ($meta['description'])
+        <meta name="description" content="{{ $meta['description'] }}">
+    @endif
+    <meta name="robots" content="{{ $meta['robots'] }}">
+    <link rel="canonical" href="{{ $meta['canonical'] }}">
+    <meta property="og:title" content="{{ $meta['title'] }}">
+    @if ($meta['description'])
+        <meta property="og:description" content="{{ $meta['description'] }}">
+    @endif
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $meta['canonical'] }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-white text-slate-950">

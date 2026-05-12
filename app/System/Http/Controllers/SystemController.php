@@ -2,6 +2,7 @@
 
 namespace App\System\Http\Controllers;
 
+use App\Analytics\Services\TrafficAnalyticsService;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\System\Services\ActivityLogService;
@@ -17,6 +18,7 @@ class SystemController extends Controller
         private readonly SystemInfoService $systemInfo,
         private readonly CacheService $cache,
         private readonly ActivityLogService $activityLog,
+        private readonly TrafficAnalyticsService $analytics,
     ) {
     }
 
@@ -37,6 +39,15 @@ class SystemController extends Controller
                 ->paginate(50)
                 ->withQueryString(),
             'filters' => $request->only(['action', 'user_id']),
+        ]);
+    }
+
+    public function analytics(Request $request): View
+    {
+        $days = (int) $request->integer('days', 30);
+
+        return view('admin.system.analytics', [
+            'analytics' => $this->analytics->overview($days),
         ]);
     }
 

@@ -12,6 +12,7 @@
 - Renderer foundation: вывод JSON-блоков Heading, Text, Button, Divider, FAQ, HTML.
 - Media foundation: upload, metadata edit, delete, SVG sanitization, activity logs.
 - System foundation: system info, activity log filters, cache status and manual cache clear.
+- Analytics foundation: public traffic aggregation, admin analytics dashboard, top pages and term archive traffic overview.
 - Admin layout foundation: общий Blade layout, sidebar, topbar, единый flash output.
 - RBAC foundation: route-level permission middleware, role permission mapping, permission-aware navigation.
 - Users/Roles foundation: CRUD пользователей, назначение ролей, просмотр и редактирование permissions ролей.
@@ -300,7 +301,7 @@ Acceptance criteria:
 - Term можно привязать к странице.
 - API может вернуть страницы по term.
 
-Статус: `основной P5 vertical slice реализован в коде: manifest, service worker, offline route, theme metadata/fallback и taxonomy layer с page-term attachment, term archives, public taxonomy API и admin CRUD для taxonomies/terms уже собраны. Runtime QA и миграции ещё не завершены`.
+Статус: `основной P5 vertical slice реализован в коде: manifest, service worker, offline route, theme metadata/fallback и taxonomy layer с page-term attachment, term archives, public taxonomy API, admin CRUD для taxonomies/terms, term archive SEO/meta и sitemap inclusion уже собраны. Runtime QA и миграции ещё не завершены`.
 
 Что закрыто на уровне кода:
 
@@ -316,10 +317,12 @@ Acceptance criteria:
 - Public term archive route `/taxonomy/{taxonomy}/{term}`.
 - Public taxonomy API, включая страницы по term.
 - Admin CRUD для taxonomies и terms: отдельные index/create/edit flow, nested term management, archive/meta fields и permission-aware вход из админки.
+- SEO/meta для term archives: title, description, canonical URL, robots и include-in-sitemap flags.
+- term-specific sitemap entries для индексируемых archive pages.
 
 Что ещё не закрыто:
 
-- Нет SEO/meta editor для term archives и term-specific sitemap entries.
+- Нет term archive OG/schema editor и более глубоких sitemap signals вроде priority/changefreq.
 - Нет runtime/manual QA PWA offline behavior и taxonomy archive flow.
 - Нет automated tests для theme fallback, service worker route и taxonomy API contract.
 

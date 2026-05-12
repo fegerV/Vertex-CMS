@@ -231,6 +231,9 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::get('system/logs', [SystemController::class, 'logs'])
             ->middleware('vertex.permission:system.view')
             ->name('system.logs');
+        Route::get('system/analytics', [SystemController::class, 'analytics'])
+            ->middleware('vertex.permission:analytics.view')
+            ->name('system.analytics');
         Route::get('system/cache', [SystemController::class, 'cache'])
             ->middleware('vertex.permission:system.view')
             ->name('system.cache');

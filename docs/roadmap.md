@@ -21,6 +21,16 @@ VertexCMS должна стать современной CMS с открытым
 6. CMS должна быть готова к headless, Git-based и collaborative workflows.
    Контент, API и деплой должны быть удобны и для редакторов, и для разработчиков, включая совместное редактирование, версионирование и автоматизацию поставки.
 
+## Текущее состояние на 2026-05-12
+
+- `v0.1` реализован в коде как рабочий foundation slice: installer, auth, RBAC, pages CRUD, media, SEO fields, frontend renderer, sitemap/robots, system pages и activity logs уже есть.
+- `Page Builder MVP` и advanced builder ушли заметно дальше исходного MVP: drag-and-drop, revisions, autosave, templates, presets, shared libraries, command palette, shortcuts, media picker и modern light/dark UI уже собраны.
+- `v0.2` частично закрыт на текущем Blade admin stack: современная админка с light/dark theme, permission-aware navigation, системные экраны и стабильный public/mobile API v1 contract уже реализованы; planned Inertia/Vue migration остаётся следующим UI-этапом, а не обязательным условием usable admin.
+- `v0.3` реализован как draft-first AI module: encrypted settings, provider registry, AI panel в page editor, generation flow для text/FAQ/CTA/SEO/builder draft и AI activity logs уже есть. Живая интеграция с внешними LLM provider SDK ещё впереди.
+- `v0.4` и `v0.5` уже имеют реальную кодовую основу: PWA manifest, service worker, offline page, theme fallback, taxonomy models, admin CRUD, public term archives, taxonomy API, term archive SEO/meta и sitemap inclusion уже собраны.
+- Privacy-first analytics foundation уже начата раньше formal `v0.7`: есть cookieless traffic aggregation и admin analytics dashboard для pages и term archives.
+- Основной незакрытый слой для уже написанных модулей: runtime/manual QA, миграции в живой среде и automated tests. Это ограничение среды и верификации, а не отсутствие архитектуры или UI.
+
 ## Версия v0.1 - MVP Foundation
 
 Цель: получить первую рабочую CMS, которую можно установить, открыть в браузере, войти в админку, создать страницу, собрать её из блоков и опубликовать.
@@ -62,6 +72,7 @@ Acceptance criteria:
 - Полноценный Inertia + Vue admin layout.
 - CRUD пользователей и ролей.
 - CRUD настроек.
+- Современный Blade admin layout с light/dark theme, пока Inertia/Vue migration не завершена.
 - Улучшенный Pages CRUD.
 - API v1 с token-based auth.
 - API resources и pagination.
@@ -135,6 +146,8 @@ Acceptance criteria:
 
 - Taxonomies.
 - Terms.
+- Admin CRUD для taxonomies и terms.
+- Публичные term archives.
 - Связь terms с pages и будущими content types.
 - Фильтрация по категориям и тегам.
 - Taxonomy API.
@@ -176,6 +189,7 @@ Acceptance criteria:
 Функции:
 
 - Cookieless-аналитика без внешних трекеров по умолчанию.
+- Admin analytics dashboard для страниц и taxonomy archives.
 - Базовый compliance-аудит для GDPR/CCPA related scenarios.
 - Безопасное шифрование чувствительных ключей и настроек.
 - Passkey/WebAuthn authentication для админки.

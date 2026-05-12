@@ -5,6 +5,7 @@ namespace App\Taxonomy\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Taxonomy;
 use App\Models\Term;
+use App\Seo\Services\SeoMetaService;
 use App\System\Services\ActivityLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -95,6 +96,9 @@ class AdminTermController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:1000'],
+            'seo_canonical_url' => ['nullable', 'url', 'max:500'],
+            'seo_robots' => ['nullable', Rule::in(SeoMetaService::ROBOTS)],
+            'seo_include_in_sitemap' => ['nullable', 'boolean'],
         ]);
 
         $parentId = filled($payload['parent_id'] ?? null) ? (int) $payload['parent_id'] : null;
@@ -117,6 +121,9 @@ class AdminTermController extends Controller
             'seo_json' => array_filter([
                 'title' => $payload['seo_title'] ?? null,
                 'description' => $payload['seo_description'] ?? null,
+                'canonical_url' => $payload['seo_canonical_url'] ?? null,
+                'robots' => $payload['seo_robots'] ?? 'index, follow',
+                'include_in_sitemap' => $request->boolean('seo_include_in_sitemap', true),
             ], fn ($value) => $value !== null && $value !== ''),
         ];
     }
