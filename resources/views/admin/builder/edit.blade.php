@@ -450,9 +450,14 @@
 
             async function fetchAvailableBlocks() {
                 try {
-                    const response = await fetch('/admin/api/builder/blocks');
+                    const response = await fetch('/api/builder/blocks');
                     const data = await response.json();
-                    availableBlocks.value = data.blocks || {};
+                    // Transform array to object keyed by block type
+                    const blocksObj = {};
+                    (data.blocks || []).forEach(block => {
+                        blocksObj[block.type] = block;
+                    });
+                    availableBlocks.value = blocksObj;
                 } catch (e) {
                     console.error('Failed to load blocks:', e);
                 }
@@ -533,10 +538,8 @@
             }
 
             async function previewContent() {
-                const blocks = content.map(block => {
-                    if (block.type === 'heading' || block.type === 'text' || block.type === 'button' || 
-                        block.type === 'divider' || block.type === 'faq' || block.type === 'html' || 
-                        block.type === 'image') {
+                const filteredBlocks = content.map(block => {
+                    if (['heading','text','button','divider','faq','html','image'].includes(block.type)) {
                         return {
                             type: block.type,
                             settings: { ...block.settings }
@@ -546,13 +549,13 @@
                 }).filter(Boolean);
 
                 try {
-                    const response = await fetch('/admin/api/builder/render-preview', {
+                    const response = await fetch(`/admin/pages/${page.id}/builder/preview`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
                         },
-                        body: JSON.stringify({ content: [{ settings: {}, blocks }] })
+                        body: JSON.stringify({ content: [ { settings: {}, blocks: filteredBlocks } ] })
                     });
                     const data = await response.json();
                     previewHtml.value = data.html;
