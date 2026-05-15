@@ -75,9 +75,13 @@ class BuilderRegistryApiTest extends TestCase
         $this->assertTrue($button['editor']['capabilities']['duplicate']);
         $this->assertSame('move-up', $button['editor']['actions'][0]['id']);
         $this->assertSame('delete', $button['editor']['actions'][3]['id']);
-        $this->assertSame('duplicate-block', $button['editor']['commands'][0]['id']);
+        $this->assertSame('inline-edit', $button['editor']['commands'][0]['id']);
+        $this->assertSame('duplicate-block', $button['editor']['commands'][1]['id']);
         $this->assertSame('multi', $button['editor']['presentation']['selection']['mode']);
         $this->assertSame('hover-or-selected', $button['editor']['presentation']['toolbar']['visibility']);
         $this->assertSame('visual', $image['editor']['presentation']['canvas']['preview']);
+        $this->assertTrue($heading['editor']['inline_editing']['enabled']);
+        $this->assertSame('double-click', $heading['editor']['inline_editing']['trigger']);
+        $this->assertSame('Enter', $heading['editor']['inline_editing']['shortcut']);
     }
 }

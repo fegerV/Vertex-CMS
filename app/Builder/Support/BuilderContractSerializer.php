@@ -49,6 +49,7 @@ class BuilderContractSerializer
                     'hint' => $this->resolveQuickAddHint($type),
                     'keywords' => $this->resolveQuickAddKeywords($type),
                 ],
+                'inline_editing' => $this->resolveInlineEditing($type),
                 'capabilities' => [
                     'move' => true,
                     'duplicate' => true,
@@ -373,12 +374,24 @@ class BuilderContractSerializer
 
     private function resolveBlockCommands(string $type): array
     {
-        return [
+        $commands = [
             ['id' => 'duplicate-block', 'label' => 'Duplicate block', 'shortcut' => 'D'],
             ['id' => 'delete-block', 'label' => 'Delete block', 'shortcut' => 'Delete'],
             ['id' => 'move-block-up', 'label' => 'Move block up', 'shortcut' => 'Alt+Up'],
             ['id' => 'move-block-down', 'label' => 'Move block down', 'shortcut' => 'Alt+Down'],
         ];
+
+        $inlineEditing = $this->resolveInlineEditing($type);
+        if ($inlineEditing['enabled'] ?? false) {
+            array_unshift($commands, [
+                'id' => 'inline-edit',
+                'label' => $inlineEditing['label'] ?? 'Edit block content',
+                'description' => $inlineEditing['description'] ?? 'Open the primary content controls for this block.',
+                'shortcut' => $inlineEditing['shortcut'] ?? 'Enter',
+            ]);
+        }
+
+        return $commands;
     }
 
     private function resolveBlockPresentation(string $type): array
@@ -397,6 +410,90 @@ class BuilderContractSerializer
                 'insert_slots' => 'between-blocks',
             ],
         ];
+    }
+
+    private function resolveInlineEditing(string $type): array
+    {
+        return match ($type) {
+            'heading' => [
+                'enabled' => true,
+                'trigger' => 'double-click',
+                'target_tab' => 'content',
+                'fields' => ['text', 'level'],
+                'label' => 'Edit heading',
+                'description' => 'Jump straight to the heading copy controls.',
+                'shortcut' => 'Enter',
+            ],
+            'text' => [
+                'enabled' => true,
+                'trigger' => 'double-click',
+                'target_tab' => 'content',
+                'fields' => ['content'],
+                'label' => 'Edit text',
+                'description' => 'Open the main text content field.',
+                'shortcut' => 'Enter',
+            ],
+            'button' => [
+                'enabled' => true,
+                'trigger' => 'double-click',
+                'target_tab' => 'content',
+                'fields' => ['text', 'url'],
+                'label' => 'Edit button',
+                'description' => 'Update the call to action text and destination.',
+                'shortcut' => 'Enter',
+            ],
+            'faq' => [
+                'enabled' => true,
+                'trigger' => 'double-click',
+                'target_tab' => 'content',
+                'fields' => ['items'],
+                'label' => 'Edit FAQ',
+                'description' => 'Manage the FAQ items for this block.',
+                'shortcut' => 'Enter',
+            ],
+            'list' => [
+                'enabled' => true,
+                'trigger' => 'double-click',
+                'target_tab' => 'content',
+                'fields' => ['items'],
+                'label' => 'Edit list',
+                'description' => 'Manage the list items in the inspector.',
+                'shortcut' => 'Enter',
+            ],
+            'image' => [
+                'enabled' => true,
+                'trigger' => 'double-click',
+                'target_tab' => 'content',
+                'fields' => ['media_id', 'alt'],
+                'label' => 'Edit image',
+                'description' => 'Choose media and update alternative text.',
+                'shortcut' => 'Enter',
+            ],
+            'video' => [
+                'enabled' => true,
+                'trigger' => 'double-click',
+                'target_tab' => 'content',
+                'fields' => ['url'],
+                'label' => 'Edit video',
+                'description' => 'Update the video URL and source settings.',
+                'shortcut' => 'Enter',
+            ],
+            'gallery' => [
+                'enabled' => true,
+                'trigger' => 'double-click',
+                'target_tab' => 'content',
+                'fields' => ['images'],
+                'label' => 'Edit gallery',
+                'description' => 'Manage gallery images and display order.',
+                'shortcut' => 'Enter',
+            ],
+            default => [
+                'enabled' => false,
+                'trigger' => null,
+                'target_tab' => 'content',
+                'fields' => [],
+            ],
+        };
     }
 
     private function looksCorruptedText(string $value): bool

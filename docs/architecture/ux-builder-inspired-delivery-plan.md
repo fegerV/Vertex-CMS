@@ -179,6 +179,7 @@ The latest builder pass has already moved part of **Phase 2** and **Phase 3** in
 - block inline action bars and block context-menu commands are now backend-driven through normalized `editor.actions` and `editor.commands`, which keeps command affordances inside the builder contract layer
 - block hover chrome and selection behavior now also read contract metadata through `editor.presentation`, so multi-select and toolbar visibility are no longer shell-only assumptions
 - section hover chrome and selection policy now also read contract metadata through `config.sections.presentation`, which starts moving canvas behavior toward the same backend-owned UX rules as the rest of the builder
+- block inline-edit affordances now also come from backend metadata through `editor.inline_editing`, which lets the shell trigger editing flows without hardcoding block-specific assumptions
 - legacy mojibake strings were removed from the active builder SFC layer
 
 The next logical iteration is deeper registry metadata for block fields, so `Content / Style / Advanced` can become even less heuristic over time.

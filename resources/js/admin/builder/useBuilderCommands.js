@@ -27,6 +27,7 @@ export function useBuilderCommands({
     moveBlockDown,
     duplicateSection,
     deleteSection,
+    openInlineEdit,
 }) {
     const showCommandPalette = ref(false);
     const commandQuery = ref('');
@@ -177,6 +178,11 @@ export function useBuilderCommands({
                     duplicateBlock(targetSection, targetBlock);
                 }
                 break;
+            case 'inline-edit':
+                if (targetSection !== null && targetBlock !== null) {
+                    openInlineEdit(targetSection, targetBlock);
+                }
+                break;
             case 'delete-block':
                 if (targetSection !== null && targetBlock !== null) {
                     deleteBlock(targetSection, targetBlock);
@@ -280,6 +286,16 @@ export function useBuilderCommands({
             event.preventDefault();
             showRevisions.value = true;
             return;
+        }
+
+        if (event.key === 'Enter' && selectedSection.value !== null && selectedBlock.value !== null) {
+            const blockType = sections.value[selectedSection.value]?.blocks?.[selectedBlock.value]?.type;
+            const inlineEditing = allBlocks?.value?.[blockType]?.editor?.inline_editing;
+            if (inlineEditing?.enabled) {
+                event.preventDefault();
+                openInlineEdit(selectedSection.value, selectedBlock.value);
+                return;
+            }
         }
 
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {

@@ -344,6 +344,7 @@
                                             }"
                                             draggable="true"
                                             @click.stop="selectBlock(sIndex, bIndex, $event)"
+                                            @dblclick.stop="inlineEditingEnabled(block.type) ? openInlineEdit(sIndex, bIndex) : undefined"
                                             @contextmenu.prevent="openBlockContextMenu(sIndex, bIndex, $event)"
                                             @dragstart="onBlockDragStart(sIndex, bIndex, $event)"
                                             @dragend="onBlockDragEnd"
@@ -357,6 +358,9 @@
                                                         <div class="vc-builder-block-title">{{ blockLabel(block.type) }}</div>
                                                         <div class="vc-builder-meta truncate">{{ block.type }}</div>
                                                     </div>
+                                                    <span v-if="inlineEditingEnabled(block.type)" class="vc-builder-badge">
+                                                        {{ inlineEditingTriggerLabel(block.type) }}
+                                                    </span>
                                                 </div>
 
                                                 <div class="vc-builder-action-cluster vc-builder-floating-controls vc-builder-block-actions" :class="{ 'vc-builder-controls-always-visible': blockToolbarVisibility(block.type) === 'always' }">
@@ -466,6 +470,10 @@
                                 <div class="text-sm font-semibold text-[var(--vc-text)]">{{ blockLabel(selectedBlockData.type) }}</div>
                                 <div class="text-xs text-[var(--vc-text-soft)]">{{ selectedBlockData.type }}</div>
                             </div>
+                        </div>
+                        <div v-if="inlineEditingEnabled(selectedBlockData.type)" class="mt-4 rounded-2xl border border-[var(--vc-border)] bg-[var(--vc-surface-muted)] px-4 py-3 text-sm text-[var(--vc-text-soft)]">
+                            <div class="font-semibold text-[var(--vc-text)]">{{ inlineEditingLabel(selectedBlockData.type) }}</div>
+                            <div class="mt-1">{{ inlineEditingDescription(selectedBlockData.type) }}</div>
                         </div>
                     </section>
 
@@ -769,6 +777,16 @@ const sectionActions = computed(() => Array.isArray(sectionConfig.value?.actions
 const sectionToolbarVisibility = computed(() => sectionConfig.value?.presentation?.toolbar?.visibility || 'hover-or-selected');
 const blockActions = (type) => allBlocks.value?.[type]?.editor?.actions || [];
 const blockToolbarVisibility = (type) => allBlocks.value?.[type]?.editor?.presentation?.toolbar?.visibility || 'hover-or-selected';
+const inlineEditingConfig = (type) => allBlocks.value?.[type]?.editor?.inline_editing || { enabled: false, target_tab: 'content', trigger: null };
+const inlineEditingEnabled = (type) => Boolean(inlineEditingConfig(type)?.enabled);
+const inlineEditingTriggerLabel = (type) => {
+    const trigger = inlineEditingConfig(type)?.trigger;
+    if (trigger === 'double-click') return 'Double-click';
+    if (trigger === 'click') return 'Click to edit';
+    return 'Inline edit';
+};
+const inlineEditingLabel = (type) => inlineEditingConfig(type)?.label || 'Edit block content';
+const inlineEditingDescription = (type) => inlineEditingConfig(type)?.description || 'Open the primary content controls for this block.';
 
 const runSectionAction = (actionId, sIndex) => {
     switch (actionId) {
@@ -975,6 +993,7 @@ const commandsState = useBuilderCommands({
     moveBlockDown: baseCanvasState.moveBlockDown,
     duplicateSection: baseCanvasState.duplicateSection,
     deleteSection: baseCanvasState.deleteSection,
+    openInlineEdit,
 });
 
 closeContextMenuImpl = commandsState.closeContextMenu;
@@ -987,6 +1006,12 @@ const openSectionContextMenu = (sIndex, event) => {
 const openBlockContextMenu = (sIndex, bIndex, event) => {
     baseCanvasState.selectBlock(sIndex, bIndex);
     commandsState.openBlockContextMenu(sIndex, bIndex, event);
+};
+
+const openInlineEdit = (sIndex, bIndex) => {
+    const type = sections.value[sIndex]?.blocks?.[bIndex]?.type;
+    baseCanvasState.selectBlock(sIndex, bIndex);
+    inspectorTab.value = inlineEditingConfig(type)?.target_tab || 'content';
 };
 
 const pageFrameStyle = computed(() => {
