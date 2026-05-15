@@ -1,11 +1,12 @@
 <!-- resources/views/admin/builder/edit.blade.php -->
 @extends('admin.layouts.app')
 
-@section('title', 'Page Builder - ' . $page->title . ' - VertexCMS')
-@section('page_title', 'Page Builder')
+@section('title', 'Builder страницы - ' . $page->title . ' - VertexCMS')
+@section('page_title', 'Builder страницы')
 @section('page_subtitle', $page->title)
 
 @section('content')
+<div id="page-builder-app">
 <div id="page-builder" class="vc-builder-shell">
     <!-- Sidebar: Blocks Library -->
     <aside class="vc-builder-sidebar vc-builder-scroll flex w-80 flex-col border-r">
@@ -422,6 +423,7 @@
         </div>
     </div>
 </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -631,6 +633,6 @@
                 textStyle
             };
         }
-    }).mount('#page-builder');
+    }).mount('#page-builder-app');
 </script>
 @endpush

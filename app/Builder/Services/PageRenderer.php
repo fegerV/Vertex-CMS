@@ -58,23 +58,25 @@ class PageRenderer
                 default => null,
             };
 
-            return view($override, [
+            return view($override, array_merge($settings, [
                 'block' => $block,
                 'settings' => $settings,
                 'html' => $html,
-            ])->render();
+            ]))->render();
         }
 
-        return match ($type) {
-            'heading' => $this->heading($settings),
-            'text' => $this->text($settings),
-            'button' => $this->button($settings),
-            'divider' => '<hr class="vc-divider">',
-            'faq' => $this->faq($settings),
-            'html' => $this->html($settings),
-            'form' => $this->form($settings),
-            default => '<!-- Unknown VertexCMS block: '.e($type).' -->',
-        };
+         return match ($type) {
+             'heading' => $this->heading($settings),
+             'text' => $this->text($settings),
+             'button' => $this->button($settings),
+             'divider' => '<hr class="vc-divider">',
+             'faq' => $this->faq($settings),
+             'html' => $this->html($settings),
+             'form' => $this->form($settings),
+             'hero' => $this->hero($settings),
+             'gallery' => $this->gallery($settings),
+             default => '<!-- Unknown VertexCMS block: '.e($type).' -->',
+         };
     }
 
     private function heading(array $settings): string
@@ -134,39 +136,94 @@ class PageRenderer
         return str_ireplace(['javascript:', 'data:'], '', $html);
     }
 
-    /**
-     * Render form block on frontend
-     */
-    private function form(array $settings): string
-    {
-        $formId = $settings['form_id'] ?? null;
-        $form = null;
+     /**
+      * Render form block on frontend
+      */
+     private function form(array $settings): string
+     {
+         $formId = $settings['form_id'] ?? null;
+         $form = null;
 
-        // Try to get existing form by ID
-        if ($formId) {
-            $form = Form::query()->find($formId);
-        }
+         // Try to get existing form by ID
+         if ($formId) {
+             $form = Form::query()->find($formId);
+         }
 
-        // If no form found, render placeholder
-        if (!$form) {
-            return '<div class="vc-form-placeholder">[Форма не найдена]</div>';
-        }
+         // If no form found, render placeholder
+         if (!$form) {
+             return '<div class="vc-form-placeholder">[Форма не найдена]</div>';
+         }
 
-        // Render form Vue component with data attributes
-        $formConfig = $this->formService->renderForm($form);
-        $actionUrl = route('public.forms.submit', $form->slug);
-        $nonce = csrf_token();
-        $uniqueId = 'form_'.$form->id.'_'.Str::random(8);
+         // Render form Vue component with data attributes
+         $formConfig = $this->formService->renderForm($form);
+         $actionUrl = route('public.forms.submit', $form->slug);
+         $nonce = csrf_token();
+         $uniqueId = 'form_'.$form->id.'_'.Str::random(8);
 
-        return view('forms::blocks.form', [
-            'form' => $form,
-            'formConfig' => $formConfig,
-            'actionUrl' => $actionUrl,
-            'nonce' => $nonce,
-            'uniqueId' => $uniqueId,
-            'settings' => $settings,
-        ])->render();
-    }
+         return view('forms::blocks.form', [
+             'form' => $form,
+             'formConfig' => $formConfig,
+             'actionUrl' => $actionUrl,
+             'nonce' => $nonce,
+             'uniqueId' => $uniqueId,
+             'settings' => $settings,
+         ])->render();
+     }
+
+     /**
+      * Render hero block on frontend
+      */
+     private function hero(array $settings): string
+     {
+         $background = $settings['background'] ?? '';
+         $title = e($settings['title'] ?? '');
+         $subtitle = e($settings['subtitle'] ?? '');
+         $buttonText = e($settings['button_text'] ?? '');
+         $buttonUrl = e($settings['button_url'] ?? '#');
+         $buttonTarget = e($settings['button_target'] ?? '_self');
+         $buttonBgColor = e($settings['button_bg_color'] ?? '#3b82f6');
+         $buttonTextColor = e($settings['button_text_color'] ?? '#ffffff');
+         $buttonBorderColor = e($settings['button_border_color'] ?? 'transparent');
+         $titleColor = e($settings['title_color'] ?? '#ffffff');
+         $subtitleColor = e($settings['subtitle_color'] ?? '#ffffff');
+         $paddingTop = $settings['padding_top'] ?? 80;
+         $paddingBottom = $settings['padding_bottom'] ?? 80;
+
+         $style = '';
+         if ($background) {
+             $style = "background-image: url('$background'); background-size: cover; background-position: center;";
+         }
+
+         $titleHtml = $title !== ''
+             ? "<h1 class='vc-hero-title' style='color: {$titleColor}; margin-bottom: 0.5rem;'>{$title}</h1>"
+             : '';
+         $subtitleHtml = $subtitle !== ''
+             ? "<p class='vc-hero-subtitle' style='color: {$subtitleColor}; margin-bottom: 1.5rem;'>{$subtitle}</p>"
+             : '';
+         $buttonHtml = $buttonText !== ''
+             ? "<a href='{$buttonUrl}' target='{$buttonTarget}' class='vc-hero-button' style='display: inline-block; background-color: {$buttonBgColor}; color: {$buttonTextColor}; border: 2px solid {$buttonBorderColor}; padding: 0.75rem 1.5rem; text-decoration: none; font-weight: 500; border-radius: 0.375rem;'>{$buttonText}</a>"
+             : '';
+
+         return <<<HTML
+<section class="vc-hero" style="{$style} padding-top: {$paddingTop}px; padding-bottom: {$paddingBottom}px; text-align: center; color: white;">
+    <div class="vc-hero-content">
+        {$titleHtml}
+        {$subtitleHtml}
+        {$buttonHtml}
+    </div>
+</section>
+HTML;
+     }
+
+/**
+        * Render gallery block on frontend
+        */
+      private function gallery(array $settings): string
+      {
+          return view('builder.blocks.gallery', [
+              'settings' => $settings,
+          ])->render();
+      }
 
     private function style(array $values): string
     {

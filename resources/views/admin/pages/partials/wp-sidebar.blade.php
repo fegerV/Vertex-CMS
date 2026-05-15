@@ -1,72 +1,117 @@
 @php
-    $publicUrl = $page->exists && $page->uri ? url(ltrim($page->uri, '/')) : null;
+    $publicUrl = $page->getPublicUrl();
+    $isNew = ! $page->exists;
 @endphp
 
-<aside class="space-y-4">
-    <section class="rounded-3xl border border-[var(--vc-border)] bg-[var(--vc-surface)] p-5 shadow-sm">
+<aside class="space-y-4 xl:sticky xl:top-24">
+    <section class="vc-form-surface vc-form-section">
         <div class="flex items-center justify-between gap-3">
-            <h2 class="text-base font-semibold text-[var(--vc-text)]">Publish</h2>
-            <span class="rounded-full border border-[var(--vc-border)] px-2 py-0.5 text-xs text-[var(--vc-text-soft)]">
-                {{ $page->exists ? ucfirst($page->status ?: 'draft') : 'Draft' }}
-            </span>
+            <h2 class="text-base font-semibold text-[var(--vc-text)]">Публикация</h2>
+            <span class="vc-badge">{{ $isNew ? 'Draft' : ucfirst($page->status ?: 'draft') }}</span>
         </div>
 
-        <dl class="mt-4 space-y-3 text-sm">
-            <div class="flex items-center justify-between gap-3">
-                <dt class="text-[var(--vc-text-soft)]">Mode</dt>
-                <dd class="font-medium text-[var(--vc-text)]">{{ $page->exists ? 'Update' : 'Create' }}</dd>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-                <dt class="text-[var(--vc-text-soft)]">Builder</dt>
-                <dd class="font-medium text-[var(--vc-text)]">{{ $page->exists ? 'Available' : 'After first save' }}</dd>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-                <dt class="text-[var(--vc-text-soft)]">Public URI</dt>
-                <dd class="max-w-[180px] truncate text-right font-medium text-[var(--vc-text)]">
-                    {{ $page->exists ? $page->uri : 'Generated after save' }}
-                </dd>
-            </div>
-        </dl>
+        <div class="vc-field">
+            <span class="vc-field-label">Статус</span>
+            <select name="status" class="vc-select">
+                @foreach ($statuses as $status)
+                    <option value="{{ $status }}" @selected(old('status', $page->status) === $status)>{{ $status }}</option>
+                @endforeach
+            </select>
+            @error('status')
+                <span class="vc-field-error">{{ $message }}</span>
+            @enderror
+        </div>
 
-        <div class="mt-5 space-y-2">
-            <button form="page-editor-form" type="submit" class="vc-button vc-button-primary w-full justify-center">
-                {{ $page->exists ? 'Update Page' : 'Save Draft' }}
+        <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between gap-3">
+                <span class="text-[var(--vc-text-soft)]">Режим</span>
+                <span class="font-medium text-[var(--vc-text)]">{{ $isNew ? 'Создание' : 'Обновление' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+                <span class="text-[var(--vc-text-soft)]">Builder</span>
+                <span class="font-medium text-[var(--vc-text)]">{{ $page->canAccessBuilder() ? 'Доступен' : 'После первого сохранения' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+                <span class="text-[var(--vc-text-soft)]">UX Preview</span>
+                <span class="font-medium text-[var(--vc-text)]">{{ $page->canAccessBuilder() ? 'Доступен' : 'После первого сохранения' }}</span>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <button type="submit" class="vc-button vc-button-primary w-full justify-center">
+                {{ $isNew ? 'Сохранить черновик' : 'Обновить страницу' }}
             </button>
 
-            @if ($page->exists)
+            @if ($page->canAccessBuilder())
+                <a href="{{ route('admin.pages.preview', $page) }}" target="_blank" rel="noopener" class="vc-button vc-button-secondary w-full justify-center">
+                    UX Preview
+                </a>
                 <a href="{{ route('admin.pages.builder', $page) }}" class="vc-button vc-button-secondary w-full justify-center">
-                    Open Builder
+                    Открыть Builder
                 </a>
             @else
                 <button type="button" disabled class="vc-button vc-button-secondary w-full justify-center opacity-60">
-                    Builder After Save
+                    UX Preview после сохранения
+                </button>
+                <button type="button" disabled class="vc-button vc-button-secondary w-full justify-center opacity-60">
+                    Builder после сохранения
                 </button>
             @endif
 
             @if ($publicUrl)
                 <a href="{{ $publicUrl }}" target="_blank" rel="noopener" class="vc-button vc-button-secondary w-full justify-center">
-                    Preview Public Page
+                    Открыть публичную страницу
                 </a>
+            @endif
+
+            @if ($page->exists)
+                <button form="page-delete-form" type="submit" class="vc-button vc-button-danger w-full justify-center">
+                    Удалить страницу
+                </button>
             @endif
         </div>
     </section>
 
-    <section class="rounded-3xl border border-[var(--vc-border)] bg-[var(--vc-surface)] p-5 shadow-sm">
-        <h2 class="text-base font-semibold text-[var(--vc-text)]">Editor Modes</h2>
-        <div class="mt-4 space-y-2 text-sm">
-            <div class="rounded-2xl border border-[var(--vc-primary)] bg-sky-50 px-3 py-2 text-sky-700">
-                Editor
-            </div>
-            <div class="rounded-2xl border border-[var(--vc-border)] bg-[var(--vc-surface-strong)] px-3 py-2 text-[var(--vc-text-soft)]">
-                SEO Preview
-            </div>
-            <div class="rounded-2xl border border-[var(--vc-border)] bg-[var(--vc-surface-strong)] px-3 py-2 text-[var(--vc-text-soft)]">
-                Builder
-            </div>
+    <section class="vc-form-surface vc-form-section">
+        <div>
+            <h2 class="text-base font-semibold text-[var(--vc-text)]">Атрибуты страницы</h2>
+            <p class="mt-1 text-sm text-[var(--vc-text-muted)]">Иерархия и шаблон вынесены в правую колонку, как в классическом редакторе WordPress.</p>
         </div>
-        <p class="mt-3 text-xs text-[var(--vc-text-soft)]">
-            This screen keeps content, taxonomy and SEO together. Layout composition stays in the dedicated page builder.
-        </p>
+
+        <label class="vc-field">
+            <span class="vc-field-label">Родительская страница</span>
+            <select name="parent_id" class="vc-select">
+                <option value="">Без родителя</option>
+                @foreach ($parentPages as $parentPage)
+                    <option value="{{ $parentPage->id }}" @selected((string) old('parent_id', $page->parent_id) === (string) $parentPage->id)>
+                        {{ $parentPage->title }} ({{ $parentPage->uri }})
+                    </option>
+                @endforeach
+            </select>
+            @error('parent_id')
+                <span class="vc-field-error">{{ $message }}</span>
+            @enderror
+        </label>
+
+        <label class="vc-field">
+            <span class="vc-field-label">Шаблон</span>
+            <input
+                type="text"
+                name="template"
+                value="{{ old('template', $page->template ?: 'default') }}"
+                class="vc-input"
+            >
+            @error('template')
+                <span class="vc-field-error">{{ $message }}</span>
+            @enderror
+        </label>
+    </section>
+
+    <section class="vc-form-surface vc-form-section">
+        <div>
+            <h2 class="text-base font-semibold text-[var(--vc-text)]">Подсказка</h2>
+            <p class="text-sm text-[var(--vc-text-muted)]">Редактор страницы отвечает за title, slug, SEO, taxonomy и custom fields, а визуальная сборка контента идёт в отдельном Builder-экране.</p>
+        </div>
     </section>
 
     @if (auth()->user()?->hasPermission('ai.use'))

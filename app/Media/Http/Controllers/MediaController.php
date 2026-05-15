@@ -18,9 +18,17 @@ class MediaController extends Controller
 
     public function index(): View
     {
+        $items = Media::query()->latest()->paginate(24);
+        $folders = \App\Models\MediaFolder::withCount('media')->orderBy('name')->get();
+
         return view('admin.media.index', [
-            'items' => Media::query()->latest()->paginate(24),
-            'folders' => \App\Models\MediaFolder::withCount('media')->orderBy('name')->get(),
+            'items' => $items,
+            'folders' => $folders,
+            'initialTotalItems' => $items->total(),
+            'canManageFolders' => request()->user()?->hasPermission('media.manage_folders') ?? false,
+            'canUploadMedia' => request()->user()?->hasPermission('media.upload') ?? false,
+            'canEditMedia' => request()->user()?->hasPermission('media.edit') ?? false,
+            'canDeleteMedia' => request()->user()?->hasPermission('media.delete') ?? false,
         ]);
     }
 

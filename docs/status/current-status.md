@@ -2,7 +2,7 @@
 
 ## Updated
 
-Last updated: `2026-05-13`
+Last updated: `2026-05-14`
 
 ## What Is Implemented
 
@@ -13,7 +13,7 @@ Last updated: `2026-05-13`
 - pages CRUD
 - JSON-based page builder foundation
 - media library
-- SEO metadata, sitemap, robots
+- SEO metadata, sitemap, robots, runtime redirects, content analysis and audit dashboard
 - API v1 foundation
 - AI draft module foundation
 - PWA/theme/taxonomy foundation
@@ -23,7 +23,10 @@ Last updated: `2026-05-13`
 
 - builtin module folders exist under `modules/`
 - `vertex-forms` exists as a real builtin module
-- `vertex-security` now has a planning and skeleton module
+- `vertex-security` now has a hybrid runtime with real optional modules:
+  - `Integrity Monitor`
+  - `Alerts`
+  - `Scanner`
 - tier-based module catalog groundwork now exists via:
   - `config/modules.php`
   - `App\Modules\Support\ModuleManifest`
@@ -36,6 +39,7 @@ Last updated: `2026-05-13`
 - persisted builder contract remains `content_json`
 - backend block registry exists in `App\Builder\Config\BlockRegistry`
 - backend builder save/preview/validation flow exists
+- builder direction is explicitly JSON-first, schema-driven and registry-based, not DOM-first
 - TipTap packages are already installed in `package.json`
 - Vue builder runtime now uses a merged registry approach:
   - `resources/js/components/builder/registry.js`
@@ -55,6 +59,13 @@ Last updated: `2026-05-13`
   - `resources/views/admin/pages/edit.blade.php`
   - `resources/views/admin/pages/partials/form.blade.php`
   - `resources/views/admin/pages/partials/wp-sidebar.blade.php`
+- advanced page builder shell now mounts from compiled Vue SFCs:
+  - `resources/js/admin/builder/AdvancedBuilderApp.vue`
+  - `resources/js/admin/builder/components/BuilderBlockRenderer.vue`
+  - `resources/js/admin/builder/components/BuilderBlockSettings.vue`
+  - `resources/js/admin/builder/components/BuilderSectionSettings.vue`
+- UX Builder-inspired delivery planning is now documented in:
+  - `docs/architecture/ux-builder-inspired-delivery-plan.md`
 
 ## Current Stage
 
@@ -74,8 +85,27 @@ The Vue page builder is now a mounted admin runtime:
 - buildable with current dependencies
 - mountable from the main frontend bundle
 - embedded into the page create/edit form flow
+- builder route no longer depends on runtime template compilation or a route-specific CSP `unsafe-eval` exception
 
 It still needs broader manual QA, but it is no longer just an isolated prototype.
+
+The current product-facing builder pass is focused on:
+
+- richer template library browsing
+- more visual template metadata and previews
+- tighter UX around canvas/inspector interactions
+
+while keeping `content_json` unchanged.
+
+### SEO module stage
+
+The SEO layer is now beyond a pure metadata foundation:
+
+- pages and term archives have editable SEO fields
+- `sitemap.xml` and `robots.txt` are live
+- redirects now resolve on the public runtime before the catch-all page route
+- an admin SEO dashboard audits coverage, sitemap conflicts, duplicate titles and content structure
+- the redirects runtime now has a dedicated admin manager UI with filters and inline updates
 
 ### Forms builder stage
 
@@ -130,6 +160,10 @@ As documented in project docs before this update:
   - `BuilderRegistryApiTest`: `1 passed`, `339 assertions`
   - `BuilderContractTest`: `4 passed`, `29 assertions`
 - `php artisan view:cache` passes after the encoding fixes as well
+- security dashboard runtime now also includes:
+  - reactive alerts
+  - integrity baseline/drift status
+  - background scanner report with scheduled command support
 - builder runtime parity pass now also passes:
   - `npm run build`
   - `BuilderRegistryApiTest`: `1 passed`, `339 assertions`

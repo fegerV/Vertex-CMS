@@ -206,29 +206,69 @@ $blocks = [
         ],
     ],
 
-    'icon' => [
-        'name' => 'Иконка',
-        'category' => 'content',
-        'icon' => 'star',
-        'description' => 'Одиночная иконка с настройками',
-        'default' => [
-            'type' => 'icon',
-            'settings' => [
-                'icon' => 'star',
-                'size' => 'md',
-                'color' => '#6b7280',
-                'background' => null,
-                'radius' => 'none',
-            ],
-        ],
-        'fields' => [
-            'icon' => ['type' => 'select', 'label' => 'Иконка', 'options' => ['star'=>'Звезда','heart'=>'Сердце','check'=>'Галочка','x'=>'Крестик','arrow'=>'Стрелка','dots'=>'Точки']],
-            'size' => ['type' => 'select', 'label' => 'Размер', 'options' => ['sm'=>'Маленький','md'=>'Средний','lg'=>'Большой','xl'=>'Огромный']],
-            'color' => ['type' => 'color', 'label' => 'Цвет иконки'],
-            'background' => ['type' => 'color', 'label' => 'Фон иконки'],
-            'radius' => ['type' => 'select', 'label' => 'Скругление', 'options' => ['none'=>'Нет','sm'=>'Маленькое','md'=>'Круг','lg'=>'Большое']],
-        ],
-    ],
+     'icon' => [
+         'name' => 'Иконка',
+         'category' => 'content',
+         'icon' => 'star',
+         'description' => 'Одиночная иконка с настройками',
+         'default' => [
+             'type' => 'icon',
+             'settings' => [
+                 'icon' => 'star',
+                 'size' => 'md',
+                 'color' => '#6b7280',
+                 'background' => null,
+                 'radius' => 'none',
+             ],
+         ],
+         'fields' => [
+             'icon' => ['type' => 'select', 'label' => 'Иконка', 'options' => ['star'=>'Звезда','heart'=>'Сердце','check'=>'Галочка','x'=>'Крестик','arrow'=>'Стрелка','dots'=>'Точки']],
+             'size' => ['type' => 'select', 'label' => 'Размер', 'options' => ['sm'=>'Маленький','md'=>'Средний','lg'=>'Большой','xl'=>'Огромный']],
+             'color' => ['type' => 'color', 'label' => 'Цвет иконки'],
+             'background' => ['type' => 'color', 'label' => 'Фон иконки'],
+             'radius' => ['type' => 'select', 'label' => 'Скругление', 'options' => ['none'=>'Нет','sm'=>'Маленькое','md'=>'Круг','lg'=>'Большое']],
+         ],
+     ],
+
+     'hero' => [
+         'name' => 'Герой блок',
+         'category' => 'layout',
+         'icon' => 'layers',
+         'description' => 'Большой баннер с заголовком, подзаголовком и фоновым изображением',
+         'default' => [
+             'type' => 'hero',
+             'settings' => [
+                 'title' => 'Заголовок героя',
+                 'subtitle' => 'Подзаголовок или описание',
+                 'background' => '',
+                 'title_color' => '#ffffff',
+                 'subtitle_color' => '#ffffff',
+                 'button_text' => 'Кнопка действия',
+                 'button_url' => '#',
+                 'button_target' => '_self',
+                 'button_bg_color' => '#3b82f6',
+                 'button_text_color' => '#ffffff',
+                 'button_border_color' => 'transparent',
+                 'padding_top' => 80,
+                 'padding_bottom' => 80,
+             ],
+         ],
+         'fields' => [
+             'title' => ['type' => 'text', 'label' => 'Заголовок', 'required' => true],
+             'subtitle' => ['type' => 'textarea', 'label' => 'Подзаголовок', 'rows' => 3],
+             'background' => ['type' => 'media', 'label' => 'Фоновое изображение'],
+             'title_color' => ['type' => 'color', 'label' => 'Цвет заголовка'],
+             'subtitle_color' => ['type' => 'color', 'label' => 'Цвет подзаголовка'],
+             'button_text' => ['type' => 'text', 'label' => 'Текст на кнопке'],
+             'button_url' => ['type' => 'text', 'label' => 'URL ссылки'],
+             'button_target' => ['type' => 'select', 'label' => 'Открытие ссылки', 'options' => ['_self'=>'В этой вкладке','_blank'=>'В новой вкладке']],
+             'button_bg_color' => ['type' => 'color', 'label' => 'Цвет фона кнопки'],
+             'button_text_color' => ['type' => 'color', 'label' => 'Цвет текста кнопки'],
+             'button_border_color' => ['type' => 'color', 'label' => 'Цвет границы кнопки'],
+             'padding_top' => ['type' => 'number', 'label' => 'Отступ сверху (px)', 'min' => 0, 'max' => 200],
+             'padding_bottom' => ['type' => 'number', 'label' => 'Отступ снизу (px)', 'min' => 0, 'max' => 200],
+         ],
+     ],
 
     // LAYOUT BLOCKS
     'columns' => [

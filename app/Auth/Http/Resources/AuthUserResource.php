@@ -17,13 +17,18 @@ class AuthUserResource extends JsonResource
             ->unique()
             ->values();
 
+        $lastLoginAt = $this->last_login_at;
+        if (is_string($lastLoginAt)) {
+            $lastLoginAt = \Carbon\Carbon::parse($lastLoginAt);
+        }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
             'status' => $this->status,
             'avatar' => $this->avatar,
-            'last_login_at' => $this->last_login_at?->toIso8601String(),
+            'last_login_at' => $lastLoginAt?->toIso8601String(),
             'roles' => $roles->map(fn ($role) => [
                 'id' => $role->id,
                 'name' => $role->name,

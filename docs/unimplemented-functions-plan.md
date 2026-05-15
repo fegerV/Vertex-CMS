@@ -17,7 +17,7 @@
 - RBAC foundation: route-level permission middleware, role permission mapping, permission-aware navigation.
 - Users/Roles foundation: CRUD пользователей, назначение ролей, просмотр и редактирование permissions ролей.
 - Settings foundation: UI и persistence для site/seo/api/ai/pwa/cache, public settings API, PWA manifest, AI sidebar scaffold.
-- Builder advanced foundation: 60+ block definitions, revisions, preview, export/import sections, template apply.
+- Builder advanced foundation: 60+ block definitions, revisions, preview, export/import sections, template apply, modular Vite-based client layer (`canvas`, `history`, `inspector`, `templates`, `commands`) and shared media library/picker bridge.
 - Custom fields foundation: `custom_fields_json`, field groups, reusable presets, apply/save/update/delete preset workflow, template/scope rules.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
@@ -282,6 +282,7 @@ Acceptance criteria:
 - Нет отдельного admin UI для AI-specific log review; пока используются общие system logs.
 - Automated coverage добавлено для AI settings security, provider listing, draft-only generation и stable error contract.
 - Остаётся runtime/manual QA UI-панели и живая проверка с внешним provider SDK.
+- Базовый security runtime уже переведён на hybrid core/modules слой: канонический namespace `Vertex\Security\`, auto-registered core middleware, config-driven module toggles и fallback для cache/queue драйверов собраны. Реальные optional modules уже есть: `Integrity Monitor` с baseline/report snapshot lifecycle, `Alerts` с реактивными предупреждениями по core config/system health/integrity и `Scanner` с фоновым heuristic scan report для uploads/media. Ещё впереди более тяжёлые модули (`GeoIP`, `HIBP`, `Cloudflare`).
 
 ## Приоритет P5 - PWA, themes, taxonomy
 

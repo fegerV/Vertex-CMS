@@ -30,15 +30,21 @@
     @foreach($settings['images'] ?? [] as $image)
         <div class="vc-gallery-item">
             @php
-                // If media_id is provided, we should ideally fetch the URL from Media service
-                // For now, if url is available in the repeater item (might need to adjust based on actual data structure)
-                $imageUrl = $image['url'] ?? ''; 
+                $imageUrl = $image['url'] ?? '';
                 if (empty($imageUrl) && !empty($image['media_id'])) {
-                    // Fallback or placeholder if only media_id exists
-                    $imageUrl = '/api/media/' . $image['media_id'];
+                    $imageUrl = \Illuminate\Support\Facades\Schema::hasTable('media')
+                        ? (\App\Models\Media::query()->find($image['media_id'])?->url ?? '/api/media/' . $image['media_id'])
+                        : '/api/media/' . $image['media_id'];
                 }
+                $useLightbox = (bool) ($settings['lightbox'] ?? true);
             @endphp
-            <img src="{{ $imageUrl }}" alt="{{ $image['alt'] ?? '' }}" class="w-full h-full object-cover {{ $radiusClasses[$radius] ?? '' }}">
+            @if ($useLightbox)
+                <a href="{{ $imageUrl }}" data-lightbox="gallery" class="block {{ $radiusClasses[$radius] ?? '' }} overflow-hidden">
+                    <img src="{{ $imageUrl }}" alt="{{ $image['alt'] ?? '' }}" class="w-full h-full object-cover {{ $radiusClasses[$radius] ?? '' }}">
+                </a>
+            @else
+                <img src="{{ $imageUrl }}" alt="{{ $image['alt'] ?? '' }}" class="w-full h-full object-cover {{ $radiusClasses[$radius] ?? '' }}">
+            @endif
         </div>
     @endforeach
 </div>

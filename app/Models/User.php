@@ -16,16 +16,26 @@ class User extends Authenticatable
         'password',
         'avatar',
         'status',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'password_changed_at',
         'last_login_at',
+        'last_login_ip',
+        'last_login_user_agent',
+    ];
+
+    protected $casts = [
+        'two_factor_recovery_codes' => 'encrypted:array',
+        'two_factor_secret' => 'encrypted',
+        'last_login_at' => 'datetime:Y-m-d H:i:s',
+        'password_changed_at' => 'datetime',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
-    ];
-
-    protected $casts = [
-        'last_login_at' => 'datetime',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     public function roles(): BelongsToMany
@@ -99,5 +109,35 @@ class User extends Authenticatable
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * Check if two-factor authentication is enabled for this user.
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return filled($this->two_factor_secret);
+    }
+
+    /**
+     * Check if this user must use 2FA (based on role).
+     */
+    public function mustUseTwoFactor(): bool
+    {
+        $requiredRoles = config('security-login.login.2fa_required_for_roles', ['super-admin']);
+
+        return $this->roles()
+            ->whereIn('slug', $requiredRoles)
+            ->exists();
+    }
+
+    /**
+     * Get the number of active sessions for this user.
+     */
+    public function activeSessionCount(): int
+    {
+        $sessions = session()->get('user_sessions', []);
+
+        return collect($sessions)->where('user_id', $this->id)->count();
     }
 }

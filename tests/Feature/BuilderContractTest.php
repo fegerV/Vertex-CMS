@@ -139,6 +139,122 @@ class BuilderContractTest extends TestCase
         $this->assertSame([], $page->content_json['sections']);
     }
 
+    public function test_builder_screen_uses_advanced_runtime_and_ux_preview_is_available_for_editing(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'title' => 'Editor Flow Page',
+            'slug' => 'editor-flow-page',
+            'uri' => '/editor-flow-page',
+            'content_json' => [
+                'version' => '1.0',
+                'layout' => 'default',
+                'sections' => [[
+                    'blocks' => [[
+                        'type' => 'heading',
+                        'settings' => [
+                            'level' => 'h1',
+                            'text' => 'Preview heading',
+                        ],
+                    ]],
+                ]],
+            ],
+        ]);
+
+        $this->actingAs($editor)
+            ->get(route('admin.pages.builder', $page))
+            ->assertOk()
+            ->assertSee('data-vc-advanced-builder', false);
+
+        $this->actingAs($editor)
+            ->get(route('admin.pages.preview', $page))
+            ->assertOk()
+            ->assertSee('UX Preview', false)
+            ->assertSee('Preview heading', false);
+    }
+
+    public function test_builder_screen_uses_compiled_runtime_without_unsafe_eval_csp_exception(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'title' => 'Builder CSP Page',
+            'slug' => 'builder-csp-page',
+            'uri' => '/builder-csp-page',
+            'content_json' => [
+                'version' => '1.0',
+                'layout' => 'default',
+                'sections' => [],
+            ],
+        ]);
+
+        $response = $this->actingAs($editor)
+            ->get(route('admin.pages.builder', $page))
+            ->assertOk();
+
+        $this->assertStringNotContainsString(
+            "'unsafe-eval'",
+            (string) $response->headers->get('Content-Security-Policy')
+        );
+    }
+
+    public function test_builder_screen_exposes_section_contract_metadata(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'title' => 'Builder Section Config Page',
+            'slug' => 'builder-section-config-page',
+            'uri' => '/builder-section-config-page',
+            'content_json' => [
+                'version' => '1.0',
+                'layout' => 'default',
+                'sections' => [],
+            ],
+        ]);
+
+        $html = $this->actingAs($editor)
+            ->get(route('admin.pages.builder', $page))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('"sections"', $html);
+        $this->assertStringContainsString('"surface_tokens"', $html);
+        $this->assertStringContainsString('"hero-surface"', $html);
+        $this->assertStringContainsString('"quick_add"', $html);
+        $this->assertStringContainsString('"template-hero-heading"', $html);
+    }
+
+    public function test_builder_shared_presets_endpoint_returns_json_payload(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+
+        $this->actingAs($editor)
+            ->getJson(route('admin.pages.builder.presets.index'))
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonStructure([
+                'ok',
+                'data',
+            ]);
+    }
+
+    public function test_builder_shared_templates_endpoint_returns_visual_library_metadata(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+
+        $response = $this->actingAs($editor)
+            ->getJson(route('admin.pages.builder.shared-templates.index'))
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $templates = $response->json('data');
+
+        $this->assertIsArray($templates);
+        $this->assertNotEmpty($templates);
+        $this->assertArrayHasKey('thumbnail', $templates[0]);
+        $this->assertArrayHasKey('sections_count', $templates[0]);
+        $this->assertArrayHasKey('blocks_count', $templates[0]);
+    }
+
     public function test_public_renderer_sanitizes_html_and_ignores_unknown_blocks(): void
     {
         $this->createPage([

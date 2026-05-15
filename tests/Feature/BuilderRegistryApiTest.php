@@ -27,7 +27,8 @@ class BuilderRegistryApiTest extends TestCase
         $response->assertJsonPath('registry_version', '1.0');
         $response->assertJsonStructure([
             'registry_version',
-            'blocks' => [
+            'blocks',
+            'entries' => [
                 '*' => [
                     'type',
                     'name',
@@ -37,6 +38,7 @@ class BuilderRegistryApiTest extends TestCase
                         'component',
                         'kind',
                         'supports',
+                        'tabs',
                     ],
                     'default_block' => [
                         'type',
@@ -46,11 +48,36 @@ class BuilderRegistryApiTest extends TestCase
             ],
         ]);
 
-        $heading = collect($response->json('blocks'))->firstWhere('type', 'heading');
+        $heading = $response->json('blocks.heading');
+        $video = $response->json('blocks.video');
+        $image = $response->json('blocks.image');
+        $button = $response->json('blocks.button');
 
         $this->assertNotNull($heading);
+        $this->assertNotNull($video);
+        $this->assertNotNull($image);
+        $this->assertNotNull($button);
         $this->assertSame('vc-builder-block-heading', $heading['editor']['component']);
         $this->assertSame('heading', $heading['default_block']['type']);
         $this->assertArrayHasKey('text', $heading['default_block']['settings']);
+        $this->assertContains('content', $heading['editor']['tabs']);
+        $this->assertSame('content', $heading['editor']['inspector']['default_tab']);
+        $this->assertSame('content', $heading['fields']['text']['group']);
+        $this->assertSame('style', $heading['fields']['color']['group']);
+        $this->assertSame('H', $heading['editor']['preview']['badge']);
+        $this->assertSame('content', $video['fields']['url']['group']);
+        $this->assertSame('Paste the YouTube, Vimeo or direct video URL here.', $video['fields']['url']['help']);
+        $this->assertContains('advanced', $video['editor']['tabs']);
+        $this->assertSame('Video placeholder', $video['editor']['preview']['empty_state']['title']);
+        $this->assertSame('Image placeholder', $image['editor']['preview']['empty_state']['title']);
+        $this->assertSame('Call to action with link', $button['editor']['quick_add']['hint']);
+        $this->assertContains('cta', $button['editor']['quick_add']['keywords']);
+        $this->assertTrue($button['editor']['capabilities']['duplicate']);
+        $this->assertSame('move-up', $button['editor']['actions'][0]['id']);
+        $this->assertSame('delete', $button['editor']['actions'][3]['id']);
+        $this->assertSame('duplicate-block', $button['editor']['commands'][0]['id']);
+        $this->assertSame('multi', $button['editor']['presentation']['selection']['mode']);
+        $this->assertSame('hover-or-selected', $button['editor']['presentation']['toolbar']['visibility']);
+        $this->assertSame('visual', $image['editor']['presentation']['canvas']['preview']);
     }
 }

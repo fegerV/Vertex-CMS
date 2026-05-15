@@ -24,7 +24,7 @@ VertexCMS должна стать современной CMS с открытым
 ## Текущее состояние на 2026-05-12
 
 - `v0.1` реализован в коде как рабочий foundation slice: installer, auth, RBAC, pages CRUD, media, SEO fields, frontend renderer, sitemap/robots, system pages и activity logs уже есть.
-- `Page Builder MVP` и advanced builder ушли заметно дальше исходного MVP: drag-and-drop, revisions, autosave, templates, presets, shared libraries, command palette, shortcuts, media picker и modern light/dark UI уже собраны.
+- `Page Builder MVP` и advanced builder ушли заметно дальше исходного MVP: drag-and-drop, revisions, autosave, templates, presets, shared libraries, command palette, shortcuts, media picker и modern light/dark UI уже собраны. Client-side advanced builder теперь живет в Vite-модулях с раздельными слоями `canvas`, `history`, `inspector`, `templates` и `commands`, а shared media library/picker использует единый UI.
 - `v0.2` частично закрыт на текущем Blade admin stack: современная админка с light/dark theme, permission-aware navigation, системные экраны и стабильный public/mobile API v1 contract уже реализованы; planned Inertia/Vue migration остаётся следующим UI-этапом, а не обязательным условием usable admin.
 - `v0.3` реализован как draft-first AI module: encrypted settings, provider registry, AI panel в page editor, generation flow для text/FAQ/CTA/SEO/builder draft и AI activity logs уже есть. Живая интеграция с внешними LLM provider SDK ещё впереди.
 - `v0.4` и `v0.5` уже имеют реальную кодовую основу: PWA manifest, service worker, offline page, theme fallback, taxonomy models, admin CRUD, public term archives, taxonomy API, term archive SEO/meta и sitemap inclusion уже собраны.
@@ -194,8 +194,9 @@ Acceptance criteria:
 - Базовый compliance-аудит для GDPR/CCPA related scenarios.
 - Безопасное шифрование чувствительных ключей и настроек.
 - Passkey/WebAuthn authentication для админки.
-- Security dashboard с предупреждениями по конфигурации.
+- Security dashboard с предупреждениями по конфигурации, статусами core/modules, рабочим Integrity Monitor, реактивным Alerts module и фоновым Scanner report.
 - Политики хранения данных и аудит доступа.
+- Security layer строится как hybrid architecture: встроенный `Security Core` в едином пространстве `Vertex\Security\` + опциональные toggle-модули (`waf`, `geoip`, `integrity`, `hibp`, `cloudflare`, `scanner`, `alerts`) без отдельного обязательного пакета.
 
 Acceptance criteria:
 

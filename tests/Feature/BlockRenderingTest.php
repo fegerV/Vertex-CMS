@@ -124,4 +124,56 @@ class BlockRenderingTest extends TestCase
         $this->assertStringContainsString('75%', $html);
         $this->assertStringContainsString('background-color: #00ff00', $html);
     }
+
+    public function test_hero_rendering()
+    {
+        $html = $this->service->compileBlock('hero', [
+            'title' => 'Hero Title',
+            'subtitle' => 'Hero Subtitle',
+            'background' => 'https://example.com/image.jpg',
+            'title_color' => '#ffffff',
+            'subtitle_color' => '#ffffff',
+            'button_text' => 'Click Me',
+            'button_url' => 'https://example.com',
+            'button_target' => '_blank',
+            'button_bg_color' => '#3b82f6',
+            'button_text_color' => '#ffffff',
+            'button_border_color' => '#1e40af',
+            'padding_top' => 80,
+            'padding_bottom' => 80
+        ]);
+
+        $this->assertStringContainsString('Hero Title', $html);
+        $this->assertStringContainsString('Hero Subtitle', $html);
+        $this->assertStringContainsString('https://example.com/image.jpg', $html);
+        $this->assertStringContainsString('Click Me', $html);
+        $this->assertStringContainsString('href="https://example.com"', $html);
+        $this->assertStringContainsString('target="_blank"', $html);
+        $this->assertStringContainsString('background-color: #3b82f6', $html);
+        $this->assertStringContainsString('color: #ffffff', $html);
+        $this->assertStringContainsString('padding-top: 80px', $html);
+        $this->assertStringContainsString('padding-bottom: 80px', $html);
+    }
+
+    public function test_gallery_rendering()
+    {
+        $html = $this->service->compileBlock('gallery', [
+            'images' => [
+                ['media_id' => 1, 'alt' => 'Image 1'],
+                ['media_id' => 2, 'alt' => 'Image 2']
+            ],
+            'columns' => 3,
+            'gap' => 'md',
+            'radius' => 'md',
+            'lightbox' => true
+        ]);
+
+        $this->assertStringContainsString('vc-gallery', $html);
+        $this->assertStringContainsString('grid-cols-3', $html);
+        $this->assertStringContainsString('gap-4', $html);
+        $this->assertStringContainsString('rounded', $html);
+        $this->assertStringContainsString('Image 1', $html);
+        $this->assertStringContainsString('Image 2', $html);
+        $this->assertStringContainsString('data-lightbox="gallery"', $html);
+    }
 }
