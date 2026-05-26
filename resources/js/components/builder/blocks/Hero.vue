@@ -2,8 +2,8 @@
   <div class="hero-block p-6">
     <div v-if="modelValue.title || modelValue.subtitle || modelValue.background" class="relative overflow-hidden rounded-lg">
       <div v-if="modelValue.background" 
-           class="absolute inset-0 bg-[url(':background')] bg-cover bg-center opacity-20" 
-           :style="'background-image: url(' + modelValue.background + ')'">
+           class="absolute inset-0 bg-cover bg-center opacity-20"
+           :style="{ backgroundImage: `url(${modelValue.background})` }">
       </div>
       <div class="relative z-10 text-center">
         <h1 v-if="modelValue.title" 
@@ -47,8 +47,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
 const props = defineProps({
   modelValue: {
     type: Object,

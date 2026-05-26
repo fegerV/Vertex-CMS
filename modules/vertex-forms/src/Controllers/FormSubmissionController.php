@@ -100,7 +100,7 @@ class FormSubmissionController extends Controller
     {
         $form->submissions()->delete();
 
-        return response()->json(["ok" => true, "message" => "All submissions deleted"]);
+        return response()->json(["ok" => true, "message" => __("forms.all_submissions_deleted")]);
     }
 
     /**
@@ -113,7 +113,7 @@ class FormSubmissionController extends Controller
             ->latest()
             ->get();
 
-        $headers = ["ID", "Date", "IP", "User ID", "Status"];
+        $headers = [__("forms.csv_id"), __("forms.csv_date"), __("forms.csv_ip"), __("forms.csv_user_id"), __("forms.csv_status")];
         foreach ($form->fields as $field) {
             $headers[] = $field->label;
         }

@@ -31,6 +31,7 @@ VertexCMS должна стать современной CMS с открытым
 - Privacy-first analytics foundation уже начата раньше formal `v0.7`: есть cookieless traffic aggregation и admin analytics dashboard для pages и term archives.
 - Automated test suite поднят в локальном portable PHP runtime и зафиксирован в зелёном состоянии на `2026-05-12`: `35 tests`, `236 assertions`. Покрыты P0, P2, P3, P4 и P5 contract-сценарии.
 - Основной незакрытый слой для уже написанных модулей: runtime/manual QA и прогон миграций в живой среде. Это ограничение верификации, а не отсутствие архитектуры или UI.
+- **Forms module (`vertex-forms`)** имеет существенную готовую кодовую базу (6 таблиц, 3 контроллера, 5 сервисов, 6 моделей, конфиг, маршруты, `FieldTypeRegistry` с 15 типами полей). Админский drag & drop конструктор и REST API уже работают. Открыты задачи: интеграция с Page Builder блоком (`<x-builder.form>`), условная логика на фронте (`FormRenderer.vue`/`ConditionalLogicModal.vue`), реCAPTCHA v3 score-верификация, Turnstile, автоматическая версионирование,CSV-экспорт с пагинацией и очистка аналитики по расписанию. Форма вынесена из `Backlog после v1.0` в отдельный трек разработки.
 
 ## Версия v0.1 - MVP Foundation
 
@@ -277,7 +278,6 @@ Acceptance criteria:
 - Themes marketplace.
 - Мультиязычность.
 - E-commerce module.
-- Forms module.
 - Webhooks.
 - n8n integration.
 - Telegram integration.

@@ -46,9 +46,4 @@ class Form extends Model
     {
         return $this->hasMany(FormVersion::class)->orderBy('version_number', 'desc');
     }
-
-    public function users()
-    {
-        return $this->belongsToMany(User::class, 'form_user');
-    }
 }

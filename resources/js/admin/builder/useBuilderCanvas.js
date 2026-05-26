@@ -1,6 +1,16 @@
 import { ref, computed } from 'vue';
 
-const cloneSnapshot = (value) => JSON.parse(JSON.stringify(value));
+const cloneSnapshot = (value) => {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        } catch (error) {
+            // Vue proxies cannot be cloned natively; JSON fallback keeps the builder contract plain.
+        }
+    }
+
+    return JSON.parse(JSON.stringify(value));
+};
 
 export function useBuilderCanvas({
     sections,
@@ -14,7 +24,11 @@ export function useBuilderCanvas({
     inspectorMode,
     persistInspectorState,
     saveToHistory,
+    markContentChanged = () => {},
 }) {
+    let blockSettingsHistoryTimer = null;
+    let sectionSettingsHistoryTimer = null;
+
     const draggedSectionIndex = ref(null);
     const dropSectionIndex = ref(null);
     const draggedBlock = ref(null);
@@ -26,6 +40,12 @@ export function useBuilderCanvas({
     const sectionSelectionConfig = computed(() => ({
         mode: sectionConfig.value?.presentation?.selection?.mode || 'single',
         clearBlockSelection: sectionConfig.value?.presentation?.selection?.clear_block_selection !== false,
+    }));
+    const sectionDefaults = computed(() => ({
+        padding_top: 16,
+        padding_bottom: 16,
+        background_color: null,
+        ...(sectionConfig.value?.default_settings || {}),
     }));
 
     const generateId = () => 'blk_' + Math.random().toString(36).substr(2, 9);
@@ -211,6 +231,7 @@ export function useBuilderCanvas({
             });
         }
 
+        markContentChanged();
         saveToHistory('Add block');
     };
 
@@ -220,6 +241,7 @@ export function useBuilderCanvas({
         sections.value[sIndex].blocks.splice(insertIndex, 0, newBlock);
         selectBlock(sIndex, insertIndex);
         closeQuickAdd();
+        markContentChanged();
         saveToHistory('Insert block');
     };
 
@@ -233,6 +255,7 @@ export function useBuilderCanvas({
         sections.value[sIndex].blocks.splice(insertIndex, 0, buildPresetBlock(preset));
         selectBlock(sIndex, insertIndex);
         closeQuickAdd();
+        markContentChanged();
         saveToHistory('Insert preset block');
     };
 
@@ -246,6 +269,7 @@ export function useBuilderCanvas({
         sections.value[sIndex].blocks.splice(insertIndex, 0, ...blocks);
         selectBlock(sIndex, insertIndex);
         closeQuickAdd();
+        markContentChanged();
         saveToHistory('Insert quick template');
     };
 
@@ -274,6 +298,7 @@ export function useBuilderCanvas({
         selectedSection.value = null;
         selectedBlock.value = null;
         selectedBlockData.value = null;
+        markContentChanged();
         saveToHistory('Delete section');
     };
 
@@ -282,6 +307,7 @@ export function useBuilderCanvas({
         section.id = generateId();
         section.blocks = section.blocks.map((block) => ({ ...block, id: generateId() }));
         sections.value.splice(sIndex + 1, 0, section);
+        markContentChanged();
         saveToHistory('Duplicate section');
     };
 
@@ -290,6 +316,7 @@ export function useBuilderCanvas({
         const temp = sections.value[sIndex];
         sections.value[sIndex] = sections.value[sIndex - 1];
         sections.value[sIndex - 1] = temp;
+        markContentChanged();
         saveToHistory('Move section up');
     };
 
@@ -298,6 +325,7 @@ export function useBuilderCanvas({
         const temp = sections.value[sIndex];
         sections.value[sIndex] = sections.value[sIndex + 1];
         sections.value[sIndex + 1] = temp;
+        markContentChanged();
         saveToHistory('Move section down');
     };
 
@@ -308,6 +336,7 @@ export function useBuilderCanvas({
         blocks[bIndex] = blocks[bIndex - 1];
         blocks[bIndex - 1] = temp;
         selectBlock(sIndex, bIndex - 1);
+        markContentChanged();
         saveToHistory('Move block up');
     };
 
@@ -318,6 +347,7 @@ export function useBuilderCanvas({
         blocks[bIndex] = blocks[bIndex + 1];
         blocks[bIndex + 1] = temp;
         selectBlock(sIndex, bIndex + 1);
+        markContentChanged();
         saveToHistory('Move block down');
     };
 
@@ -328,6 +358,7 @@ export function useBuilderCanvas({
         copy.id = generateId();
         sections.value[sIndex].blocks.splice(bIndex + 1, 0, copy);
         selectBlock(sIndex, bIndex + 1);
+        markContentChanged();
         saveToHistory('Duplicate block');
     };
 
@@ -347,6 +378,7 @@ export function useBuilderCanvas({
             offset++;
         }
 
+        markContentChanged();
         saveToHistory('Duplicate selected blocks');
     };
 
@@ -364,6 +396,7 @@ export function useBuilderCanvas({
             selectedBlock.value = null;
             selectedBlockData.value = null;
         }
+        markContentChanged();
         saveToHistory('Delete selected blocks');
     };
 
@@ -383,23 +416,45 @@ export function useBuilderCanvas({
                 ? { type: nextBlock.type, settings: nextBlock.settings }
                 : null;
         }
+        markContentChanged();
         saveToHistory('Delete block');
+    };
+
+    const saveBlockSettingsToHistory = (sIndex, bIndex) => {
+        if (blockSettingsHistoryTimer) clearTimeout(blockSettingsHistoryTimer);
+        blockSettingsHistoryTimer = setTimeout(() => {
+            saveToHistory('Edit block settings', { mergeKey: `block-settings:${sIndex}:${bIndex}` });
+            blockSettingsHistoryTimer = null;
+        }, 450);
     };
 
     const updateBlockSettings = (newSettings) => {
         if (selectedSection.value === null || selectedBlock.value === null) return;
-        sections.value[selectedSection.value].blocks[selectedBlock.value].settings = newSettings;
-        selectedBlockData.value = {
-            type: sections.value[selectedSection.value].blocks[selectedBlock.value].type,
-            settings: newSettings,
-        };
-        saveToHistory('Edit block settings', { mergeKey: `block-settings:${selectedSection.value}:${selectedBlock.value}` });
+        const sIndex = selectedSection.value;
+        const bIndex = selectedBlock.value;
+
+        sections.value[sIndex].blocks[bIndex].settings = newSettings;
+        if (selectedBlockData.value) {
+            selectedBlockData.value.settings = newSettings;
+        }
+        markContentChanged();
+        saveBlockSettingsToHistory(sIndex, bIndex);
+    };
+
+    const saveSectionSettingsToHistory = (sIndex) => {
+        if (sectionSettingsHistoryTimer) clearTimeout(sectionSettingsHistoryTimer);
+        sectionSettingsHistoryTimer = setTimeout(() => {
+            saveToHistory('Edit section settings', { mergeKey: `section-settings:${sIndex}` });
+            sectionSettingsHistoryTimer = null;
+        }, 450);
     };
 
     const updateSectionSettings = (newSettings) => {
         if (selectedSection.value === null) return;
-        sections.value[selectedSection.value].settings = newSettings;
-        saveToHistory('Edit section settings', { mergeKey: `section-settings:${selectedSection.value}` });
+        const sIndex = selectedSection.value;
+        sections.value[sIndex].settings = newSettings;
+        markContentChanged();
+        saveSectionSettingsToHistory(sIndex);
     };
 
     const onSectionDragStart = (sIndex, event) => {
@@ -425,6 +480,7 @@ export function useBuilderCanvas({
         const [section] = sections.value.splice(from, 1);
         sections.value.splice(sIndex, 0, section);
         selectSection(sIndex);
+        markContentChanged();
         saveToHistory('Reorder sections');
         onSectionDragEnd();
     };
@@ -475,6 +531,7 @@ export function useBuilderCanvas({
 
         sections.value[targetSectionIndex].blocks.splice(insertIndex, 0, block);
         selectBlock(targetSectionIndex, insertIndex);
+        markContentChanged();
         saveToHistory('Reorder blocks');
         onBlockDragEnd();
     };
@@ -568,9 +625,3 @@ export function useBuilderCanvas({
         renderPreviewBlocks,
     };
 }
-    const sectionDefaults = computed(() => ({
-        padding_top: 16,
-        padding_bottom: 16,
-        background_color: null,
-        ...(sectionConfig.value?.default_settings || {}),
-    }));

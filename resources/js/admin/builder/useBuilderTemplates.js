@@ -1,6 +1,16 @@
 import { ref, computed } from 'vue';
 
-const cloneSnapshot = (value) => JSON.parse(JSON.stringify(value));
+const cloneSnapshot = (value) => {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        } catch (error) {
+            // Vue proxies cannot be cloned natively; JSON fallback keeps template payloads plain.
+        }
+    }
+
+    return JSON.parse(JSON.stringify(value));
+};
 
 export function useBuilderTemplates({
     page,
@@ -14,6 +24,7 @@ export function useBuilderTemplates({
     blockLabel,
     csrfToken,
     selectBlock,
+    markContentChanged = () => {},
 }) {
     const presetDraftName = ref('');
     const presetVisibility = ref('shared');
@@ -170,6 +181,7 @@ export function useBuilderTemplates({
             type: sections.value[selectedSection.value].blocks[selectedBlock.value].type,
             settings: mergedSettings,
         };
+        markContentChanged();
         saveToHistory('Apply block preset');
     };
 
@@ -188,6 +200,7 @@ export function useBuilderTemplates({
 
         sections.value[selectedSection.value].blocks.splice(insertIndex, 0, block);
         selectBlock(selectedSection.value, insertIndex);
+        markContentChanged();
         saveToHistory('Insert block preset');
     };
 

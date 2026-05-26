@@ -1,5 +1,8 @@
 @php
     $url = $settings['url'] ?? '';
+    if ($url === '' && filled($settings['media_id'] ?? null)) {
+        $url = '/api/media/' . e($settings['media_id']);
+    }
     $alt = $settings['alt'] ?? '';
     $width = $settings['width'] ?? '100%';
     $height = $settings['height'] ?? 'auto';
@@ -24,4 +27,8 @@
     $classString = 'vc-image ' . ($radiusClasses[$radius] ?? '') . ' ' . ($shadowClasses[$shadow] ?? '');
 @endphp
 
-<img src="{{ $url }}" alt="{{ $alt }}" class="{{ $classString }}" style="width: {{ $width }}; height: {{ $height }};">
+@if($url === '')
+    <div class="vc-media-placeholder vc-image-placeholder flex min-h-40 items-center justify-center bg-gray-100 text-gray-500">Image placeholder</div>
+@else
+    <img src="{{ $url }}" alt="{{ $alt }}" class="{{ $classString }}" style="width: {{ $width }}; height: {{ $height }};">
+@endif

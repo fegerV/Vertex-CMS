@@ -182,6 +182,12 @@ The current builder API now already moves in this direction:
 - block action panels and block context-menu commands are now also contract-backed through normalized `editor.actions` and `editor.commands`, so inline controls can evolve without pushing product rules into the Vue shell
 - block selection mode, toolbar visibility and preview behavior now also flow through normalized `editor.presentation`, so hover chrome and multi-select behavior can stay backend-owned instead of being scattered through the shell
 - block inline editing affordances now also flow through normalized `editor.inline_editing`, so canvas triggers like double-click, target inspector tab and primary editing intent are backend-owned metadata too
+- field ordering and primary inspector emphasis now also flow through normalized field metadata like `priority` and `importance`, so the inspector can present the right controls first without hardcoded Vue sorting
+- field layout primitives now also flow through normalized field metadata like `layout.variant`, `layout.span` and `layout.row`, so the inspector can compose compact two-up rows, media-first cards and stacked fields from backend contract data
+- field control presets now also flow through normalized field metadata like `control.variant`, `control.min`, `control.max`, `control.step` and `control.unit`, so the inspector can render segmented choices, color swatches, spacing sliders and link-oriented inputs from backend contract data instead of shell heuristics
+- field control families now also flow through normalized field metadata like `control.family`, `control.family_label` and `control.family_icon`, so the inspector can introduce higher-level UX groupings such as Typography, Surface, Spacing and Link without inventing its own sidebar semantics
+- field control packs now also flow through normalized field metadata like `control.pack`, `control.pack_label`, `control.pack_description` and `control.pack_icon`, so the inspector can render composite editing sections such as Button treatment, Media settings or Typography packs from backend contract data
+- block-level pack recipes now also flow through `editor.packs`; the full current block catalog declares these bundles inside `blocks.php`, while `BlockPackRegistry` remains a temporary duplicated catalog during cleanup
 - section-level builder config now also flows through `config.sections`, sourced from `SectionRegistry`, including section tabs, default settings, surface tokens and starter presets, so section UX can follow the same contract-driven direction as blocks
 - section action panels and section context commands now also come from `SectionRegistry`, so section toolbar affordances follow the same backend-owned contract model as blocks
 - section selection policy, toolbar visibility and canvas affordances now also flow through `config.sections.presentation`, which keeps section hover/selection behavior aligned with the same contract-driven model
@@ -280,6 +286,7 @@ For the broader admin UX direction around page creation and the parallel forms-b
 
 - `docs/architecture/wp-style-editor-and-form-builder.md`
 - `docs/architecture/ux-builder-inspired-delivery-plan.md`
+- `docs/architecture/breakdance-inspired-vertex-builder.md`
 
 ## UX Builder-Inspired Shell
 

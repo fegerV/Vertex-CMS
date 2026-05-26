@@ -9,7 +9,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
-<body class="vc-admin-body">
+<body class="vc-admin-body @yield('body_class')">
     @php
         $user = auth()->user();
         $navigation = [
@@ -191,7 +191,7 @@
                 </div>
             </header>
 
-            <main class="vc-page-wrap">
+            <main class="vc-page-wrap @yield('page_wrap_class')">
                 <nav class="mb-6 flex overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-1 md:space-x-2">
                         <li class="inline-flex items-center">

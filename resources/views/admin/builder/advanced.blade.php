@@ -3,6 +3,8 @@
 @section('title', 'UX Builder - ' . $page->title)
 @section('page_title', 'UX Builder')
 @section('page_subtitle', $page->title)
+@section('page_wrap_class', 'vc-page-wrap-builder')
+@section('body_class', 'vc-admin-body-builder')
 
 @section('content')
 <div

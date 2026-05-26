@@ -14,7 +14,9 @@
 @endphp
 
 <div class="vc-video w-full {{ $ratioClass }}">
-    @if($type === 'youtube')
+    @if($url === '')
+        <div class="vc-media-placeholder vc-video-placeholder flex h-full items-center justify-center bg-gray-100 text-gray-500">Video placeholder</div>
+    @elseif($type === 'youtube')
         @php
             preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $matches);
             $id = $matches[1] ?? '';

@@ -46,4 +46,6 @@ Route::middleware(["vertex.permission:forms.edit"])->prefix("forms")->name("form
     Route::get("{form}/builder", [FormBuilderController::class, "show"])->name("builder"); // Vue SPA
 });
 
-Route::delete("forms/{form}", [FormController::class, "destroy"])->middleware("vertex.permission:forms.delete")->name("forms.destroy");
+Route::middleware(["vertex.permission:forms.delete"])->prefix("forms")->name("forms.")->group(function () {
+    Route::delete("{form}", [FormController::class, "destroy"])->name("destroy");
+});

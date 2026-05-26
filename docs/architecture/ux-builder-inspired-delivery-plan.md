@@ -62,6 +62,7 @@ Make the existing builder feel less like a prototype and more like a product.
 - clearer empty states
 - better quick-add previews
 - normalize broken builder text/label quality where needed
+- **Forms block integration**: `<x-builder.form :form-id="...">` renders `Vertex\Forms\FormPublicController::config()` JSON through a `FormRenderer.vue` component, laying groundwork for side-loaded form blocks as first-class page content alongside sections (see `docs/forminator-patterns.md §17.13` and `modules/vertex-forms/` for back-end contract).
 
 ### Backend
 
@@ -180,6 +181,14 @@ The latest builder pass has already moved part of **Phase 2** and **Phase 3** in
 - block hover chrome and selection behavior now also read contract metadata through `editor.presentation`, so multi-select and toolbar visibility are no longer shell-only assumptions
 - section hover chrome and selection policy now also read contract metadata through `config.sections.presentation`, which starts moving canvas behavior toward the same backend-owned UX rules as the rest of the builder
 - block inline-edit affordances now also come from backend metadata through `editor.inline_editing`, which lets the shell trigger editing flows without hardcoding block-specific assumptions
+- inspector ordering and primary field emphasis now also come from backend field metadata, which helps the builder surface the most important controls first in a more UX Builder-like way
+- inspector field layout now also comes from backend metadata, so compact rows and media-first sections are no longer hardcoded view decisions
+- inspector control variants now also come from backend metadata, so segmented choices, color swatches, spacing sliders and link-focused inputs are no longer local Vue-only widget decisions
+- inspector control families now also come from backend metadata, so higher-level UX groupings like Typography, Surface, Spacing and Link are no longer shell-authored presentation guesses
+- inspector control packs now also come from backend metadata, so richer editing sections like Typography packs, Button treatment packs and Media settings packs are no longer assembled ad hoc in Vue
+- block-level pack recipes now also come from backend metadata through `editor.packs`; the full current block catalog declares them directly in `blocks.php`, while `BlockPackRegistry` remains only as a temporary duplicated catalog during cleanup
 - legacy mojibake strings were removed from the active builder SFC layer
+- the live canvas runtime now prefers explicit dirty signals over deep-watching the full page tree, and preview/autosave skip duplicate JSON payloads to keep large pages more responsive during inspector edits
+- the live preview endpoint now avoids rendering both public HTML and editor document in the same request, while the server renderer avoids collection-heavy loops on the hot preview path
 
-The next logical iteration is deeper registry metadata for block fields, so `Content / Style / Advanced` can become even less heuristic over time.
+The next logical iteration is to shrink or remove `BlockPackRegistry`, then move into the dedicated design-library workspace for templates, starters and reusable sections.

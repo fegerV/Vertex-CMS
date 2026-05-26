@@ -7,14 +7,27 @@ use Vertex\Forms\Models\Form;
 use Vertex\Forms\Services\FormService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class FormPublicController extends Controller
 {
     public function __construct(
         private readonly FormService $formService,
     ) {
+    }
+
+    /**
+     * Render public form page.
+     */
+    public function show(Form $form): View
+    {
+        return view('forms::public.show', [
+            'form' => $form->load('fields'),
+            'formConfig' => $this->formService->renderForm($form),
+            'actionUrl' => route('public.forms.submit', $form),
+            'settings' => $form->settings ?? [],
+        ]);
     }
 
     /**
@@ -27,13 +40,13 @@ class FormPublicController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $form->settings['success_message'] ?? 'Форма успешно отправлена!',
+                'message' => $form->settings['success_message'] ?? __("forms.submit_success"),
                 'submission_id' => $submission->submission_id,
             ]);
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $form->settings['error_message'] ?? 'Пожалуйста, исправьте ошибки в форме.',
+                'message' => $form->settings['error_message'] ?? __("forms.validation_fix_errors"),
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {

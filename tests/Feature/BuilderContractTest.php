@@ -139,6 +139,102 @@ class BuilderContractTest extends TestCase
         $this->assertSame([], $page->content_json['sections']);
     }
 
+    public function test_builder_preview_can_return_editor_document_for_live_canvas(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'title' => 'Live Preview Page',
+            'slug' => 'live-preview-page',
+            'uri' => '/live-preview-page',
+        ]);
+
+        $response = $this->actingAs($editor)->postJson("/admin/pages/{$page->id}/builder/preview", [
+            'document' => true,
+            'content' => [[
+                'id' => 'section_live',
+                'settings' => [],
+                'blocks' => [[
+                    'id' => 'block_live_heading',
+                    'type' => 'heading',
+                    'settings' => [
+                        'level' => 'h2',
+                        'text' => 'Live canvas',
+                    ],
+                ]],
+            ]],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('ok', true);
+        $document = (string) $response->json('document');
+
+        $this->assertStringContainsString('<!DOCTYPE html>', $document);
+        $this->assertStringContainsString('data-vc-section-index="0"', $document);
+        $this->assertStringContainsString('data-vc-block-index="0"', $document);
+        $this->assertStringContainsString('data-vc-block-depth="0"', $document);
+        $this->assertStringContainsString('Live canvas', $document);
+    }
+
+    public function test_builder_preview_allows_empty_media_blocks_as_editor_placeholders(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'title' => 'Empty Media Preview Page',
+            'slug' => 'empty-media-preview-page',
+            'uri' => '/empty-media-preview-page',
+        ]);
+
+        $response = $this->actingAs($editor)->postJson("/admin/pages/{$page->id}/builder/preview", [
+            'document' => true,
+            'content' => [[
+                'id' => 'section_media',
+                'settings' => [],
+                'blocks' => [[
+                    'id' => 'block_empty_video',
+                    'type' => 'video',
+                    'settings' => [
+                        'type' => 'youtube',
+                        'url' => '',
+                    ],
+                ], [
+                    'id' => 'block_empty_image',
+                    'type' => 'image',
+                    'settings' => [
+                        'media_id' => null,
+                        'url' => '',
+                    ],
+                ]],
+            ]],
+        ]);
+
+        $response->assertOk();
+        $document = (string) $response->json('document');
+
+        $this->assertStringContainsString('Video placeholder', $document);
+        $this->assertStringContainsString('Image placeholder', $document);
+    }
+
+    public function test_builder_preview_rejects_invalid_blocks_with_json_error(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'title' => 'Preview Validation Page',
+            'slug' => 'preview-validation-page',
+            'uri' => '/preview-validation-page',
+        ]);
+
+        $response = $this->actingAs($editor)->postJson("/admin/pages/{$page->id}/builder/preview", [
+            'content' => [[
+                'type' => 'unknown-widget',
+                'settings' => [],
+            ]],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('ok', false);
+        $this->assertStringContainsString('Unknown block type: unknown-widget', $response->json('errors.0'));
+    }
+
     public function test_builder_screen_uses_advanced_runtime_and_ux_preview_is_available_for_editing(): void
     {
         $editor = $this->makeUserWithRole('editor');
@@ -217,6 +313,7 @@ class BuilderContractTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString('"sections"', $html);
+        $this->assertStringContainsString('"blocks"', $html);
         $this->assertStringContainsString('"surface_tokens"', $html);
         $this->assertStringContainsString('"hero-surface"', $html);
         $this->assertStringContainsString('"quick_add"', $html);
@@ -253,6 +350,137 @@ class BuilderContractTest extends TestCase
         $this->assertArrayHasKey('thumbnail', $templates[0]);
         $this->assertArrayHasKey('sections_count', $templates[0]);
         $this->assertArrayHasKey('blocks_count', $templates[0]);
+    }
+
+    public function test_builder_autosave_rejects_invalid_blocks_and_does_not_create_revision(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage();
+
+        $response = $this->actingAs($editor)->postJson("/admin/pages/{$page->id}/builder/auto-save", [
+            'content' => [[
+                'type' => 'unknown-widget',
+                'settings' => [],
+            ]],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('ok', false);
+        $this->assertDatabaseCount('page_revisions', 0);
+    }
+
+    public function test_builder_import_returns_sections_without_persisting_page_content(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'content_json' => [
+                'version' => '1.0',
+                'layout' => 'default',
+                'sections' => [[
+                    'id' => 'original-section',
+                    'settings' => [],
+                    'blocks' => [[
+                        'id' => 'original-block',
+                        'type' => 'heading',
+                        'settings' => ['text' => 'Original'],
+                    ]],
+                ]],
+            ],
+        ]);
+
+        $import = json_encode([
+            'version' => '2.0',
+            'exported_at' => now()->toIso8601String(),
+            'sections' => [[
+                'type' => 'text',
+                'settings' => ['content' => 'Imported copy'],
+            ]],
+        ], JSON_THROW_ON_ERROR);
+
+        $response = $this->actingAs($editor)->postJson('/admin/pages/import-sections', [
+            'import_data' => $import,
+            'page_id' => $page->id,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('ok', true);
+        $response->assertJsonPath('sections.0.blocks.0.type', 'text');
+
+        $page->refresh();
+        $this->assertSame('Original', $page->content_json['sections'][0]['blocks'][0]['settings']['text']);
+    }
+
+    public function test_builder_restore_revision_restores_full_content_shape_and_seo_snapshot(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'title' => 'Restorable page',
+            'content_json' => [
+                'version' => '1.0',
+                'layout' => 'landing',
+                'sections' => [[
+                    'id' => 'page-section',
+                    'settings' => [],
+                    'blocks' => [[
+                        'id' => 'page-block',
+                        'type' => 'heading',
+                        'settings' => ['text' => 'Current copy'],
+                    ]],
+                ]],
+            ],
+        ], [
+            'title' => 'Current SEO',
+            'description' => 'Current description',
+            'robots' => 'index, follow',
+            'include_in_sitemap' => true,
+        ]);
+
+        $revision = PageRevision::query()->create([
+            'page_id' => $page->id,
+            'user_id' => $editor->id,
+            'title' => 'Restored title',
+            'content_json' => [
+                'sections' => [[
+                    'id' => 'revision-section',
+                    'settings' => [],
+                    'blocks' => [[
+                        'id' => 'revision-block',
+                        'type' => 'text',
+                        'settings' => ['content' => 'Revision copy'],
+                    ]],
+                ]],
+            ],
+            'custom_fields_json' => [],
+            'seo_json' => [
+                'title' => 'Revision SEO',
+                'description' => 'Revision description',
+                'canonical_url' => 'https://example.com/revision',
+                'robots' => 'noindex, follow',
+                'og_title' => 'Revision OG',
+                'og_description' => 'Revision OG description',
+                'og_image' => null,
+                'schema_json' => ['@type' => 'WebPage'],
+                'include_in_sitemap' => false,
+            ],
+            'action' => 'manual-save',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($editor)
+            ->postJson("/admin/pages/{$page->id}/revisions/{$revision->id}/restore");
+
+        $response->assertOk();
+        $response->assertJsonPath('ok', true);
+
+        $page->refresh();
+        $page->load('seoMeta');
+
+        $this->assertSame('1.0', $page->content_json['version']);
+        $this->assertSame('landing', $page->content_json['layout']);
+        $this->assertSame('text', $page->content_json['sections'][0]['blocks'][0]['type']);
+        $this->assertSame('Revision SEO', $page->seoMeta?->title);
+        $this->assertSame('noindex, follow', $page->seoMeta?->robots);
+        $this->assertFalse($page->seoMeta?->include_in_sitemap ?? true);
     }
 
     public function test_public_renderer_sanitizes_html_and_ignores_unknown_blocks(): void

@@ -12,12 +12,17 @@
 /storage/framework/sessions/*
 /storage/framework/testing/*
 /storage/framework/views/*
+/storage/vertex-cache/
 /storage/app/*.sqlite
 /storage/app/installed.lock
+/storage/app/security/
 /bootstrap/cache/*.php
 /tools/
 /database/*.sqlite
 !.gitkeep
 /flatsome-main/
 /forminator/
+/breakdance/
+/.kilo/
+/public/uploads/
 

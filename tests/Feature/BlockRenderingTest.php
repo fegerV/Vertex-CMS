@@ -159,21 +159,31 @@ class BlockRenderingTest extends TestCase
     {
         $html = $this->service->compileBlock('gallery', [
             'images' => [
-                ['media_id' => 1, 'alt' => 'Image 1'],
-                ['media_id' => 2, 'alt' => 'Image 2']
+                ['media_id' => 1, 'alt' => 'Image 1', 'caption' => 'Caption 1'],
+                ['media_id' => 2, 'alt' => 'Image 2', 'caption' => 'Caption 2']
             ],
+            'layout' => 'slider',
             'columns' => 3,
+            'tablet_columns' => 2,
+            'mobile_columns' => 1,
             'gap' => 'md',
             'radius' => 'md',
+            'aspect_ratio' => '16:9',
+            'caption_mode' => 'overlay',
             'lightbox' => true
         ]);
 
         $this->assertStringContainsString('vc-gallery', $html);
-        $this->assertStringContainsString('grid-cols-3', $html);
-        $this->assertStringContainsString('gap-4', $html);
-        $this->assertStringContainsString('rounded', $html);
+        $this->assertStringContainsString('vc-gallery-layout-slider', $html);
+        $this->assertStringContainsString('--vc-gallery-columns: 3', $html);
+        $this->assertStringContainsString('--vc-gallery-gap: 1rem', $html);
+        $this->assertStringContainsString('--vc-gallery-ratio: 16 / 9', $html);
+        $this->assertStringContainsString('vc-gallery-radius-md', $html);
         $this->assertStringContainsString('Image 1', $html);
         $this->assertStringContainsString('Image 2', $html);
+        $this->assertStringContainsString('Caption 1', $html);
         $this->assertStringContainsString('data-lightbox="gallery"', $html);
+        $this->assertStringContainsString('data-vc-lightbox', $html);
+        $this->assertStringContainsString('data-vc-gallery-prev', $html);
     }
 }

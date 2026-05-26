@@ -21,6 +21,44 @@ class FormConditionEngine
         };
     }
 
+    public function evaluateCondition(?array $condition, array $data): bool
+    {
+        if (empty($condition)) {
+            return true;
+        }
+
+        $rules = $condition['rules'] ?? null;
+
+        if (!is_array($rules)) {
+            $rules = [[
+                'field' => $condition['depends_on'] ?? '',
+                'operator' => $condition['operator'] ?? 'equals',
+                'value' => $condition['value'] ?? '',
+            ]];
+        }
+
+        $rules = array_values(array_filter($rules, fn ($rule) => !empty($rule['field'] ?? null)));
+
+        if ($rules === []) {
+            return true;
+        }
+
+        $logic = ($condition['logic'] ?? 'all') === 'any' ? 'any' : 'all';
+        $matches = array_map(function (array $rule) use ($data): bool {
+            $fieldName = (string) ($rule['field'] ?? '');
+            $operator = (string) ($rule['operator'] ?? 'equals');
+            $value = $rule['value'] ?? '';
+
+            return $this->evaluate($data[$fieldName] ?? null, $operator, $value);
+        }, $rules);
+
+        $passed = $logic === 'any'
+            ? in_array(true, $matches, true)
+            : !in_array(false, $matches, true);
+
+        return ($condition['action'] ?? 'show') === 'hide' ? !$passed : $passed;
+    }
+
     /**
      * Determine which fields should be visible given current form data.
      */
@@ -31,19 +69,8 @@ class FormConditionEngine
         foreach ($fields as $field) {
             if (!$field["visible"]) continue;
 
-            $cond = $field["conditional"] ?? null;
-            if (!$cond) {
-                $visible[] = $field["name"];
-                continue;
-            }
-
-            $dependsOn = $cond["depends_on"] ?? "";
-            $operator = $cond["operator"] ?? "equals";
-            $value = $cond["value"] ?? "";
-
-            $fieldValue = $data[$dependsOn] ?? null;
-
-            if ($this->evaluate($fieldValue, $operator, $value)) {
+            $cond = $field["conditional"] ?? $field["options"]["conditional"] ?? null;
+            if (!$cond || $this->evaluateCondition(is_array($cond) ? $cond : null, $data)) {
                 $visible[] = $field["name"];
             }
         }

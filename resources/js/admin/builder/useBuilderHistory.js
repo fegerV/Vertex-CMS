@@ -1,6 +1,18 @@
 import { ref, computed } from 'vue';
 
-const cloneSnapshot = (value) => JSON.parse(JSON.stringify(value));
+const cloneSnapshot = (value) => {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        } catch (error) {
+            // Vue proxies cannot be cloned natively; JSON fallback keeps snapshots serializable.
+        }
+    }
+
+    return JSON.parse(JSON.stringify(value));
+};
+
+const snapshotSignature = (value) => JSON.stringify(value);
 
 export function useBuilderHistory({
     sections,
@@ -31,18 +43,25 @@ export function useBuilderHistory({
 
     const saveToHistory = (label = 'Edit builder', options = {}) => {
         const { mergeKey = null } = options;
+        const signature = snapshotSignature(sections.value);
+        const lastEntry = history.value[historyIndex.value];
+
+        if (lastEntry?.signature === signature) {
+            return;
+        }
+
         const snapshot = cloneSnapshot(sections.value);
 
         history.value = history.value.slice(0, historyIndex.value + 1);
 
-        const lastEntry = history.value[history.value.length - 1];
-        if (mergeKey && lastEntry?.mergeKey === mergeKey) {
-            history.value[history.value.length - 1] = { snapshot, label, mergeKey };
+        const lastAvailableEntry = history.value[history.value.length - 1];
+        if (mergeKey && lastAvailableEntry?.mergeKey === mergeKey) {
+            history.value[history.value.length - 1] = { snapshot, label, mergeKey, signature };
             historyIndex.value = history.value.length - 1;
             return;
         }
 
-        history.value.push({ snapshot, label, mergeKey });
+        history.value.push({ snapshot, label, mergeKey, signature });
         if (history.value.length > 100) {
             history.value.shift();
             historyIndex.value = history.value.length - 1;

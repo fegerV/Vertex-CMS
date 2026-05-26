@@ -129,6 +129,8 @@ export default {
     data() {
         return {
             localSettings: { ...this.settings },
+            syncingFromProps: false,
+            emitTimer: null,
         };
     },
     computed: {
@@ -152,17 +154,61 @@ export default {
             deep: true,
             immediate: true,
             handler(newSettings) {
+                if (newSettings === this.localSettings) {
+                    return;
+                }
+                if (this.emitTimer) {
+                    clearTimeout(this.emitTimer);
+                    this.emitTimer = null;
+                }
+                this.syncingFromProps = true;
                 this.localSettings = { ...(newSettings || {}) };
+                this.$nextTick(() => {
+                    this.syncingFromProps = false;
+                });
             },
         },
         localSettings: {
             deep: true,
             handler() {
-                this.$emit('update', this.localSettings);
+                if (this.syncingFromProps) {
+                    return;
+                }
+                this.scheduleSettingsUpdate();
             },
         },
     },
+    beforeUnmount() {
+        if (!this.emitTimer) {
+            return;
+        }
+
+        clearTimeout(this.emitTimer);
+        this.emitTimer = null;
+        this.emitSettingsUpdate();
+    },
     methods: {
+        scheduleSettingsUpdate() {
+            if (this.syncingFromProps) {
+                return;
+            }
+
+            if (this.emitTimer) {
+                clearTimeout(this.emitTimer);
+            }
+
+            this.emitTimer = setTimeout(() => {
+                this.emitTimer = null;
+                this.emitSettingsUpdate();
+            }, 120);
+        },
+        emitSettingsUpdate() {
+            if (this.syncingFromProps) {
+                return;
+            }
+
+            this.$emit('update', this.localSettings);
+        },
         applyPreset(preset) {
             this.localSettings = {
                 ...this.defaultSettings,

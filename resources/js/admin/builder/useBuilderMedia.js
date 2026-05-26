@@ -7,6 +7,7 @@ export function useBuilderMedia({
     selectedBlock,
     selectedBlockData,
     saveToHistory,
+    markContentChanged = () => {},
 }) {
     const mediaLookup = ref({});
     const showMediaPicker = ref(false);
@@ -93,19 +94,50 @@ export function useBuilderMedia({
             target[last] = value;
         };
         const lastKey = targetPath.at(-1);
+        const pickedAlt = pickedItem.alt || pickedItem.title || pickedItem.original_filename || '';
+        const pickedUrl = pickedItem.url || '';
+        mediaLookup.value = {
+            ...mediaLookup.value,
+            [Number(pickedItem.id)]: pickedItem,
+        };
 
-        if (lastKey === 'media_id') {
+        if (mediaPickerTarget.value?.mode === 'append-gallery-images') {
+            const key = mediaPickerTarget.value?.key || 'images';
+            const currentImages = Array.isArray(settings[key]) ? [...settings[key]] : [];
+            currentImages.push({
+                media_id: pickedItem.id,
+                url: pickedUrl,
+                alt: pickedAlt,
+                caption: pickedItem.caption || pickedItem.title || '',
+                link: '',
+            });
+            settings[key] = currentImages;
+        } else if (lastKey === 'media_id') {
             setAtPath(settings, targetPath, pickedItem.id);
+
             if (targetPath.length === 1) {
-                settings.url = pickedItem.url || settings.url || '';
-                if (!settings.alt && pickedItem.alt) {
-                    settings.alt = pickedItem.alt;
+                settings.url = pickedUrl || settings.url || '';
+                if (!settings.alt && pickedAlt) {
+                    settings.alt = pickedAlt;
+                }
+            }
+
+            if (targetPath.length === 3) {
+                const item = targetPath.slice(0, -1).reduce((acc, segment) => acc?.[segment], settings);
+                if (item && typeof item === 'object') {
+                    item.url = pickedUrl || item.url || '';
+                    if (!item.alt && pickedAlt) {
+                        item.alt = pickedAlt;
+                    }
+                    if (!item.caption && pickedItem.caption) {
+                        item.caption = pickedItem.caption;
+                    }
                 }
             }
         } else if (lastKey) {
             setAtPath(settings, targetPath, pickedItem.id);
             if (targetPath.length === 1 && (lastKey === 'image' || lastKey.endsWith('_image')) && !settings.url) {
-                settings.url = pickedItem.url || '';
+                settings.url = pickedUrl || '';
             }
         }
 
@@ -114,6 +146,7 @@ export function useBuilderMedia({
             type: sections.value[selectedSection.value].blocks[selectedBlock.value].type,
             settings,
         };
+        markContentChanged();
         saveToHistory('Attach media');
         closeMediaPicker();
     };
@@ -152,9 +185,11 @@ export function useBuilderMedia({
             const normalized = Array.isArray(path) ? path : [path];
             return normalized.reduce((acc, segment) => acc?.[segment], source);
         };
-        const currentValue = resolvePathValue(selectedBlockData.value?.settings || {}, payload?.path || payload?.key);
+        const currentValue = payload?.mode === 'append-gallery-images'
+            ? null
+            : resolvePathValue(selectedBlockData.value?.settings || {}, payload?.path || payload?.key);
 
-        if (currentValue) {
+        if (currentValue && !Array.isArray(currentValue)) {
             await hydrateMediaLookup([currentValue]);
             mediaPickerSelected.value = mediaLookup.value[Number(currentValue)] || null;
         }

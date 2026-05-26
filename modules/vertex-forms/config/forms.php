@@ -3,6 +3,22 @@
 return [
 
     /*
+     * Global visual defaults.
+     * Individual forms can set settings.theme to one of these values or
+     * use "inherit" to follow the site-wide default from forms.default_theme.
+     */
+    'default_theme' => env('FORMS_DEFAULT_THEME', 'default'),
+    'theme_presets' => [
+        'inherit' => 'Inherit global theme',
+        'default' => 'Default',
+        'minimal' => 'Minimal',
+        'modern' => 'Modern',
+        'rounded' => 'Rounded',
+        'dark' => 'Dark',
+        'transparent' => 'Transparent',
+    ],
+
+    /*
      * Default sender email for form notifications.
      */
     'default_from_email' => env('MAIL_FROM_ADDRESS', 'noreply@example.com'),

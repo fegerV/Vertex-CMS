@@ -56,5 +56,14 @@ class FormFieldRegistryApiTest extends TestCase
         $this->assertSame('vc-form-field-text', $text['editor']['component']);
         $this->assertArrayHasKey('label', $text['props']);
         $this->assertSame('text', $text['default_field']['type']);
+
+        $fields = collect($response->json('fields'))->pluck('type')->all();
+
+        $this->assertContains('url', $fields);
+        $this->assertContains('time', $fields);
+        $this->assertContains('name', $fields);
+        $this->assertContains('address', $fields);
+        $this->assertContains('consent', $fields);
+        $this->assertContains('rating', $fields);
     }
 }

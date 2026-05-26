@@ -1,24 +1,13 @@
 <template>
   <div class="media-layout" :class="{ 'media-layout-picker': isPickerMode }">
     <aside class="media-sidebar">
-      <div class="media-sidebar-card media-sidebar-head">
-        <div class="media-sidebar-copy">
-          <h2 class="media-title">Папки</h2>
-          <p class="media-copy">Дерево папок всегда слева, а галерея занимает основное рабочее пространство.</p>
-        </div>
-        <div class="media-sidebar-stats">
-          <span class="media-sidebar-stat">{{ totalItems }} файлов</span>
-          <span class="media-sidebar-stat">{{ folders.length }} папок</span>
-        </div>
-      </div>
-
       <div class="media-sidebar-card media-sidebar-tree-card">
         <div class="media-sidebar-card-head">
           <strong>Дерево папок</strong>
           <button
             v-if="config.canManageFolders"
             type="button"
-            class="vc-button vc-button-secondary"
+            class="media-button media-button-secondary"
             @click="openCreateFolderModal(selectedFolderId)"
           >
             Новая папка
@@ -71,23 +60,6 @@
         </div>
       </div>
 
-      <div class="media-sidebar-card palette-card">
-        <div class="palette-head">
-          <h3>Цвета папок</h3>
-          <span>{{ folderPalette.length }} вариантов</span>
-        </div>
-        <div class="palette-grid">
-          <button
-            v-for="color in folderPalette"
-            :key="color"
-            type="button"
-            class="palette-swatch"
-            :style="{ backgroundColor: color }"
-            @click="openCreateFolderWithColor(color)"
-          ></button>
-        </div>
-        <p class="palette-copy">Нажмите на цвет, чтобы создать папку уже с выбранным оттенком.</p>
-      </div>
     </aside>
 
     <section class="media-main">
@@ -99,10 +71,10 @@
             <span v-else>Выберите файл из галереи или загрузите новый.</span>
           </div>
           <div class="media-picker-actions">
-            <button type="button" class="vc-button vc-button-secondary" @click="requestClose">Закрыть</button>
+            <button type="button" class="media-button media-button-secondary" @click="requestClose">Закрыть</button>
             <button
               type="button"
-              class="vc-button vc-button-primary"
+              class="media-button media-button-primary"
               :disabled="!pickerSelectedItem"
               @click="submitPickedMedia"
             >
@@ -156,11 +128,11 @@
             >
           </div>
           <div class="media-toolbar-actions">
-            <button type="button" class="vc-button vc-button-secondary" @click="refreshAll">Обновить</button>
+            <button type="button" class="media-button media-button-secondary" @click="refreshAll">Обновить</button>
             <button
               v-if="config.canUploadMedia"
               type="button"
-              class="vc-button vc-button-primary"
+              class="media-button media-button-primary"
               @click="triggerFilePicker"
             >
               Загрузить файлы
@@ -275,23 +247,37 @@
                 <button
                   v-if="isPickerMode"
                   type="button"
-                  class="vc-button vc-button-primary"
+                  class="media-button media-button-primary"
                   @click="selectForPicker(item)"
                 >
                   Выбрать
                 </button>
-                <button type="button" class="vc-button vc-button-secondary" @click="openPreview(item)">Просмотр</button>
-                <button v-if="config.canEditMedia" type="button" class="vc-button vc-button-secondary" @click="openEditMediaModal(item)">Редактировать</button>
-                <button v-if="!isPickerMode && config.canDeleteMedia" type="button" class="vc-button vc-button-danger" @click="deleteMedia(item)">Удалить</button>
+                <button type="button" class="media-icon-button" title="Просмотр" aria-label="Просмотр" @click="openPreview(item)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  </svg>
+                </button>
+                <button v-if="config.canEditMedia" type="button" class="media-icon-button" title="Редактировать" aria-label="Редактировать" @click="openEditMediaModal(item)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.651-1.651a1.875 1.875 0 0 1 2.651 2.651L7.5 19.151 3.75 20.25l1.099-3.75L16.862 4.487Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m15 6 3 3" />
+                  </svg>
+                </button>
+                <button v-if="!isPickerMode && config.canDeleteMedia" type="button" class="media-icon-button media-icon-button-danger" title="Удалить" aria-label="Удалить" @click="deleteMedia(item)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166M18.16 5.79 17.25 19.5A2.25 2.25 0 0 1 15.006 21.75H8.994A2.25 2.25 0 0 1 6.75 19.5L5.84 5.79m12.32 0A48.108 48.108 0 0 0 12 5.25c-2.102 0-4.16.18-6.16.54m12.32 0L19.5 5.25M5.84 5.79 4.5 5.25m0 0c.34-.059.68-.114 1.022-.166M4.5 5.25h15M9.75 5.25V4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V5.25" />
+                  </svg>
+                </button>
               </div>
             </div>
           </article>
         </div>
 
         <div v-if="lastPage > 1" class="media-pagination">
-          <button type="button" class="vc-button vc-button-secondary" :disabled="currentPage <= 1 || loading" @click="changePage(-1)">Назад</button>
+          <button type="button" class="media-button media-button-secondary" :disabled="currentPage <= 1 || loading" @click="changePage(-1)">Назад</button>
           <span>Страница {{ currentPage }} из {{ lastPage }}</span>
-          <button type="button" class="vc-button vc-button-secondary" :disabled="currentPage >= lastPage || loading" @click="changePage(1)">Вперёд</button>
+          <button type="button" class="media-button media-button-secondary" :disabled="currentPage >= lastPage || loading" @click="changePage(1)">Вперёд</button>
         </div>
       </div>
     </section>
@@ -344,8 +330,8 @@
         </div>
 
         <div class="media-modal-actions">
-          <button type="button" class="vc-button vc-button-secondary" @click="closeFolderModal">Отмена</button>
-          <button type="button" class="vc-button vc-button-primary" @click="submitFolderModal">Сохранить</button>
+          <button type="button" class="media-button media-button-secondary" @click="closeFolderModal">Отмена</button>
+          <button type="button" class="media-button media-button-primary" @click="submitFolderModal">Сохранить</button>
         </div>
       </div>
     </div>
@@ -402,8 +388,8 @@
         </div>
 
         <div class="media-modal-actions">
-          <button type="button" class="vc-button vc-button-secondary" @click="closeMediaModal">Отмена</button>
-          <button type="button" class="vc-button vc-button-primary" @click="updateMedia">Сохранить</button>
+          <button type="button" class="media-button media-button-secondary" @click="closeMediaModal">Отмена</button>
+          <button type="button" class="media-button media-button-primary" @click="updateMedia">Сохранить</button>
         </div>
       </div>
     </div>
@@ -455,9 +441,9 @@
               <strong>{{ folderNameById(previewMedia.folder_id) || 'Без папки' }}</strong>
             </div>
             <div class="media-preview-actions">
-              <a :href="previewMedia.url" target="_blank" rel="noopener" class="vc-button vc-button-secondary">Открыть файл</a>
-              <button v-if="isPickerMode" type="button" class="vc-button vc-button-primary" @click="pickPreviewMedia">Использовать файл</button>
-              <button v-if="config.canEditMedia" type="button" class="vc-button vc-button-primary" @click="openEditFromPreview">Редактировать</button>
+              <a :href="previewMedia.url" target="_blank" rel="noopener" class="media-button media-button-secondary">Открыть файл</a>
+              <button v-if="isPickerMode" type="button" class="media-button media-button-primary" @click="pickPreviewMedia">Использовать файл</button>
+              <button v-if="config.canEditMedia" type="button" class="media-button media-button-primary" @click="openEditFromPreview">Редактировать</button>
             </div>
           </aside>
         </div>
@@ -750,11 +736,6 @@ function resetFolderForm(parentId = null, color = '#6366F1') {
 function openCreateFolderModal(parentId = null) {
     folderModal.value = { open: true, mode: 'create', id: null };
     resetFolderForm(parentId, selectedFolder.value?.color || '#6366F1');
-}
-
-function openCreateFolderWithColor(color) {
-    folderModal.value = { open: true, mode: 'create', id: null };
-    resetFolderForm(selectedFolderId.value, color);
 }
 
 function openEditFolderModal(folder) {
@@ -1081,25 +1062,6 @@ onMounted(() => {
   padding: 1rem;
 }
 
-.media-sidebar-head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.media-sidebar-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.media-sidebar-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.media-sidebar-stat,
 .media-gallery-total {
   display: inline-flex;
   align-items: center;
@@ -1129,21 +1091,6 @@ onMounted(() => {
   color: var(--vc-text);
   font-size: 0.95rem;
   font-weight: 800;
-}
-
-.media-title {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--vc-text);
-}
-
-.media-copy,
-.palette-copy {
-  margin: 0;
-  color: var(--vc-text-soft);
-  font-size: 0.84rem;
-  line-height: 1.45;
 }
 
 .folder-all-card,
@@ -1275,26 +1222,6 @@ onMounted(() => {
   color: #b91c1c;
 }
 
-.palette-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.palette-head h3 {
-  margin: 0;
-  color: var(--vc-text);
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.palette-head span {
-  color: var(--vc-text-soft);
-  font-size: 0.75rem;
-}
-
-.palette-grid,
 .folder-presets {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1302,7 +1229,6 @@ onMounted(() => {
   margin-top: 1rem;
 }
 
-.palette-swatch,
 .folder-preset {
   width: 100%;
   aspect-ratio: 1;
@@ -1546,8 +1472,7 @@ onMounted(() => {
 }
 
 .media-thumb,
-.media-edit-preview img,
-.media-preview-image {
+.media-edit-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1669,6 +1594,8 @@ onMounted(() => {
 
 .media-preview-modal {
   width: min(1180px, 100%);
+  max-height: calc(100vh - 2.5rem);
+  overflow: hidden;
 }
 
 .media-modal-head,
@@ -1754,20 +1681,35 @@ onMounted(() => {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 1rem;
+  max-height: calc(100vh - 8.5rem);
   padding: 1.25rem;
 }
 
 .media-preview-stage {
+  display: grid;
+  height: clamp(360px, 62vh, 680px);
+  min-height: 0;
   overflow: hidden;
-  min-height: 520px;
+  place-items: center;
   border-radius: 1.5rem;
   background: rgba(15, 23, 42, 0.04);
+}
+
+.media-preview-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .media-preview-meta {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .media-preview-panel {
@@ -1797,6 +1739,249 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.6rem;
   margin-top: auto;
+}
+
+.media-layout {
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+.media-sidebar {
+  gap: 0.75rem;
+  top: 1.25rem;
+}
+
+.media-sidebar-card,
+.media-toolbar,
+.media-gallery-shell,
+.media-card,
+.media-stat-chip,
+.media-picker-bar,
+.folder-empty,
+.media-empty,
+.media-error,
+.media-preview-panel {
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.media-sidebar-card,
+.media-toolbar,
+.media-gallery-shell {
+  background: color-mix(in srgb, var(--vc-surface) 92%, transparent);
+}
+
+.media-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-color: color-mix(in srgb, var(--vc-border) 78%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.media-sidebar-card-head .media-button {
+  flex: 0 0 auto;
+}
+
+.media-context-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.media-context-stats {
+  grid-template-columns: repeat(3, minmax(88px, 1fr));
+}
+
+.media-gallery-total,
+.media-folder-pill {
+  border-radius: 999px;
+}
+
+.media-toolbar-row {
+  align-items: stretch;
+}
+
+.media-toolbar-actions {
+  flex: 0 0 auto;
+}
+
+.media-toolbar-search .vc-input {
+  min-height: 44px;
+}
+
+.upload-dropzone {
+  border-radius: 8px;
+  border-width: 1px;
+  padding: 0.9rem 1rem;
+}
+
+.media-grid,
+.media-grid-loading {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+
+.media-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.media-card:hover {
+  border-color: color-mix(in srgb, var(--vc-text-soft) 34%, var(--vc-border));
+  transform: translateY(-1px);
+}
+
+.media-preview-button {
+  aspect-ratio: 4 / 3;
+}
+
+.media-card-body {
+  gap: 0.65rem;
+  padding: 0.85rem;
+}
+
+.media-card-head {
+  min-width: 0;
+}
+
+.media-card-title {
+  overflow: hidden;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-card-subtitle {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.74rem;
+}
+
+.media-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.media-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--vc-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  color: var(--vc-text);
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.media-button:hover {
+  border-color: color-mix(in srgb, var(--vc-text-soft) 40%, var(--vc-border));
+  background: var(--vc-surface-strong);
+}
+
+.media-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.media-button-primary {
+  border-color: color-mix(in srgb, #14b8a6 72%, var(--vc-border));
+  background: #14b8a6;
+  color: #042f2e;
+}
+
+.media-button-primary:hover {
+  background: #2dd4bf;
+  color: #042f2e;
+}
+
+.media-button-secondary {
+  background: color-mix(in srgb, var(--vc-surface-strong) 86%, transparent);
+}
+
+.media-button-danger {
+  border-color: rgba(244, 63, 94, 0.34);
+  background: rgba(244, 63, 94, 0.08);
+  color: #fb7185;
+}
+
+.media-button-danger:hover {
+  border-color: rgba(244, 63, 94, 0.55);
+  background: rgba(244, 63, 94, 0.14);
+}
+
+.media-icon-button {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--vc-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--vc-surface-strong) 88%, transparent);
+  color: var(--vc-text-soft);
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.media-icon-button:hover {
+  border-color: color-mix(in srgb, var(--vc-text-soft) 42%, var(--vc-border));
+  background: var(--vc-surface-strong);
+  color: var(--vc-text);
+  transform: translateY(-1px);
+}
+
+.media-icon-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.media-icon-button-danger {
+  border-color: rgba(244, 63, 94, 0.3);
+  color: #fb7185;
+}
+
+.media-icon-button-danger:hover {
+  border-color: rgba(244, 63, 94, 0.55);
+  background: rgba(244, 63, 94, 0.12);
+  color: #fecdd3;
+}
+
+.folder-row,
+.folder-all-card {
+  border-radius: 8px;
+}
+
+.folder-action {
+  border-radius: 7px;
+  background: var(--vc-surface-strong);
+}
+
+.folder-color-picker,
+.folder-presets {
+  max-width: 420px;
+}
+
+.folder-presets {
+  grid-template-columns: repeat(10, minmax(28px, 1fr));
+}
+
+.folder-preset {
+  min-height: 32px;
+  border-radius: 8px;
 }
 
 @media (max-width: 1200px) {
@@ -1844,7 +2029,6 @@ onMounted(() => {
 
   .media-toolbar-actions,
   .media-picker-actions,
-  .media-sidebar-stats,
   .media-context-stats {
     width: 100%;
   }

@@ -8,22 +8,32 @@
     $showProgress = $formConfig['show_progress'] ?? true;
     $showPageTitles = $formConfig['show_page_titles'] ?? false;
     $fields = $formConfig['fields'] ?? [];
-    $formTitle = $settings['title'] ?? ($form->name ?? 'Форма');
+    $formTitle = $settings['title'] ?? ($form->name ?? '');
     $formDescription = $settings['description'] ?? ($form->description ?? '');
-    $buttonText = $settings['button_text'] ?? ($form->settings['submit_label'] ?? 'Отправить');
-    $successMessage = $settings['success_message'] ?? ($form->settings['success_message'] ?? 'Форма успешно отправлена!');
-    $theme = $settings['theme'] ?? 'default';
+    $buttonText = $settings['button_text'] ?? ($form->settings['submit_label'] ?? __('forms.submit'));
+    $successMessage = $settings['success_message'] ?? ($form->settings['success_message'] ?? __('forms.success_title'));
+    $globalTheme = config_value('forms.default_theme', config('forms.default_theme', 'default'));
+    $localTheme = $form->settings['theme'] ?? ($settings['theme'] ?? 'inherit');
+    $theme = $localTheme && $localTheme !== 'inherit' ? $localTheme : $globalTheme;
+    $theme = preg_replace('/[^a-z0-9_-]/i', '', (string) ($theme ?: 'default')) ?: 'default';
+    $customCss = trim((string) ($form->settings['custom_css'] ?? config_value('forms.custom_css', '')));
+    $pageOfText = __('forms.page_of', ['page' => ':page', 'total' => ':total']);
+    $prevText = __('forms.prev');
+    $nextText = __('forms.next');
 @endphp
 
-<div 
-    id="{{ $uniqueId }}" 
-    class="vc-form-wrapper vc-form-{{ $theme }}" 
-    data-form-id="{{ $formId }}" 
+<div
+    id="{{ $uniqueId }}"
+    class="vc-form-wrapper vc-form-{{ $theme }}"
+    data-form-id="{{ $formId }}"
     data-action-url="{{ $actionUrl }}"
     data-current-page="{{ $currentPage }}"
     data-total-pages="{{ $totalPages }}"
     x-data="formBuilder(@json($formConfig), '{{ $uniqueId }}')"
 >
+    @if($customCss !== '')
+        <style>{!! $customCss !!}</style>
+    @endif
     @if($formTitle)
         <h3 class="vc-form-title text-xl font-bold mb-2">{{ $formTitle }}</h3>
     @endif
@@ -49,41 +59,48 @@
             </div>
         @endif
 
-        <form 
+        <form
             x-ref="formElement"
-            @submit.prevent="submitForm()" 
-            class="vc-form space-y-4" 
+            @submit.prevent="submitForm()"
+            class="vc-form space-y-4"
             enctype="multipart/form-data"
         >
             <input type="hidden" name="_token" value="{{ $nonce }}">
 
             @foreach($fields as $field)
-                <div data-field-name="{{ $field['name'] }}" class="vc-form-field-wrapper" :class="'vc-field-'+'{{ $field['type'] }}'">
+                <div
+                    data-field-name="{{ $field['name'] }}"
+                    class="vc-form-field-wrapper"
+                    :class="'vc-field-'+'{{ $field['type'] }}'"
+                    x-show="isFieldVisible('{{ $field['name'] }}')"
+                    x-transition
+                >
                      @include('forms::blocks._form-field', ['field' => $field])
                 </div>
             @endforeach
 
             @if($totalPages > 1)
                 <div class="vc-form-pagination flex justify-between items-center mt-6 pt-4 border-t">
-                    <button 
-                        type="button" 
-                        @click="prevPage()" 
+                    <button
+                        type="button"
+                        @click="prevPage()"
                         x-show="currentPage > 1"
                         class="px-4 py-2 border rounded-md hover:bg-gray-50"
                     >
-                        Назад
+                        {{ $prevText }}
                     </button>
-                    <span class="text-sm text-gray-500" x-text="`Страница ${currentPage} из ${totalPages}`"></span>
-                    <button 
-                        type="button" 
-                        @click="nextPage()" 
+                    <span class="text-sm text-gray-500"
+                          x-text="`{{ str_replace(':page', '${currentPage}', str_replace(':total', '${totalPages}', $pageOfText)) }}`"></span>
+                    <button
+                        type="button"
+                        @click="nextPage()"
                         x-show="currentPage < totalPages"
                         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                     >
-                        Далее
+                        {{ $nextText }}
                     </button>
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         x-show="currentPage === totalPages"
                         :disabled="loading"
                         class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 disabled:opacity-50"
@@ -96,8 +113,8 @@
                     </button>
                 </div>
             @else
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     :disabled="loading"
                     class="w-full px-6 py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
@@ -129,19 +146,19 @@ document.addEventListener('alpine:init', () => {
         errors: {},
 
         init() {
-            // Initialize default values
             this.fields.forEach(field => {
                 if (field.default_value !== null && field.default_value !== undefined) {
                     this.$set(this.formData, field.name, field.default_value);
+                } else if (['name', 'address'].includes(field.type)) {
+                    this.$set(this.formData, field.name, {});
+                } else if (field.type === 'checkbox_group') {
+                    this.$set(this.formData, field.name, []);
                 } else {
                     this.$set(this.formData, field.name, '');
                 }
             });
 
-            // Setup live calculator watchers
             this.setupCalculators();
-
-            // Setup conditional logic watchers
             this.setupConditionals();
         },
 
@@ -160,12 +177,40 @@ document.addEventListener('alpine:init', () => {
         },
 
         get visibleFields() {
-            return this.fields.filter(field => {
-                if (!field.conditional) return true;
-                const cond = field.conditional;
-                const depValue = this.formData[cond.depends_on];
-                return this.checkCondition(depValue, cond.operator, cond.value);
-            });
+            return this.fields.filter(field => this.isFieldVisible(field.name));
+        },
+
+        isFieldVisible(fieldName) {
+            const field = this.fields.find(item => item.name === fieldName);
+
+            if (!field || !field.conditional) return true;
+
+            return this.evaluateCondition(field.conditional);
+        },
+
+        evaluateCondition(condition) {
+            const rules = Array.isArray(condition.rules) && condition.rules.length
+                ? condition.rules
+                : [{
+                    field: condition.depends_on,
+                    operator: condition.operator || 'equals',
+                    value: condition.value || '',
+                }];
+
+            const validRules = rules.filter(rule => rule && rule.field);
+
+            if (!validRules.length) return true;
+
+            const matches = validRules.map(rule => this.checkCondition(
+                this.formData[rule.field],
+                rule.operator || 'equals',
+                rule.value || ''
+            ));
+            const passed = condition.logic === 'any'
+                ? matches.includes(true)
+                : !matches.includes(false);
+
+            return condition.action === 'hide' ? !passed : passed;
         },
 
         checkCondition(value, operator, target) {
@@ -217,15 +262,16 @@ document.addEventListener('alpine:init', () => {
             let isValid = true;
 
             this.visibleFields.forEach(field => {
+                const requiredMsg = '{{ __('forms.error_required_field') }}'.replace('{label}', field.label);
                 if (field.required && (!this.formData[field.name] || this.formData[field.name] === '')) {
-                    this.errors[field.name] = `${field.label} обязательно для заполнения`;
+                    this.errors[field.name] = requiredMsg;
                     isValid = false;
                 }
 
                 if (field.type === 'email' && this.formData[field.name]) {
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     if (!emailRegex.test(this.formData[field.name])) {
-                        this.errors[field.name] = 'Некорректный email';
+                        this.errors[field.name] = '{{ __('forms.validation_invalid_email') }}';
                         isValid = false;
                     }
                 }
@@ -233,11 +279,11 @@ document.addEventListener('alpine:init', () => {
                 if (field.type === 'number') {
                     const val = parseFloat(this.formData[field.name]);
                     if (field.options?.min !== undefined && val < field.options.min) {
-                        this.errors[field.name] = `Минимум ${field.options.min}`;
+                        this.errors[field.name] = '{{ __('forms.validation_min') }}'.replace('{min}', field.options.min);
                         isValid = false;
                     }
                     if (field.options?.max !== undefined && val > field.options.max) {
-                        this.errors[field.name] = `Максимум ${field.options.max}`;
+                        this.errors[field.name] = '{{ __('forms.validation_max') }}'.replace('{max}', field.options.max);
                         isValid = false;
                     }
                 }
@@ -248,7 +294,7 @@ document.addEventListener('alpine:init', () => {
                     if (Array.isArray(files)) {
                         files.forEach(file => {
                             if (file.size > maxSize) {
-                                this.errors[field.name] = `Файл слишком большой (макс. ${field.max_size}KB)`;
+                                this.errors[field.name] = '{{ __('forms.validation_file_too_big') }}'.replace('{max}', field.max_size);
                                 isValid = false;
                             }
                         });
@@ -310,20 +356,19 @@ document.addEventListener('alpine:init', () => {
                     if (data.errors) {
                         this.errors = data.errors;
                     } else {
-                        this.errors.general = data.message || 'Ошибка отправки';
+                        this.errors.general = data.message || '{{ __('forms.error_submission_failed') }}';
                     }
                     return;
                 }
 
                 this.submitted = true;
 
-                // Dispatch custom event
                 this.$el.dispatchEvent(new CustomEvent('form-submitted', {
                     detail: { submissionId: data.submission_id, formId: {{ $formId }} }
                 }));
 
             } catch (e) {
-                this.errors.general = 'Ошибка сети. Попробуйте позже.';
+                this.errors.general = '{{ __('forms.error_network') }}';
             } finally {
                 this.loading = false;
             }

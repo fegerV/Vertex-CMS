@@ -49,7 +49,7 @@ export function useBuilderCommands({
 
         return sectionCommands().map((command) => ({
             ...command,
-            description: command.description || 'Section command',
+            description: command.description || 'Команда секции',
             disabled: false,
         }));
     });
@@ -60,7 +60,7 @@ export function useBuilderCommands({
 
         return blockCommands(selectedBlockType.value).map((command) => ({
             ...command,
-            description: command.description || 'Block command',
+            description: command.description || 'Команда блока',
             disabled: false,
         }));
     });
@@ -69,13 +69,13 @@ export function useBuilderCommands({
         const hasSelection = selectedBlockIds.value.length > 0;
 
         const staticItems = [
-            { id: 'save', label: 'Save changes', description: 'Persist current builder JSON', shortcut: 'Ctrl/Cmd+S' },
-            { id: 'preview', label: 'Open preview', description: 'Render current page preview', shortcut: 'Ctrl/Cmd+Shift+P' },
-            { id: 'undo', label: 'Undo last action', description: 'Step back one builder action', shortcut: 'Ctrl/Cmd+Z', disabled: !canUndo.value },
-            { id: 'redo', label: 'Redo action', description: 'Restore next builder action', shortcut: 'Ctrl/Cmd+Shift+Z', disabled: !canRedo.value },
-            { id: 'revisions', label: 'Open revisions', description: 'Browse saved revisions', shortcut: 'R' },
-            { id: 'duplicate-selection', label: 'Duplicate selected blocks', description: 'Duplicate current multi-selection in this section', shortcut: 'Ctrl/Cmd+D', disabled: !hasSelection },
-            { id: 'delete-selection', label: 'Delete selected blocks', description: 'Delete current multi-selection', shortcut: 'Delete', disabled: !hasSelection },
+            { id: 'save', label: 'Сохранить изменения', description: 'Записать текущий JSON builder-а', shortcut: 'Ctrl/Cmd+S' },
+            { id: 'preview', label: 'Открыть предпросмотр', description: 'Собрать текущий предпросмотр страницы', shortcut: 'Ctrl/Cmd+Shift+P' },
+            { id: 'undo', label: 'Отменить последнее действие', description: 'Вернуться на один шаг назад', shortcut: 'Ctrl/Cmd+Z', disabled: !canUndo.value },
+            { id: 'redo', label: 'Повторить действие', description: 'Вернуть следующий шаг истории', shortcut: 'Ctrl/Cmd+Shift+Z', disabled: !canRedo.value },
+            { id: 'revisions', label: 'Открыть ревизии', description: 'Просмотреть сохранённые ревизии', shortcut: 'R' },
+            { id: 'duplicate-selection', label: 'Дублировать выбранные блоки', description: 'Дублировать текущее множественное выделение в секции', shortcut: 'Ctrl/Cmd+D', disabled: !hasSelection },
+            { id: 'delete-selection', label: 'Удалить выбранные блоки', description: 'Удалить текущее множественное выделение', shortcut: 'Delete', disabled: !hasSelection },
         ];
 
         return [...staticItems, ...selectedSectionCommandItems.value, ...selectedBlockCommandItems.value]

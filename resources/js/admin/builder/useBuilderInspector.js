@@ -11,30 +11,30 @@ export function useBuilderInspector({
 
     const inspectorTitle = computed(() => {
         if (selectedBlockData.value) {
-            return `${blockLabel(selectedBlockData.value.type)} settings`;
+            return `${blockLabel(selectedBlockData.value.type)}: настройки`;
         }
 
         if (selectedSection.value !== null) {
-            return `Section ${selectedSection.value + 1} settings`;
+            return `Секция ${selectedSection.value + 1}: настройки`;
         }
 
         return inspectorPinned.value
-            ? `${inspectorMode.value === 'section' ? 'Section' : 'Block'} inspector`
-            : 'Inspector';
+            ? `${inspectorMode.value === 'section' ? 'Инспектор секции' : 'Инспектор блока'}`
+            : 'Инспектор';
     });
 
     const inspectorDescription = computed(() => {
         if (selectedBlockData.value) {
-            return 'Tune block content, appearance and reusable presets.';
+            return 'Настраивайте контент блока, внешний вид и переиспользуемые пресеты.';
         }
 
         if (selectedSection.value !== null) {
-            return 'Adjust section spacing, background and CSS hooks.';
+            return 'Управляйте отступами секции, фоном и CSS-параметрами.';
         }
 
         return inspectorPinned.value
-            ? 'Inspector mode is pinned between selections.'
-            : 'Pick a section or block on the canvas to start editing.';
+            ? 'Режим инспектора закреплён между переключениями.'
+            : 'Выберите секцию или блок на холсте, чтобы начать редактирование.';
     });
 
     const persistInspectorState = () => {

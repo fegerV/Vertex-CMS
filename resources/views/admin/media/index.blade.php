@@ -4,6 +4,8 @@
 @section('page_title', 'Медиатека')
 @section('page_subtitle', 'Папки, цвета, загрузка и управление файлами')
 
+@section('page_wrap_class', 'vc-page-wrap-media')
+
 @section('content')
 @php
     $initialItems = $items->getCollection()->map(fn ($item) => [
@@ -47,6 +49,6 @@
 <div
     data-vc-media-manager
     data-config='@json($mediaConfig)'
-    class="mx-auto max-w-[1600px]"
+    class="vc-media-manager-host"
 ></div>
 @endsection

@@ -5,6 +5,7 @@ namespace App\Builder\Http\Controllers;
 use App\Builder\Config\BlockRegistry;
 use App\Builder\Config\SectionRegistry;
 use App\Builder\Services\PageBuilderService;
+use App\Builder\Support\BuilderContractSerializer;
 use App\Builder\Support\BuilderLibraryManager;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
@@ -21,6 +22,7 @@ class AdvancedBuilderController extends Controller
     public function __construct(
         private readonly PageBuilderService $builder,
         private readonly BuilderLibraryManager $library,
+        private readonly BuilderContractSerializer $serializer,
         private readonly ActivityLogService $activityLog,
     ) {
     }
@@ -98,6 +100,15 @@ class AdvancedBuilderController extends Controller
         ]);
 
         $sections = $this->builder->normalizeSections($payload['content']);
+        $errors = $this->builder->validateBlocks($sections);
+
+        if ($errors !== []) {
+            return response()->json([
+                'ok' => false,
+                'errors' => $errors,
+            ], 422);
+        }
+
         $this->builder->createRevision($page, $sections, 'auto-save');
 
         return response()->json([
@@ -172,16 +183,6 @@ class AdvancedBuilderController extends Controller
 
         try {
             $sections = $this->builder->importSections($request->input('import_data'));
-
-            if ($request->filled('page_id')) {
-                $page = Page::query()->findOrFail($request->integer('page_id'));
-                $page->content_json = [
-                    'version' => '1.0',
-                    'layout' => $page->content_json['layout'] ?? 'default',
-                    'sections' => $sections,
-                ];
-                $page->save();
-            }
 
             return response()->json([
                 'ok' => true,
@@ -479,6 +480,7 @@ class AdvancedBuilderController extends Controller
     protected function getBuilderConfig(?Request $request = null): array
     {
         $user = $request?->user();
+        $serializedBlocks = $this->serializer->serializeRegistry(BlockRegistry::all());
 
         return [
             'responsive_preview' => true,
@@ -495,6 +497,7 @@ class AdvancedBuilderController extends Controller
             'max_revisions' => 50,
             'categories' => BlockRegistry::getCategories(),
             'total_blocks' => count(BlockRegistry::all()),
+            'blocks' => $serializedBlocks,
             'quick_add' => [
                 'templates' => $this->library->quickAddTemplates(),
             ],
