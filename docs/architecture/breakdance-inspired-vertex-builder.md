@@ -51,7 +51,7 @@ This is the right foundation. The best path is to deepen it, not replace it.
 
 ## Gap Analysis
 
-- Some duplicated block editing metadata still exists in `BlockPackRegistry`, but every block now exposes explicit `editor.packs` through `app/Builder/Config/blocks.php`.
+- Block editing metadata now has a single primary source: every block exposes explicit `editor.packs` through `app/Builder/Config/blocks.php`, while `BlockPackRegistry` is only a compatibility reader over that registry.
 - Auxiliary builder flows such as template management and onboarding are not yet first-class standalone workspaces.
 - The visual template library exists, but can become closer to a real design library with stronger preview and category workflows.
 - Inspector control packs exist for the full current block catalog.
@@ -64,7 +64,7 @@ This is the right foundation. The best path is to deepen it, not replace it.
 
 - Keep enriching `BuilderContractSerializer` and `BlockRegistry` so every block exposes semantic `editor.packs`.
 - Prefer explicit block metadata where possible.
-- Keep `BlockPackRegistry` only as a compatibility/catalog bridge until duplicated pack metadata can be removed.
+- Keep `BlockPackRegistry` as a thin compatibility reader only; new pack metadata belongs in `app/Builder/Config/blocks.php`.
 - Add tests around pack metadata for content, layout, dynamic, interactive and utility blocks.
 
 ### Phase 2: Design Library Workspace
@@ -103,7 +103,7 @@ This is the right foundation. The best path is to deepen it, not replace it.
 
 ### Slice 1: Pack Catalog Coverage
 
-The first implementation slice expanded `BlockPackRegistry` with pack recipes for unmigrated blocks and lets `BuilderContractSerializer` normalize those recipes into the runtime contract.
+The first implementation slice expanded block pack recipes across the catalog and lets `BuilderContractSerializer` normalize those recipes into the runtime contract.
 
 Why this slice:
 
@@ -125,4 +125,4 @@ The second implementation slice rewrote `app/Builder/Config/blocks.php` into a c
 
 ## Next Recommended Slice
 
-Shrink `BlockPackRegistry` so it no longer duplicates pack recipes already declared in `app/Builder/Config/blocks.php`. After that, move on to a dedicated design-library workspace for templates and starter pages.
+Move on to a dedicated design-library workspace for templates and starter pages, keeping `app/Builder/Config/blocks.php` as the single source of truth for block pack recipes.

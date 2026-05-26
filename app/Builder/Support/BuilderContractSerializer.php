@@ -2,7 +2,6 @@
 
 namespace App\Builder\Support;
 
-use App\Builder\Config\BlockPackRegistry;
 use Illuminate\Support\Str;
 
 class BuilderContractSerializer
@@ -478,12 +477,7 @@ class BuilderContractSerializer
 
     private function resolveBlockPackRecipes(string $type, array $block): array
     {
-        $recipes = collect(BlockPackRegistry::for($type))
-            ->merge(collect((array) data_get($block, 'editor.packs', []))->map(function (array $recipe, string|int $key): array {
-                return array_merge($recipe, [
-                    'id' => (string) ($recipe['id'] ?? $key),
-                ]);
-            }))
+        $recipes = collect((array) data_get($block, 'editor.packs', []))
             ->map(function (array $recipe, string|int $key): array {
                 return [
                     'id' => (string) ($recipe['id'] ?? $key),

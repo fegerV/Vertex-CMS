@@ -186,9 +186,9 @@ The latest builder pass has already moved part of **Phase 2** and **Phase 3** in
 - inspector control variants now also come from backend metadata, so segmented choices, color swatches, spacing sliders and link-focused inputs are no longer local Vue-only widget decisions
 - inspector control families now also come from backend metadata, so higher-level UX groupings like Typography, Surface, Spacing and Link are no longer shell-authored presentation guesses
 - inspector control packs now also come from backend metadata, so richer editing sections like Typography packs, Button treatment packs and Media settings packs are no longer assembled ad hoc in Vue
-- block-level pack recipes now also come from backend metadata through `editor.packs`; the full current block catalog declares them directly in `blocks.php`, while `BlockPackRegistry` remains only as a temporary duplicated catalog during cleanup
+- block-level pack recipes now also come from backend metadata through `editor.packs`; the full current block catalog declares them directly in `blocks.php`, while `BlockPackRegistry` is only a compatibility reader over the primary registry
 - legacy mojibake strings were removed from the active builder SFC layer
 - the live canvas runtime now prefers explicit dirty signals over deep-watching the full page tree, and preview/autosave skip duplicate JSON payloads to keep large pages more responsive during inspector edits
 - the live preview endpoint now avoids rendering both public HTML and editor document in the same request, while the server renderer avoids collection-heavy loops on the hot preview path
 
-The next logical iteration is to shrink or remove `BlockPackRegistry`, then move into the dedicated design-library workspace for templates, starters and reusable sections.
+The next logical iteration is to move into the dedicated design-library workspace for templates, starters and reusable sections, while keeping `blocks.php` as the single source for block editing metadata.

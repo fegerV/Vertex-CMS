@@ -53,7 +53,7 @@ class BuilderContractSerializerTest extends TestCase
         $this->assertSame('Edit heading', $blocks['heading']['editor']['inline_editing']['label']);
     }
 
-    public function test_builder_contract_serializer_adds_catalog_pack_recipes_for_unmigrated_blocks(): void
+    public function test_builder_contract_serializer_reads_pack_recipes_from_block_registry(): void
     {
         $serializer = app(BuilderContractSerializer::class);
         $blocks = $serializer->serializeRegistry(BlockRegistry::all());
