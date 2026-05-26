@@ -30,6 +30,7 @@ Route::post("pages/builder/presets", [AdvancedBuilderController::class, "storeSh
 Route::put("pages/builder/presets/{presetId}", [AdvancedBuilderController::class, "updateSharedPreset"])->middleware("vertex.permission:pages.edit")->name("pages.builder.presets.update");
 Route::delete("pages/builder/presets/{presetId}", [AdvancedBuilderController::class, "destroySharedPreset"])->middleware("vertex.permission:pages.edit")->name("pages.builder.presets.destroy");
 Route::get("pages/builder/shared-templates", [AdvancedBuilderController::class, "getSharedTemplates"])->middleware("vertex.permission:pages.edit")->name("pages.builder.shared-templates.index");
+Route::get("pages/builder/design-library", [AdvancedBuilderController::class, "getDesignLibrary"])->middleware("vertex.permission:pages.edit")->name("pages.builder.design-library.index");
 Route::post("pages/builder/shared-templates", [AdvancedBuilderController::class, "storeSharedTemplate"])->middleware("vertex.permission:pages.edit")->name("pages.builder.shared-templates.store");
 Route::put("pages/builder/shared-templates/{templateId}", [AdvancedBuilderController::class, "updateSharedTemplate"])->middleware("vertex.permission:pages.edit")->name("pages.builder.shared-templates.update");
 Route::delete("pages/builder/shared-templates/{templateId}", [AdvancedBuilderController::class, "destroySharedTemplate"])->middleware("vertex.permission:pages.edit")->name("pages.builder.shared-templates.destroy");

@@ -46,4 +46,23 @@ class BuilderLibraryManagerTest extends TestCase
         $this->assertArrayHasKey('blocks', $templates[0]);
         $this->assertSame('heading', $templates[0]['blocks'][0]['type']);
     }
+
+    public function test_builder_library_manager_exposes_design_library_workspace_contract(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $manager = app(BuilderLibraryManager::class);
+        $request = request()->setUserResolver(fn () => $editor);
+
+        $workspace = $manager->designLibraryWorkspace($request);
+
+        $this->assertSame('1.0', $workspace['version']);
+        $this->assertSame('templates', $workspace['navigation'][0]['id']);
+        $this->assertGreaterThan(0, $workspace['stats']['templates']);
+        $this->assertGreaterThan(0, $workspace['stats']['starters']);
+        $this->assertNotEmpty($workspace['categories']['templates']);
+        $this->assertSame('templates', $workspace['collections'][0]['id']);
+        $this->assertSame('starters', $workspace['collections'][1]['id']);
+        $this->assertArrayHasKey('thumbnail', $workspace['collections'][1]['items'][0]);
+        $this->assertSame('presets', $workspace['collections'][2]['id']);
+    }
 }

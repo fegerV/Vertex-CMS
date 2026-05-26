@@ -369,6 +369,14 @@ class AdvancedBuilderController extends Controller
         ]);
     }
 
+    public function getDesignLibrary(Request $request): JsonResponse
+    {
+        return response()->json([
+            'ok' => true,
+            'data' => $this->library->designLibraryWorkspace($request),
+        ]);
+    }
+
     public function storeSharedTemplate(Request $request): JsonResponse
     {
         $payload = $request->validate([

@@ -72,6 +72,7 @@ This is the right foundation. The best path is to deepen it, not replace it.
 - Split template management into a clearer dedicated builder library surface.
 - Keep templates backend-backed through `BuilderLibraryManager`.
 - Add stronger category filters, visual previews, ownership labels and source labels.
+- Expose one design-library workspace contract for templates, quick-start compositions and presets before building the richer Vue/Inertia browser.
 - Keep template application routed through backend validation.
 
 ### Phase 3: Canvas Interaction
@@ -125,4 +126,4 @@ The second implementation slice rewrote `app/Builder/Config/blocks.php` into a c
 
 ## Next Recommended Slice
 
-Move on to a dedicated design-library workspace for templates and starter pages, keeping `app/Builder/Config/blocks.php` as the single source of truth for block pack recipes.
+Connect the new design-library workspace contract to a richer Vue/Inertia browser surface for templates and starter pages, keeping `app/Builder/Config/blocks.php` as the single source of truth for block pack recipes.

@@ -170,6 +170,8 @@ The same separation is now applied to the builder library layer: built-in templa
 
 That same library layer now also owns built-in quick-add starter templates. The Vue shell consumes them through `config.quick_add.templates`, instead of hardcoding starter compositions locally.
 
+The library layer now also exposes a dedicated design-library workspace contract through `admin.pages.builder.design-library.index`. It groups templates, quick-start compositions and block presets into a single backend-owned payload with navigation counts, category summaries, collection metadata and empty-state copy. This gives the future Vue/Inertia design-library screen one stable API instead of forcing it to stitch together separate endpoints.
+
 The current builder API now already moves in this direction:
 
 - `/admin/api/builder/blocks` exposes a keyed `blocks` map for runtime usage
@@ -192,6 +194,7 @@ The current builder API now already moves in this direction:
 - section action panels and section context commands now also come from `SectionRegistry`, so section toolbar affordances follow the same backend-owned contract model as blocks
 - section selection policy, toolbar visibility and canvas affordances now also flow through `config.sections.presentation`, which keeps section hover/selection behavior aligned with the same contract-driven model
 - quick-add starter templates now flow through `config.quick_add.templates`, sourced from `BuilderLibraryManager`, so starter compositions are backend-backed contract data as well
+- design-library workspace data now flows through `BuilderLibraryManager::designLibraryWorkspace()`, giving templates, starters and presets a single backend-owned browsing contract
 
 That means the inspector can gradually become fully registry-driven without waiting for a full rewrite of every legacy block definition.
 

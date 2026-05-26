@@ -56,6 +56,64 @@ class BuilderLibraryManager
         return collect($this->visibleTemplates($request))->firstWhere('id', $templateId);
     }
 
+    public function designLibraryWorkspace(Request $request): array
+    {
+        $templates = $this->visibleTemplates($request);
+        $starters = collect($this->quickAddTemplates())
+            ->map(fn (array $starter) => $this->decorateStarterItem($starter))
+            ->values()
+            ->all();
+        $presets = $this->visiblePresets($request);
+
+        return [
+            'version' => '1.0',
+            'generated_at' => now()->toIso8601String(),
+            'navigation' => [
+                ['id' => 'templates', 'label' => 'Templates', 'count' => count($templates)],
+                ['id' => 'starters', 'label' => 'Starters', 'count' => count($starters)],
+                ['id' => 'presets', 'label' => 'Presets', 'count' => count($presets)],
+            ],
+            'stats' => [
+                'templates' => count($templates),
+                'starters' => count($starters),
+                'presets' => count($presets),
+                'builtin_templates' => collect($templates)->where('source', 'builtin')->count(),
+                'shared_templates' => collect($templates)->where('source', 'shared')->count(),
+                'editable_items' => collect(array_merge($templates, $presets))->where('can_edit', true)->count(),
+            ],
+            'categories' => [
+                'templates' => $this->summarizeLibraryGroups($templates, 'category'),
+                'starters' => $this->summarizeLibraryGroups($starters, 'category'),
+                'presets' => $this->summarizeLibraryGroups($presets, 'type'),
+            ],
+            'collections' => [
+                [
+                    'id' => 'templates',
+                    'label' => 'Page and section templates',
+                    'description' => 'Reusable page sections with previews, ownership and visibility metadata.',
+                    'items' => $templates,
+                ],
+                [
+                    'id' => 'starters',
+                    'label' => 'Quick-start compositions',
+                    'description' => 'Small block stacks optimized for fast insertion from the builder canvas.',
+                    'items' => $starters,
+                ],
+                [
+                    'id' => 'presets',
+                    'label' => 'Block presets',
+                    'description' => 'Reusable settings snapshots for individual block types.',
+                    'items' => $presets,
+                ],
+            ],
+            'empty_states' => [
+                'templates' => 'Save a section as a shared template to grow the design library.',
+                'starters' => 'Starter compositions are shipped by Vertex and can be extended by modules.',
+                'presets' => 'Select a block and save its settings as a reusable preset.',
+            ],
+        ];
+    }
+
     public function allSharedTemplates(): array
     {
         $value = $this->settings->get('builder.shared_templates', []);
@@ -194,6 +252,42 @@ class BuilderLibraryManager
                 ],
             ],
         ];
+    }
+
+    private function decorateStarterItem(array $starter): array
+    {
+        $blocks = array_values((array) ($starter['blocks'] ?? []));
+
+        return [
+            ...$starter,
+            'source' => $starter['source'] ?? 'builtin',
+            'visibility' => $starter['visibility'] ?? 'shared',
+            'category' => $starter['category'] ?? 'starter',
+            'thumbnail' => $starter['thumbnail'] ?? $this->buildTemplateThumbnail([
+                'name' => $starter['name'] ?? 'Starter',
+                'category' => $starter['category'] ?? 'starter',
+                'sections' => [
+                    ['blocks' => $blocks],
+                ],
+            ]),
+            'blocks_count' => count($blocks),
+            'can_edit' => false,
+            'can_delete' => false,
+        ];
+    }
+
+    private function summarizeLibraryGroups(array $items, string $field): array
+    {
+        return collect($items)
+            ->groupBy(fn (array $item) => (string) ($item[$field] ?? 'uncategorized'))
+            ->map(fn ($group, string $id): array => [
+                'id' => $id,
+                'label' => str($id)->replace(['-', '_'], ' ')->title()->toString(),
+                'count' => $group->count(),
+            ])
+            ->sortBy('label')
+            ->values()
+            ->all();
     }
 
     private function canViewLibraryItem(array $item, Request $request): bool

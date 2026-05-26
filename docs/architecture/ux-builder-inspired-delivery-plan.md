@@ -176,6 +176,7 @@ The latest builder pass has already moved part of **Phase 2** and **Phase 3** in
 - block contract normalization is now also extracted from the controller into a dedicated serializer layer, which makes the API endpoint thinner and keeps future registry evolution out of transport code
 - built-in templates and shared library visibility/decoration are now extracted into a dedicated library manager, reducing controller sprawl and moving the template/preset layer toward the same explicit backend architecture
 - built-in quick-add starters now also come from the backend library layer, so the most common page-start compositions are no longer hardcoded in the Vue shell
+- the library layer now exposes a first design-library workspace contract that groups templates, starters and presets with navigation counts, category summaries and collection metadata for a future dedicated browser screen
 - section action bars and section context-menu actions are now backend-driven through `SectionRegistry`, instead of living as local Vue-only button maps
 - block inline action bars and block context-menu commands are now backend-driven through normalized `editor.actions` and `editor.commands`, which keeps command affordances inside the builder contract layer
 - block hover chrome and selection behavior now also read contract metadata through `editor.presentation`, so multi-select and toolbar visibility are no longer shell-only assumptions
@@ -191,4 +192,4 @@ The latest builder pass has already moved part of **Phase 2** and **Phase 3** in
 - the live canvas runtime now prefers explicit dirty signals over deep-watching the full page tree, and preview/autosave skip duplicate JSON payloads to keep large pages more responsive during inspector edits
 - the live preview endpoint now avoids rendering both public HTML and editor document in the same request, while the server renderer avoids collection-heavy loops on the hot preview path
 
-The next logical iteration is to move into the dedicated design-library workspace for templates, starters and reusable sections, while keeping `blocks.php` as the single source for block editing metadata.
+The next logical iteration is to connect the dedicated design-library workspace contract to a richer Vue/Inertia browser surface for templates, starters and reusable sections, while keeping `blocks.php` as the single source for block editing metadata.

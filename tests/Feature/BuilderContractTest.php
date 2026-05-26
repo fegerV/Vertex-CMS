@@ -352,6 +352,32 @@ class BuilderContractTest extends TestCase
         $this->assertArrayHasKey('blocks_count', $templates[0]);
     }
 
+    public function test_builder_design_library_endpoint_returns_workspace_contract(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+
+        $this->actingAs($editor)
+            ->getJson(route('admin.pages.builder.design-library.index'))
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('data.version', '1.0')
+            ->assertJsonPath('data.navigation.0.id', 'templates')
+            ->assertJsonPath('data.collections.0.id', 'templates')
+            ->assertJsonPath('data.collections.1.id', 'starters')
+            ->assertJsonStructure([
+                'ok',
+                'data' => [
+                    'version',
+                    'generated_at',
+                    'navigation',
+                    'stats',
+                    'categories',
+                    'collections',
+                    'empty_states',
+                ],
+            ]);
+    }
+
     public function test_builder_autosave_rejects_invalid_blocks_and_does_not_create_revision(): void
     {
         $editor = $this->makeUserWithRole('editor');
