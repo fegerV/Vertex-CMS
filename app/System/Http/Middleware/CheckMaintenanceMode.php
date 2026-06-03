@@ -17,6 +17,11 @@ class CheckMaintenanceMode
 
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip maintenance if app is not installed
+        if (!app(\App\Core\Services\InstallationService::class)->isInstalled()) {
+            return $next($request);
+        }
+
         // Skip maintenance for admin routes, API routes, and excluded pages
         if ($this->shouldBypass($request)) {
             return $next($request);
