@@ -1,8 +1,8 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Настройки - VertexCMS')
-@section('page_title', 'Настройки')
-@section('page_subtitle', 'Конфигурация сайта, SEO, API, AI, PWA и кеша')
+@section('title', __('settings.title').' - VertexCMS')
+@section('page_title', __('settings.title'))
+@section('page_subtitle', __('settings.subtitle'))
 
 @section('content')
     <div class="mx-auto max-w-6xl">
@@ -42,7 +42,7 @@
                                             @checked(old($oldKey, $values[$key] ?? false))
                                             class="rounded border-slate-300"
                                         >
-                                        <span class="text-sm text-slate-700">Включено</span>
+                                        <span class="text-sm text-slate-700">{{ __('settings.enabled') }}</span>
                                     </span>
                                 @elseif ($field['input'] === 'select')
                                     <select name="{{ $inputName }}" class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900">
@@ -55,7 +55,7 @@
                                         type="{{ $field['input'] }}"
                                         name="{{ $inputName }}"
                                         value="{{ $field['secret'] ?? false ? '' : old($oldKey, $values[$key] ?? '') }}"
-                                        @if ($field['secret'] ?? false) placeholder="{{ ! empty($values[$key]) ? 'Сохранённый ключ скрыт' : 'Введите ключ' }}" @endif
+                                        @if ($field['secret'] ?? false) placeholder="{{ ! empty($values[$key]) ? __('settings.secret_placeholder') : __('settings.secret_empty') }}" @endif
                                         class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
                                     >
                                 @endif
@@ -71,7 +71,7 @@
 
             <div class="flex justify-end">
                 <button class="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-                    Сохранить настройки
+                    {{ __('settings.save') }}
                 </button>
             </div>
         </form>

@@ -59,6 +59,8 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::put('settings', [SettingsController::class, 'update'])
             ->middleware('vertex.permission:settings.edit')
             ->name('settings.update');
+        Route::get('locale/{locale}', [SettingsController::class, 'changeLocale'])
+            ->name('locale.change');
 
         Route::get('pages', [PageController::class, 'index'])
             ->middleware('vertex.permission:pages.view')

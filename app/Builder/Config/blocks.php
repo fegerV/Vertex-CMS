@@ -548,7 +548,7 @@ $blocks = [
             'description' => ['type' => 'textarea', 'label' => 'Описание', 'rows' => 2],
             'price' => ['type' => 'number', 'label' => 'Цена', 'required' => true, 'step' => 0.01],
             'old_price' => ['type' => 'number', 'label' => 'Старая цена', 'step' => 0.01],
-            'currency', => ['type' => 'text', 'label' => 'Валюта', 'value' => '₽'],
+            'currency' => ['type' => 'text', 'label' => 'Валюта', 'value' => '₽'],
             'rating' => ['type' => 'number', 'label' => 'Рейтинг', 'min' => 0, 'max' => 5, 'step' => 0.5],
             'reviews_count' => ['type' => 'number', 'label' => 'Количество отзывов'],
             'button_text' => ['type' => 'text', 'label' => 'Текст на кнопке'],

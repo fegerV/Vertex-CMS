@@ -10,15 +10,15 @@
     @php
         $user = auth()->user();
         $navigation = [
-            ['label' => 'Панель управления', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access'],
-            ['label' => 'Страницы', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view'],
-            ['label' => 'Медиа', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view'],
-            ['label' => 'Пользователи', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view'],
-            ['label' => 'Роли', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view'],
-            ['label' => 'Настройки', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view'],
-            ['label' => 'Система', 'route' => 'admin.system.info', 'active' => 'admin.system.info', 'permission' => 'system.view'],
-            ['label' => 'Кеш', 'route' => 'admin.system.cache', 'active' => 'admin.system.cache*', 'permission' => 'system.view'],
-            ['label' => 'Логи', 'route' => 'admin.system.logs', 'active' => 'admin.system.logs', 'permission' => 'system.view'],
+            ['label' => __('admin.dashboard'), 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access'],
+            ['label' => __('admin.pages'), 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view'],
+            ['label' => __('admin.media'), 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view'],
+            ['label' => __('admin.users'), 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view'],
+            ['label' => __('admin.roles'), 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view'],
+            ['label' => __('admin.settings'), 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view'],
+            ['label' => __('admin.system'), 'route' => 'admin.system.info', 'active' => 'admin.system.info', 'permission' => 'system.view'],
+            ['label' => __('admin.cache'), 'route' => 'admin.system.cache', 'active' => 'admin.system.cache*', 'permission' => 'system.view'],
+            ['label' => __('admin.logs'), 'route' => 'admin.system.logs', 'active' => 'admin.system.logs', 'permission' => 'system.view'],
         ];
     @endphp
 
@@ -46,18 +46,25 @@
             <header class="border-b border-slate-200 bg-white">
                 <div class="flex items-center justify-between gap-4 px-6 py-4">
                     <div>
-                        <h1 class="text-xl font-semibold">@yield('page_title', 'Панель управления')</h1>
+                        <h1 class="text-xl font-semibold">@yield('page_title', __('admin.dashboard'))</h1>
                         @hasSection('page_subtitle')
                             <p class="mt-1 text-sm text-slate-500">@yield('page_subtitle')</p>
                         @endif
                     </div>
 
-                    <form method="POST" action="{{ route('admin.logout') }}">
-                        @csrf
-                        <button class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">
-                            Выйти
-                        </button>
-                    </form>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2 border-r border-slate-200 pr-4">
+                            <a href="{{ route('admin.locale.change', 'ru') }}" class="text-xs font-medium {{ app()->getLocale() === 'ru' ? 'text-slate-950 underline' : 'text-slate-500 hover:text-slate-700' }}">RU</a>
+                            <a href="{{ route('admin.locale.change', 'en') }}" class="text-xs font-medium {{ app()->getLocale() === 'en' ? 'text-slate-950 underline' : 'text-slate-500 hover:text-slate-700' }}">EN</a>
+                        </div>
+
+                        <form method="POST" action="{{ route('admin.logout') }}">
+                            @csrf
+                            <button class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">
+                                {{ __('admin.logout') }}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </header>
 

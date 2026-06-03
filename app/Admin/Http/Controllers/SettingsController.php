@@ -44,7 +44,16 @@ class SettingsController extends Controller
 
         return redirect()
             ->route('admin.settings.edit')
-            ->with('status', 'Настройки сохранены.');
+            ->with('status', __('settings.save_success'));
+    }
+
+    public function changeLocale(Request $request, string $locale): RedirectResponse
+    {
+        if (in_array($locale, ['en', 'ru'])) {
+            $request->session()->put('locale', $locale);
+        }
+
+        return redirect()->back();
     }
 
     private function rules(): array

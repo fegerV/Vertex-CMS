@@ -1,6 +1,6 @@
 <div class="grid gap-5 sm:grid-cols-2">
     <label class="block sm:col-span-2">
-        <span class="mb-1 block text-sm font-medium">Title</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.name') }}</span>
         <input
             type="text"
             name="title"
@@ -14,7 +14,7 @@
     </label>
 
     <label class="block">
-        <span class="mb-1 block text-sm font-medium">Slug</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.slug') }}</span>
         <input
             type="text"
             name="slug"
@@ -28,9 +28,9 @@
     </label>
 
     <label class="block">
-        <span class="mb-1 block text-sm font-medium">Parent Page</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.parent') }}</span>
         <select name="parent_id" class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900">
-            <option value="">No parent</option>
+            <option value="">{{ __('pages.no_parent') }}</option>
             @foreach ($parentPages as $parentPage)
                 <option value="{{ $parentPage->id }}" @selected((string) old('parent_id', $page->parent_id) === (string) $parentPage->id)>
                     {{ $parentPage->title }} ({{ $parentPage->uri }})
@@ -43,7 +43,7 @@
     </label>
 
     <label class="block">
-        <span class="mb-1 block text-sm font-medium">Status</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.status') }}</span>
         <select name="status" class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900">
             @foreach ($statuses as $status)
                 <option value="{{ $status }}" @selected(old('status', $page->status) === $status)>
@@ -57,7 +57,7 @@
     </label>
 
     <label class="block">
-        <span class="mb-1 block text-sm font-medium">Template</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.template') }}</span>
         <input
             type="text"
             name="template"
@@ -71,7 +71,7 @@
 </div>
 
 <label class="block">
-    <span class="mb-1 block text-sm font-medium">Content JSON</span>
+    <span class="mb-1 block text-sm font-medium">{{ __('pages.content_json') }}</span>
     <textarea
         name="content_json"
         rows="12"
@@ -149,12 +149,12 @@
 
 <section class="space-y-5 border-t border-slate-100 pt-5">
     <div>
-        <h2 class="text-lg font-semibold">SEO</h2>
+        <h2 class="text-lg font-semibold">{{ __('pages.seo') }}</h2>
         <p class="mt-1 text-sm text-slate-500">Page metadata for search engines and social previews.</p>
     </div>
 
     <label class="block">
-        <span class="mb-1 block text-sm font-medium">SEO title</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.seo_title') }}</span>
         <input
             type="text"
             name="seo_title"
@@ -167,7 +167,7 @@
     </label>
 
     <label class="block">
-        <span class="mb-1 block text-sm font-medium">SEO description</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.seo_description') }}</span>
         <textarea
             name="seo_description"
             rows="3"
@@ -180,7 +180,7 @@
 
     <div class="grid gap-5 sm:grid-cols-2">
         <label class="block">
-            <span class="mb-1 block text-sm font-medium">Canonical URL</span>
+            <span class="mb-1 block text-sm font-medium">{{ __('pages.canonical_url') }}</span>
             <input
                 type="url"
                 name="seo_canonical_url"
@@ -193,7 +193,7 @@
         </label>
 
         <label class="block">
-            <span class="mb-1 block text-sm font-medium">Robots</span>
+            <span class="mb-1 block text-sm font-medium">{{ __('pages.robots') }}</span>
             <select name="seo_robots" class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900">
                 @foreach ($robotsOptions as $robots)
                     <option value="{{ $robots }}" @selected(old('seo_robots', $seo?->robots ?? 'index, follow') === $robots)>
@@ -209,7 +209,7 @@
 
     <div class="grid gap-5 sm:grid-cols-2">
         <label class="block">
-            <span class="mb-1 block text-sm font-medium">OG title</span>
+            <span class="mb-1 block text-sm font-medium">{{ __('pages.og_title') }}</span>
             <input
                 type="text"
                 name="seo_og_title"
@@ -219,7 +219,7 @@
         </label>
 
         <label class="block">
-            <span class="mb-1 block text-sm font-medium">OG image media ID</span>
+            <span class="mb-1 block text-sm font-medium">{{ __('pages.og_image') }}</span>
             <input
                 type="number"
                 name="seo_og_image"
@@ -230,7 +230,7 @@
     </div>
 
     <label class="block">
-        <span class="mb-1 block text-sm font-medium">OG description</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.og_description') }}</span>
         <textarea
             name="seo_og_description"
             rows="3"
@@ -239,7 +239,7 @@
     </label>
 
     <label class="block">
-        <span class="mb-1 block text-sm font-medium">Schema JSON</span>
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.schema_json') }}</span>
         <textarea
             name="seo_schema_json"
             rows="6"
@@ -258,7 +258,7 @@
             @checked(old('seo_include_in_sitemap', $seo?->include_in_sitemap ?? true))
             class="rounded border-slate-300"
         >
-        <span>Include in sitemap.xml</span>
+        <span>{{ __('pages.include_in_sitemap') }}</span>
     </label>
 </section>
 
@@ -270,7 +270,7 @@
     @endif
 
     <button type="submit" class="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-        Save
+        {{ __('pages.save') }}
     </button>
 </div>
 
