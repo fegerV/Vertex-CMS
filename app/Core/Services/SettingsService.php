@@ -71,7 +71,7 @@ class SettingsService
             ->reduce(function (array $carry, string $key) use ($all): array {
                 [$group, $setting] = explode('.', $key, 2);
                 $carry[$group] ??= [];
-                $carry[$group][$setting] = $all[$key] ?? null;
+                $carry[$group][$setting] = $all[$key] ?? $this->defaultPublicValue($key);
 
                 return $carry;
             }, []);
@@ -94,6 +94,26 @@ class SettingsService
             'json' => json_encode($value, JSON_UNESCAPED_UNICODE),
             'encrypted' => encrypt((string) $value),
             default => (string) $value,
+        };
+    }
+
+    private function defaultPublicValue(string $key): mixed
+    {
+        return match ($key) {
+            'site.name' => config('app.name', 'VertexCMS'),
+            'site.url' => config('app.url'),
+            'site.locale' => config('app.locale', 'en'),
+            'api.public_enabled' => true,
+            'api.mobile_enabled' => false,
+            'api.version' => 'v1',
+            'pwa.enabled' => false,
+            'pwa.name' => config('app.name', 'VertexCMS'),
+            'pwa.short_name' => config('app.name', 'VertexCMS'),
+            'pwa.theme_color' => '#020617',
+            'pwa.background_color' => '#ffffff',
+            'pwa.display' => 'standalone',
+            'pwa.start_url' => '/',
+            default => null,
         };
     }
 }

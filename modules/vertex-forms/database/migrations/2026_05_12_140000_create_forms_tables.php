@@ -31,7 +31,7 @@ return new class extends Migration
             $table->foreignId('form_id')->constrained('forms')->cascadeOnDelete();
             $table->string('name')->comment('Field name/ID');
             $table->string('label');
-            $table->string('type'); // text, number, email, tel, textarea, select, radio, checkbox, toggle, date, time, file, hidden, calculator, heading, divider, html
+            $table->string('type'); // text, number, email, tel, textarea, select, radio, checkbox, checkbox_group, date, file, hidden, calculator, heading, divider, html, page_break
             $table->integer('sort_order')->default(0);
             $table->json('options')->nullable(); // select options, validation rules, conditional logic, calculator formula
             $table->boolean('required')->default(false);

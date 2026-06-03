@@ -2,7 +2,7 @@
 
 ## Status
 
-Last updated: `2026-05-13`
+Last updated: `2026-05-19`
 
 The `vertex-forms` module already has:
 
@@ -37,18 +37,17 @@ What already works conceptually:
 - duplicate/delete fields
 - save JSON payload to `/admin/api/forms`
 - load formal field metadata from `/admin/api/forms/field-registry`
+- apply Forminator-like starter templates
+- autosave existing forms after edits
+- use top-level workspaces for Build, Appearance, Behavior, Emails, Integrations, Visibility, Submissions and Reports
+- configure multi-rule field conditional logic through UI instead of raw JSON
+- use an expanded field catalog including URL, time, structured name, address, consent and rating fields
+- inspect recent submissions and analytics from inside the builder workspace
 
 What is still missing for the target UX:
 
-- proper top toolbar with draft/publish/autosave state
-- multi-tab form settings flow
-- form templates picker
-- polished field grouping and search
 - drag-and-drop reorder ergonomics
-- conditional logic builder UI
-- submissions/reporting workspace
 - integrations workspace
-- appearance presets UI
 - email notification flow editor
 - production-grade preview/publish flow
 
@@ -169,6 +168,8 @@ Stage 1 is now implemented.
 
 - replace Alpine prototype with Vue builder runtime
 - add autosave, draft/publish, settings tabs
+
+Stage 2 is partially implemented: the Vue builder now has autosave for existing forms, a stronger toolbar, starter templates, top-level workspaces, canvas summaries, a visual multi-rule conditional logic editor, and embedded submissions/analytics panels.
 
 ### Stage 3
 

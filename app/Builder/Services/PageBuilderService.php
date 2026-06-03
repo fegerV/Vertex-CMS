@@ -5,7 +5,7 @@ namespace App\Builder\Services;
 use App\Builder\Config\BlockRegistry;
 use App\Models\Page;
 use App\Models\PageRevision;
-use Illuminate\Support\Facades\DB;
+use App\Models\SeoMeta;
 use Illuminate\Support\Str;
 
 class PageBuilderService
@@ -17,7 +17,7 @@ class PageBuilderService
             'page_id' => $page->id,
             'user_id' => auth()->id(),
             'title' => $page->title,
-            'content_json' => ['sections' => $this->normalizeSections($content)],
+            'content_json' => $this->normalizeContentSnapshot($page, $content),
             'custom_fields_json' => $page->custom_fields_json ?? [],
             'seo_json' => $page->seoMeta?->toArray() ?? [],
             'action' => $action,
@@ -34,11 +34,34 @@ class PageBuilderService
 
     public function restoreRevision(Page $page, PageRevision $revision): Page
     {
+        $content = $this->normalizeContentSnapshot($page, $revision->content_json ?? []);
+
         $page->forceFill([
-            'content_json' => $revision->content_json,
+            'content_json' => $content,
             'custom_fields_json' => $revision->custom_fields_json ?? $page->custom_fields_json,
             'title' => $revision->title,
         ])->save();
+
+        $seoPayload = is_array($revision->seo_json ?? null) ? $revision->seo_json : [];
+        if ($seoPayload !== []) {
+            SeoMeta::query()->updateOrCreate(
+                [
+                    'entity_type' => Page::class,
+                    'entity_id' => $page->id,
+                ],
+                [
+                    'title' => $seoPayload['title'] ?? null,
+                    'description' => $seoPayload['description'] ?? null,
+                    'canonical_url' => $seoPayload['canonical_url'] ?? null,
+                    'robots' => $seoPayload['robots'] ?? 'index, follow',
+                    'og_title' => $seoPayload['og_title'] ?? null,
+                    'og_description' => $seoPayload['og_description'] ?? null,
+                    'og_image' => $seoPayload['og_image'] ?? null,
+                    'schema_json' => is_array($seoPayload['schema_json'] ?? null) ? $seoPayload['schema_json'] : null,
+                    'include_in_sitemap' => (bool) ($seoPayload['include_in_sitemap'] ?? false),
+                ],
+            );
+        }
 
         $page->load('seoMeta');
 
@@ -151,6 +174,10 @@ class PageBuilderService
 
     protected function validateFieldType(string $field, $value, array $config): bool
     {
+        if ($value === '') {
+            return true;
+        }
+
         return match ($config['type']) {
             'string' => is_string($value) || is_null($value),
             'number' => is_numeric($value) || is_null($value),
@@ -271,5 +298,27 @@ class PageBuilderService
                 }, $blocks)),
             ];
         }, $sections));
+    }
+
+    protected function normalizeContentSnapshot(Page $page, array $content): array
+    {
+        $layout = 'default';
+        $version = '1.0';
+        $sections = $content;
+
+        if (array_key_exists('sections', $content)) {
+            $sections = is_array($content['sections'] ?? null) ? $content['sections'] : [];
+            $layout = (string) ($content['layout'] ?? ($page->content_json['layout'] ?? 'default'));
+            $version = (string) ($content['version'] ?? ($page->content_json['version'] ?? '1.0'));
+        } else {
+            $layout = (string) ($page->content_json['layout'] ?? 'default');
+            $version = (string) ($page->content_json['version'] ?? '1.0');
+        }
+
+        return [
+            'version' => $version,
+            'layout' => $layout,
+            'sections' => $this->normalizeSections(is_array($sections) ? $sections : []),
+        ];
     }
 }

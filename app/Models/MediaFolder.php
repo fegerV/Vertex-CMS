@@ -10,7 +10,7 @@ class MediaFolder extends Model
 {
     protected $fillable = ['parent_id', 'name', 'slug', 'color'];
 
-    protected $ casts = [
+    protected $casts = [
         'color' => 'string',
     ];
 

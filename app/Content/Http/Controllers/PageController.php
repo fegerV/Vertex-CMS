@@ -2,21 +2,22 @@
 
 namespace App\Content\Http\Controllers;
 
+use App\Builder\Services\PageRenderer;
 use App\Content\Services\PageService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PageRequest;
 use App\Models\CustomFieldGroup;
 use App\Models\Page;
 use App\Models\Taxonomy;
 use App\Seo\Services\SeoMetaService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PageController extends Controller
 {
     public function __construct(
         private readonly PageService $pages,
+        private readonly PageRenderer $renderer,
     ) {
     }
 
@@ -44,9 +45,9 @@ class PageController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(PageRequest $request): RedirectResponse
     {
-        $page = $this->pages->create($this->validated($request), $request->user());
+        $page = $this->pages->create($request->sanitized(), $request->user());
 
         return redirect()
             ->route('admin.pages.edit', $page)
@@ -69,50 +70,32 @@ class PageController extends Controller
         ]);
     }
 
-    public function update(Request $request, Page $page): RedirectResponse
+    public function preview(Page $page): View
     {
-        $page = $this->pages->update($page, $this->validated($request), $request->user());
+        $page->load('seoMeta');
+
+        return view('admin.pages.preview', [
+            'page' => $page,
+            'renderedHtml' => $this->renderer->render($page->content_json ?? $this->pages->defaultContent()),
+        ]);
+    }
+
+    public function update(PageRequest $request, Page $page): RedirectResponse
+    {
+        $page = $this->pages->update($page, $request->sanitized(), $request->user());
 
         return redirect()
             ->route('admin.pages.edit', $page)
             ->with('status', 'Страница сохранена.');
     }
 
-    public function destroy(Request $request, Page $page): RedirectResponse
+    public function destroy(Page $page): RedirectResponse
     {
-        $this->pages->delete($page, $request->user());
+        $this->pages->delete($page, request()->user());
 
         return redirect()
             ->route('admin.pages.index')
             ->with('status', 'Страница удалена.');
-    }
-
-    private function validated(Request $request): array
-    {
-        $payload = $request->validate([
-            'parent_id' => ['nullable', 'integer', Rule::exists('pages', 'id')],
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', Rule::in(PageService::STATUSES)],
-            'template' => ['nullable', 'string', 'max:255'],
-            'content_json' => ['nullable', 'string'],
-            'custom_fields_json' => ['nullable', 'string'],
-            'term_ids' => ['nullable', 'array'],
-            'term_ids.*' => ['integer', Rule::exists('terms', 'id')],
-            'seo_title' => ['nullable', 'string', 'max:255'],
-            'seo_description' => ['nullable', 'string', 'max:500'],
-            'seo_canonical_url' => ['nullable', 'url', 'max:500'],
-            'seo_robots' => ['nullable', Rule::in(SeoMetaService::ROBOTS)],
-            'seo_og_title' => ['nullable', 'string', 'max:255'],
-            'seo_og_description' => ['nullable', 'string', 'max:500'],
-            'seo_og_image' => ['nullable', 'integer'],
-            'seo_schema_json' => ['nullable', 'json'],
-            'seo_include_in_sitemap' => ['nullable', 'boolean'],
-        ]);
-
-        $payload['seo_include_in_sitemap'] = $request->boolean('seo_include_in_sitemap');
-
-        return $payload;
     }
 
     private function fieldGroupsForTemplate(string $template)

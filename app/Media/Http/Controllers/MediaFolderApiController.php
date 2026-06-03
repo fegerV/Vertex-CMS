@@ -21,14 +21,7 @@ class MediaFolderApiController extends Controller
             ->get();
 
         return response()->json([
-            'folders' => $folders->map(fn ($f) => [
-                'id' => $f->id,
-                'name' => $f->name,
-                'slug' => $f->slug,
-                'color' => $f->color,
-                'parent_id' => $f->parent_id,
-                'media_count' => $f->media_count,
-            ]),
+            'folders' => $folders->map(fn (MediaFolder $folder) => $this->transformFolder($folder)),
         ]);
     }
 
@@ -46,10 +39,10 @@ class MediaFolderApiController extends Controller
             'name' => $data['name'],
             'slug' => Str::slug($data['name']).'-'.Str::random(4),
             'parent_id' => $data['parent_id'] ?? null,
-            'color' => $data['color'] ?? '#6366f1',
+            'color' => $this->normalizeColor($data['color'] ?? '#6366f1'),
         ]);
 
-        return response()->json(['ok' => true, 'data' => $folder], 201);
+        return response()->json(['ok' => true, 'data' => $this->transformFolder($folder->loadCount('media'))], 201);
     }
 
     public function update(Request $request, MediaFolder $folder): JsonResponse
@@ -58,6 +51,7 @@ class MediaFolderApiController extends Controller
 
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:100'],
+            'parent_id' => ['nullable', 'exists:media_folders,id'],
             'color' => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
 
@@ -66,13 +60,18 @@ class MediaFolderApiController extends Controller
             $folder->slug = Str::slug($data['name']).'-'.Str::random(4);
         }
 
+        if (array_key_exists('parent_id', $data)) {
+            abort_if((int) $data['parent_id'] === (int) $folder->id, 422, 'Folder cannot be its own parent.');
+            $folder->parent_id = $data['parent_id'];
+        }
+
         if (isset($data['color'])) {
-            $folder->color = $data['color'];
+            $folder->color = $this->normalizeColor($data['color']);
         }
 
         $folder->save();
 
-        return response()->json(['ok' => true, 'data' => $folder]);
+        return response()->json(['ok' => true, 'data' => $this->transformFolder($folder->loadCount('media'))]);
     }
 
     public function destroy(Request $request, MediaFolder $folder): JsonResponse
@@ -85,5 +84,22 @@ class MediaFolderApiController extends Controller
         $folder->delete();
 
         return response()->json(['ok' => true]);
+    }
+
+    private function normalizeColor(string $color): string
+    {
+        return '#'.strtoupper(ltrim($color, '#'));
+    }
+
+    private function transformFolder(MediaFolder $folder): array
+    {
+        return [
+            'id' => $folder->id,
+            'name' => $folder->name,
+            'slug' => $folder->slug,
+            'color' => $folder->color ?: '#6366F1',
+            'parent_id' => $folder->parent_id,
+            'media_count' => $folder->media_count ?? 0,
+        ];
     }
 }

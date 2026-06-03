@@ -15,6 +15,8 @@ return [
     "providers" => ServiceProvider::defaultProviders()->merge([
         App\Providers\AppServiceProvider::class,
         App\Providers\VertexServiceProvider::class,
+        App\Vertex\Security\SecurityServiceProvider::class,
+        App\Security\Login\Providers\LoginServiceProvider::class,
         App\System\Providers\MailServiceProvider::class,
         Vertex\Forms\VertexFormsServiceProvider::class,
     ])->toArray(),

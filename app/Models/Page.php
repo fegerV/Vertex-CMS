@@ -58,4 +58,18 @@ class Page extends Model
         return $this->status === 'published'
             && ($this->published_at === null || $this->published_at->isPast());
     }
+
+    public function canAccessBuilder(): bool
+    {
+        return $this->exists;
+    }
+
+    public function getPublicUrl(): ?string
+    {
+        if (! $this->exists || ! $this->uri) {
+            return null;
+        }
+
+        return url(ltrim($this->uri, '/'));
+    }
 }

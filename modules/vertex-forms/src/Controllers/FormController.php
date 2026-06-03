@@ -59,7 +59,7 @@ class FormController extends Controller
             "settings" => $validated["settings"] ?? [],
         ]);
 
-        return redirect()->route("admin.forms.index")->with("status", "Форма создана.");
+        return redirect()->route("admin.forms.index")->with("status", __("forms.created"));
     }
 
     public function edit(Form $form): View
@@ -86,13 +86,13 @@ class FormController extends Controller
 
         $form->update($validated);
 
-        return redirect()->route("admin.forms.index")->with("status", "Форма обновлена.");
+        return redirect()->route("admin.forms.index")->with("status", __("forms.updated"));
     }
 
     public function destroy(Form $form): RedirectResponse
     {
         $form->delete();
-        return redirect()->route("admin.forms.index")->with("status", "Форма удалена.");
+        return redirect()->route("admin.forms.index")->with("status", __("forms.deleted"));
     }
 
     public function preview(Form $form): View
@@ -107,7 +107,7 @@ class FormController extends Controller
     public function duplicate(Form $form): RedirectResponse
     {
         $new = $form->replicate();
-        $new->name = $form->name . " (копия)";
+        $new->name = $form->name . " (" . __("forms.duplicated_name_suffix") . ")";
         $new->slug = $form->slug . "-copy-" . time();
         $new->save();
 
@@ -115,7 +115,7 @@ class FormController extends Controller
             $field->replicate(["form_id"])->save();
         }
 
-        return redirect()->route("admin.forms.edit", $new)->with("status", "Форма дублирована.");
+        return redirect()->route("admin.forms.edit", $new)->with("status", __("forms.duplicated"));
     }
 
     /**
@@ -139,7 +139,7 @@ class FormController extends Controller
     {
         $json = $request->file("json")?->get() ?: $request->input("json");
         if (!$json) {
-            return back()->withErrors(["json" => "No JSON provided"]);
+            return back()->withErrors(["json" => __("forms.import_no_json")]);
         }
 
         try {
@@ -148,9 +148,9 @@ class FormController extends Controller
 
             return redirect()->route("admin.forms.edit", $newForm)->with("status", "Форма импортирована.");
         } catch (\JsonException $e) {
-            return back()->withErrors(["json" => "Invalid JSON: " . $e->getMessage()]);
+            return back()->withErrors(["json" => __("forms.import_invalid_json", ["message" => $e->getMessage()])]);
         } catch (\Exception $e) {
-            return back()->withErrors(["import" => "Import failed: " . $e->getMessage()]);
+            return back()->withErrors(["import" => __("forms.import_failed", ["message" => $e->getMessage()])]);
         }
     }
 

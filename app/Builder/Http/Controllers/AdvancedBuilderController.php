@@ -3,13 +3,13 @@
 namespace App\Builder\Http\Controllers;
 
 use App\Builder\Config\BlockRegistry;
+use App\Builder\Config\SectionRegistry;
 use App\Builder\Services\PageBuilderService;
-use App\Content\Services\PageService;
-use App\Core\Services\SettingsService;
+use App\Builder\Support\BuilderContractSerializer;
+use App\Builder\Support\BuilderLibraryManager;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Models\PageRevision;
-use App\Models\Setting;
 use App\System\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,19 +21,19 @@ class AdvancedBuilderController extends Controller
 {
     public function __construct(
         private readonly PageBuilderService $builder,
-        private readonly PageService $pages,
-        private readonly SettingsService $settings,
+        private readonly BuilderLibraryManager $library,
+        private readonly BuilderContractSerializer $serializer,
         private readonly ActivityLogService $activityLog,
     ) {
     }
 
-    public function advanced(Page $page): View
+    public function advanced(Request $request, Page $page): View
     {
         $page->load('seoMeta');
 
         return view('admin.builder.advanced', [
             'page' => $page,
-            'config' => $this->getBuilderConfig(),
+            'config' => $this->getBuilderConfig($request),
         ]);
     }
 
@@ -100,6 +100,15 @@ class AdvancedBuilderController extends Controller
         ]);
 
         $sections = $this->builder->normalizeSections($payload['content']);
+        $errors = $this->builder->validateBlocks($sections);
+
+        if ($errors !== []) {
+            return response()->json([
+                'ok' => false,
+                'errors' => $errors,
+            ], 422);
+        }
+
         $this->builder->createRevision($page, $sections, 'auto-save');
 
         return response()->json([
@@ -175,16 +184,6 @@ class AdvancedBuilderController extends Controller
         try {
             $sections = $this->builder->importSections($request->input('import_data'));
 
-            if ($request->filled('page_id')) {
-                $page = Page::query()->findOrFail($request->integer('page_id'));
-                $page->content_json = [
-                    'version' => '1.0',
-                    'layout' => $page->content_json['layout'] ?? 'default',
-                    'sections' => $sections,
-                ];
-                $page->save();
-            }
-
             return response()->json([
                 'ok' => true,
                 'sections' => $sections,
@@ -201,7 +200,7 @@ class AdvancedBuilderController extends Controller
     public function getTemplates(): JsonResponse
     {
         return response()->json([
-            'templates' => $this->visibleTemplates(request()),
+            'templates' => $this->library->visibleTemplates(request()),
         ]);
     }
 
@@ -212,8 +211,7 @@ class AdvancedBuilderController extends Controller
             'merge' => ['boolean'],
         ]);
 
-        $template = collect($this->visibleTemplates($request))
-            ->firstWhere('id', $request->input('template_id'));
+        $template = $this->library->findVisibleTemplate($request->input('template_id'), $request);
 
         abort_unless($template, 404, 'Template not found');
 
@@ -256,11 +254,11 @@ class AdvancedBuilderController extends Controller
         ]);
     }
 
-    public function getSharedPresets(): JsonResponse
+    public function getSharedPresets(Request $request): JsonResponse
     {
         return response()->json([
             'ok' => true,
-            'data' => $this->visiblePresets($request),
+            'data' => $this->library->visiblePresets($request),
         ]);
     }
 
@@ -273,7 +271,7 @@ class AdvancedBuilderController extends Controller
             'visibility' => ['nullable', 'in:private,shared'],
         ]);
 
-        $presets = $this->allPresets();
+        $presets = $this->library->allPresets();
         $preset = [
             'id' => (string) Str::uuid(),
             'name' => $payload['name'],
@@ -287,7 +285,7 @@ class AdvancedBuilderController extends Controller
         ];
 
         array_unshift($presets, $preset);
-        $this->storeSharedPresets($presets);
+        $this->library->storeSharedPresets($presets);
         $this->activityLog->record('builder.preset.create', 'settings', null, 'Builder shared preset created.', [
             'preset_id' => $preset['id'],
             'preset_type' => $preset['type'],
@@ -295,8 +293,8 @@ class AdvancedBuilderController extends Controller
 
         return response()->json([
             'ok' => true,
-            'data' => $this->decorateLibraryItem($preset, $request),
-            'presets' => $this->visiblePresets($request),
+            'data' => $this->library->decorateLibraryItem($preset, $request),
+            'presets' => $this->library->visiblePresets($request),
         ], 201);
     }
 
@@ -309,11 +307,11 @@ class AdvancedBuilderController extends Controller
             'visibility' => ['sometimes', 'in:private,shared'],
         ]);
 
-        $existing = collect($this->allPresets())->firstWhere('id', $presetId);
+        $existing = collect($this->library->allPresets())->firstWhere('id', $presetId);
         abort_unless($existing, 404);
-        abort_unless($this->canManageLibraryItem($existing, $request), 403);
+        abort_unless($this->library->canManageLibraryItem($existing, $request), 403);
 
-        $presets = collect($this->allPresets())->map(function (array $preset) use ($presetId, $payload, $request) {
+        $presets = collect($this->library->allPresets())->map(function (array $preset) use ($presetId, $payload, $request) {
             if (($preset['id'] ?? null) !== $presetId) {
                 return $preset;
             }
@@ -329,37 +327,37 @@ class AdvancedBuilderController extends Controller
         $updated = collect($presets)->firstWhere('id', $presetId);
         abort_unless($updated, 404);
 
-        $this->storeSharedPresets($presets);
+        $this->library->storeSharedPresets($presets);
         $this->activityLog->record('builder.preset.update', 'settings', null, 'Builder shared preset updated.', [
             'preset_id' => $presetId,
         ], $request);
 
         return response()->json([
             'ok' => true,
-            'data' => $this->decorateLibraryItem($updated, $request),
-            'presets' => $this->visiblePresets($request),
+            'data' => $this->library->decorateLibraryItem($updated, $request),
+            'presets' => $this->library->visiblePresets($request),
         ]);
     }
 
     public function destroySharedPreset(Request $request, string $presetId): JsonResponse
     {
-        $existing = collect($this->allPresets())->firstWhere('id', $presetId);
+        $existing = collect($this->library->allPresets())->firstWhere('id', $presetId);
         abort_unless($existing, 404);
-        abort_unless($this->canManageLibraryItem($existing, $request), 403);
+        abort_unless($this->library->canManageLibraryItem($existing, $request), 403);
 
-        $presets = collect($this->allPresets())
+        $presets = collect($this->library->allPresets())
             ->reject(fn (array $preset) => ($preset['id'] ?? null) === $presetId)
             ->values()
             ->all();
 
-        $this->storeSharedPresets($presets);
+        $this->library->storeSharedPresets($presets);
         $this->activityLog->record('builder.preset.delete', 'settings', null, 'Builder shared preset deleted.', [
             'preset_id' => $presetId,
         ], $request);
 
         return response()->json([
             'ok' => true,
-            'presets' => $this->visiblePresets($request),
+            'presets' => $this->library->visiblePresets($request),
         ]);
     }
 
@@ -367,7 +365,15 @@ class AdvancedBuilderController extends Controller
     {
         return response()->json([
             'ok' => true,
-            'data' => $this->visibleTemplates($request),
+            'data' => $this->library->visibleTemplates($request),
+        ]);
+    }
+
+    public function getDesignLibrary(Request $request): JsonResponse
+    {
+        return response()->json([
+            'ok' => true,
+            'data' => $this->library->designLibraryWorkspace($request),
         ]);
     }
 
@@ -380,7 +386,7 @@ class AdvancedBuilderController extends Controller
             'visibility' => ['nullable', 'in:private,shared'],
         ]);
 
-        $templates = $this->allSharedTemplates();
+        $templates = $this->library->allSharedTemplates();
         $template = [
             'id' => (string) Str::uuid(),
             'name' => $payload['name'],
@@ -394,15 +400,15 @@ class AdvancedBuilderController extends Controller
         ];
 
         array_unshift($templates, $template);
-        $this->storeSharedTemplates($templates);
+        $this->library->storeSharedTemplates($templates);
         $this->activityLog->record('builder.template.create', 'settings', null, 'Builder shared template created.', [
             'template_id' => $template['id'],
         ], $request);
 
         return response()->json([
             'ok' => true,
-            'data' => $this->decorateLibraryItem($template, $request),
-            'templates' => $this->visibleTemplates($request),
+            'data' => $this->library->decorateLibraryItem($template, $request),
+            'templates' => $this->library->visibleTemplates($request),
         ], 201);
     }
 
@@ -415,11 +421,11 @@ class AdvancedBuilderController extends Controller
             'visibility' => ['sometimes', 'in:private,shared'],
         ]);
 
-        $existing = collect($this->allSharedTemplates())->firstWhere('id', $templateId);
+        $existing = collect($this->library->allSharedTemplates())->firstWhere('id', $templateId);
         abort_unless($existing, 404);
-        abort_unless($this->canManageLibraryItem($existing, $request), 403);
+        abort_unless($this->library->canManageLibraryItem($existing, $request), 403);
 
-        $templates = collect($this->allSharedTemplates())->map(function (array $template) use ($templateId, $payload, $request) {
+        $templates = collect($this->library->allSharedTemplates())->map(function (array $template) use ($templateId, $payload, $request) {
             if (($template['id'] ?? null) !== $templateId) {
                 return $template;
             }
@@ -437,37 +443,37 @@ class AdvancedBuilderController extends Controller
         })->values()->all();
 
         $updated = collect($templates)->firstWhere('id', $templateId);
-        $this->storeSharedTemplates($templates);
+        $this->library->storeSharedTemplates($templates);
         $this->activityLog->record('builder.template.update', 'settings', null, 'Builder shared template updated.', [
             'template_id' => $templateId,
         ], $request);
 
         return response()->json([
             'ok' => true,
-            'data' => $this->decorateLibraryItem($updated, $request),
-            'templates' => $this->visibleTemplates($request),
+            'data' => $this->library->decorateLibraryItem($updated, $request),
+            'templates' => $this->library->visibleTemplates($request),
         ]);
     }
 
     public function destroySharedTemplate(Request $request, string $templateId): JsonResponse
     {
-        $existing = collect($this->allSharedTemplates())->firstWhere('id', $templateId);
+        $existing = collect($this->library->allSharedTemplates())->firstWhere('id', $templateId);
         abort_unless($existing, 404);
-        abort_unless($this->canManageLibraryItem($existing, $request), 403);
+        abort_unless($this->library->canManageLibraryItem($existing, $request), 403);
 
-        $templates = collect($this->allSharedTemplates())
+        $templates = collect($this->library->allSharedTemplates())
             ->reject(fn (array $template) => ($template['id'] ?? null) === $templateId)
             ->values()
             ->all();
 
-        $this->storeSharedTemplates($templates);
+        $this->library->storeSharedTemplates($templates);
         $this->activityLog->record('builder.template.delete', 'settings', null, 'Builder shared template deleted.', [
             'template_id' => $templateId,
         ], $request);
 
         return response()->json([
             'ok' => true,
-            'templates' => $this->visibleTemplates($request),
+            'templates' => $this->library->visibleTemplates($request),
         ]);
     }
 
@@ -479,8 +485,11 @@ class AdvancedBuilderController extends Controller
         ];
     }
 
-    protected function getBuilderConfig(): array
+    protected function getBuilderConfig(?Request $request = null): array
     {
+        $user = $request?->user();
+        $serializedBlocks = $this->serializer->serializeRegistry(BlockRegistry::all());
+
         return [
             'responsive_preview' => true,
             'breakpoints' => [
@@ -488,6 +497,7 @@ class AdvancedBuilderController extends Controller
                 ['name' => 'tablet', 'label' => 'Tablet', 'width' => '768px', 'maxWidth' => '768px'],
                 ['name' => 'mobile', 'label' => 'Mobile', 'width' => '480px', 'maxWidth' => '480px'],
             ],
+            'sections' => SectionRegistry::config(),
             'auto_save' => [
                 'enabled' => true,
                 'interval' => 120,
@@ -495,6 +505,18 @@ class AdvancedBuilderController extends Controller
             'max_revisions' => 50,
             'categories' => BlockRegistry::getCategories(),
             'total_blocks' => count(BlockRegistry::all()),
+            'blocks' => $serializedBlocks,
+            'quick_add' => [
+                'templates' => $this->library->quickAddTemplates(),
+            ],
+            'media' => [
+                'api_base' => url('/admin/api/media'),
+                'folder_api_base' => url('/admin/api/media/folders'),
+                'can_manage_folders' => $user?->hasPermission('media.edit') ?? false,
+                'can_upload_media' => $user?->hasPermission('media.upload') ?? false,
+                'can_edit_media' => $user?->hasPermission('media.edit') ?? false,
+                'can_delete_media' => $user?->hasPermission('media.delete') ?? false,
+            ],
         ];
     }
 
@@ -502,149 +524,5 @@ class AdvancedBuilderController extends Controller
     {
         return collect($content['sections'] ?? [])
             ->sum(fn (array $section) => count($section['blocks'] ?? []));
-    }
-
-    protected function visiblePresets(Request $request): array
-    {
-        return collect($this->allPresets())
-            ->filter(fn (array $preset) => $this->canViewLibraryItem($preset, $request))
-            ->map(fn (array $preset) => $this->decorateLibraryItem($preset, $request))
-            ->values()
-            ->all();
-    }
-
-    protected function allPresets(): array
-    {
-        $value = $this->settings->get('builder.shared_presets', []);
-
-        return is_array($value) ? array_values($value) : [];
-    }
-
-    protected function storeSharedPresets(array $presets): void
-    {
-        Setting::query()->updateOrCreate(
-            ['group_name' => 'builder', 'setting_key' => 'shared_presets'],
-            [
-                'setting_value' => json_encode(array_values($presets), JSON_UNESCAPED_UNICODE),
-                'type' => 'json',
-                'autoload' => true,
-            ],
-        );
-
-        $this->settings->forgetCache();
-    }
-
-    protected function visibleTemplates(Request $request): array
-    {
-        return collect(array_merge($this->templateLibrary(), $this->allSharedTemplates()))
-            ->filter(fn (array $template) => $this->canViewLibraryItem($template, $request))
-            ->map(fn (array $template) => $this->decorateLibraryItem($template, $request))
-            ->values()
-            ->all();
-    }
-
-    protected function allSharedTemplates(): array
-    {
-        $value = $this->settings->get('builder.shared_templates', []);
-
-        return is_array($value) ? array_values($value) : [];
-    }
-
-    protected function storeSharedTemplates(array $templates): void
-    {
-        Setting::query()->updateOrCreate(
-            ['group_name' => 'builder', 'setting_key' => 'shared_templates'],
-            [
-                'setting_value' => json_encode(array_values($templates), JSON_UNESCAPED_UNICODE),
-                'type' => 'json',
-                'autoload' => true,
-            ],
-        );
-
-        $this->settings->forgetCache();
-    }
-
-    protected function templateLibrary(): array
-    {
-        return [
-            [
-                'id' => 'hero-banner',
-                'name' => 'Hero Banner',
-                'category' => 'landing',
-                'source' => 'builtin',
-                'visibility' => 'shared',
-                'sections' => [
-                    [
-                        'settings' => ['background_color' => '#f8fafc', 'padding_top' => 48, 'padding_bottom' => 48],
-                        'blocks' => [
-                            ['type' => 'heading', 'settings' => ['level' => 'h1', 'text' => 'Page headline', 'align' => 'center']],
-                            ['type' => 'text', 'settings' => ['content' => 'Describe the main value proposition in one short paragraph.', 'align' => 'center']],
-                            ['type' => 'button', 'settings' => ['text' => 'Get started', 'url' => '#', 'style' => 'primary']],
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'id' => 'faq-section',
-                'name' => 'FAQ Section',
-                'category' => 'content',
-                'source' => 'builtin',
-                'visibility' => 'shared',
-                'sections' => [
-                    [
-                        'settings' => ['padding_top' => 32, 'padding_bottom' => 32],
-                        'blocks' => [
-                            ['type' => 'heading', 'settings' => ['level' => 'h2', 'text' => 'Frequently asked questions']],
-                            ['type' => 'faq', 'settings' => ['items' => [
-                                ['question' => 'How does it work?', 'answer' => 'Add your answer here.'],
-                                ['question' => 'Can I customize it?', 'answer' => 'Yes, each block can be edited.'],
-                            ]]],
-                        ],
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    protected function canViewLibraryItem(array $item, Request $request): bool
-    {
-        if (($item['source'] ?? null) === 'builtin') {
-            return true;
-        }
-
-        if (($item['visibility'] ?? 'shared') === 'shared') {
-            return true;
-        }
-
-        return (int) ($item['owner_id'] ?? 0) === (int) ($request->user()?->id ?? 0) || $this->isSuperAdmin($request);
-    }
-
-    protected function canManageLibraryItem(array $item, Request $request): bool
-    {
-        if (($item['source'] ?? null) === 'builtin') {
-            return false;
-        }
-
-        return (int) ($item['owner_id'] ?? 0) === (int) ($request->user()?->id ?? 0) || $this->isSuperAdmin($request);
-    }
-
-    protected function decorateLibraryItem(array $item, Request $request): array
-    {
-        $isOwner = (int) ($item['owner_id'] ?? 0) === (int) ($request->user()?->id ?? 0);
-        $isBuiltin = ($item['source'] ?? null) === 'builtin';
-
-        return [
-            ...$item,
-            'source' => $item['source'] ?? 'shared',
-            'visibility' => $item['visibility'] ?? 'shared',
-            'can_edit' => ! $isBuiltin && ($isOwner || $this->isSuperAdmin($request)),
-            'can_delete' => ! $isBuiltin && ($isOwner || $this->isSuperAdmin($request)),
-            'owner' => $item['owner_name'] ?? null,
-        ];
-    }
-
-    protected function isSuperAdmin(Request $request): bool
-    {
-        return (bool) $request->user()?->roles()->where('slug', 'super-admin')->exists();
     }
 }

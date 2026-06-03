@@ -31,9 +31,14 @@ class SettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        $rawSettings = Arr::dot($request->input('settings', []));
+        $rules = collect($this->rules())
+            ->filter(fn (array $ruleSet, string $key) => array_key_exists($key, $rawSettings))
+            ->all();
+
         $payload = Arr::dot(Validator::make(
             $request->input('settings', []),
-            $this->rules()
+            $rules
         )->validate());
 
         $payload = $this->normalizeBooleanValues($request, $payload);
@@ -70,9 +75,11 @@ class SettingsController extends Controller
 
         foreach (SettingCatalog::definitions() as $key => $definition) {
             if (($definition['type'] ?? null) === 'boolean') {
-                $payload[$key] = array_key_exists($key, $rawSettings)
-                    ? filter_var($rawSettings[$key], FILTER_VALIDATE_BOOLEAN)
-                    : false;
+                if (! array_key_exists($key, $rawSettings)) {
+                    continue;
+                }
+
+                $payload[$key] = filter_var($rawSettings[$key], FILTER_VALIDATE_BOOLEAN);
             }
         }
 

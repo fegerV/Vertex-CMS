@@ -6,11 +6,19 @@ Endpoints for rendering and submitting forms on the frontend.
 
 All public form routes are under /forms prefix.
 
+## Public Form Page
+
+### Render Form
+
+GET /forms/{form:slug}
+
+Returns the public HTML page for the form.
+
 ## Configuration Endpoint
 
 ### Get Form Config
 
-GET /forms/{form:slug}
+GET /forms/{form:slug}/config
 
 Returns JSON configuration for the form SPA.
 

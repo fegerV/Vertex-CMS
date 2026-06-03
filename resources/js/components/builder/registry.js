@@ -190,6 +190,22 @@ function normalizeRemoteDefinition(block) {
     };
 }
 
+function normalizeRemoteEntries(payload) {
+    if (Array.isArray(payload?.entries)) {
+        return payload.entries.map(normalizeRemoteDefinition);
+    }
+
+    if (Array.isArray(payload?.blocks)) {
+        return payload.blocks.map(normalizeRemoteDefinition);
+    }
+
+    if (payload?.blocks && typeof payload.blocks === 'object') {
+        return Object.values(payload.blocks).map(normalizeRemoteDefinition);
+    }
+
+    return [];
+}
+
 function experimentalEntries() {
     return Object.values(experimentalRegistry);
 }
@@ -223,9 +239,7 @@ export async function loadBuilderRegistry(endpoint = '/admin/api/builder/blocks'
             }
 
             const payload = await response.json();
-            const entries = Array.isArray(payload.blocks)
-                ? payload.blocks.map(normalizeRemoteDefinition)
-                : [];
+            const entries = normalizeRemoteEntries(payload);
 
             registryState.remoteEntries = entries;
             registryState.remoteMap = Object.fromEntries(entries.map((entry) => [entry.type, entry]));

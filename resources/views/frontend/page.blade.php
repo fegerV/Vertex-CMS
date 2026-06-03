@@ -1,4 +1,5 @@
 @php
+    $builderPreview = (bool) ($builderPreview ?? false);
     $seo = $page?->seoMeta;
     $title = $seo?->title ?: ($page?->title ?? 'VertexCMS');
     $description = $seo?->description ?: config_value('seo.default_description', '');
@@ -37,7 +38,11 @@
         </script>
     @endif
      @if (! app()->runningUnitTests())
-         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/telegram-widget.js'])
+         @if ($builderPreview)
+             @vite(['resources/css/app.css'])
+         @else
+             @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/telegram-widget.js'])
+         @endif
      @endif
  </head>
  <body class="bg-white text-slate-950">
@@ -54,7 +59,7 @@
      </main>
 
       <!-- Telegram Widget -->
-      @if (config_value('telegram.enabled', false))
+      @if (! $builderPreview && config_value('telegram.enabled', false))
           <script>
              window.telegramWidgetConfig = {!! json_encode([
                  'enabled' => true,
@@ -72,7 +77,7 @@
           <div id="telegram-widget"></div>
       @endif
 
-     @if (config_value('pwa.enabled', false))
+     @if (! $builderPreview && config_value('pwa.enabled', false))
          <script>
              if ('serviceWorker' in navigator) {
                  window.addEventListener('load', () => {

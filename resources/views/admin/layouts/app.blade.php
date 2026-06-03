@@ -9,7 +9,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
-<body class="vc-admin-body">
+<body class="vc-admin-body @yield('body_class')">
     @php
         $user = auth()->user();
         $navigation = [
@@ -34,11 +34,32 @@
                 'section' => 'Operations',
                 'items' => [
                     ['label' => 'Система', 'route' => 'admin.system.info', 'active' => 'admin.system.info', 'permission' => 'system.view', 'description' => 'Среда и модули', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.83-5.83m0 0a2.968 2.968 0 0 1 0-4.183L15.75 6m-2.25 8.25a2.968 2.968 0 0 1-4.183 0L3.75 8.25" />'],
-                    ['label' => 'Analytics', 'route' => 'admin.system.analytics', 'active' => 'admin.system.analytics', 'permission' => 'analytics.view', 'description' => 'Traffic and audience', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125h3.75v7.125H3v-7.125Zm7.125-9.375h3.75V20.25h-3.75V3.75Zm7.125 5.625H21V20.25h-3.75V9.375Z" />'],
+                    ['label' => 'Безопасность', 'route' => 'admin.system.security', 'active' => 'admin.system.security*', 'permission' => 'system.view', 'description' => 'Core, integrity и toggle-модули', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7.5 3v5.25c0 4.706-3.068 8.854-7.5 10.25-4.432-1.396-7.5-5.544-7.5-10.25V6L12 3Zm0 5.25v5.25l3 3" />'],
+                    ['label' => 'Аналитика', 'route' => 'admin.system.analytics', 'active' => 'admin.system.analytics', 'permission' => 'analytics.view', 'description' => 'Трафик и аудитория', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125h3.75v7.125H3v-7.125Zm7.125-9.375h3.75V20.25h-3.75V3.75Zm7.125 5.625H21V20.25h-3.75V9.375Z" />'],
                     ['label' => 'Кеш', 'route' => 'admin.system.cache', 'active' => 'admin.system.cache*', 'permission' => 'system.view', 'description' => 'Состояние и очистка', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />'],
                     ['label' => 'Логи', 'route' => 'admin.system.logs', 'active' => 'admin.system.logs', 'permission' => 'system.view', 'description' => 'Аудит действий', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3z" />'],
                 ],
             ],
+        ];
+
+        if (\Illuminate\Support\Facades\Route::has('admin.forms.index')) {
+            $navigation[0]['items'][] = [
+                'label' => 'Формы',
+                'route' => 'admin.forms.index',
+                'active' => 'admin.forms.*',
+                'permission' => 'forms.view',
+                'description' => 'Конструктор форм и калькуляторов',
+                'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75h6A2.25 2.25 0 0 1 17.25 6v12A2.25 2.25 0 0 1 15 20.25H9A2.25 2.25 0 0 1 6.75 18V6A2.25 2.25 0 0 1 9 3.75Zm-3 3h12M9.75 10.5h4.5m-4.5 3h4.5m-4.5 3h2.25" />',
+            ];
+        }
+
+        $navigation[1]['items'][] = [
+            'label' => 'SEO',
+            'route' => 'admin.seo.dashboard',
+            'active' => 'admin.seo.*',
+            'permission' => 'seo.view',
+            'description' => 'Метаданные, sitemap и редиректы',
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9m-9 6h9m-9 6h9M4.5 6h.008v.008H4.5V6Zm0 6h.008v.008H4.5V12Zm0 6h.008v.008H4.5V18Z" />',
         ];
 
         $segments = request()->segments();
@@ -52,16 +73,19 @@
             'taxonomies' => 'Таксономии',
             'terms' => 'Термины',
             'system' => 'Система',
+            'security' => 'Безопасность',
             'info' => 'Информация',
             'cache' => 'Кеш',
             'logs' => 'Логи',
-            'analytics' => 'Analytics',
+            'analytics' => 'Аналитика',
+            'forms' => 'Формы',
             'create' => 'Создать',
             'edit' => 'Редактировать',
             'builder' => 'Конструктор',
             'revisions' => 'Версии',
             'redirects' => 'Перенаправления',
             'custom-field-groups' => 'Группы полей',
+            'seo' => 'SEO',
         ];
     @endphp
 
@@ -167,7 +191,7 @@
                 </div>
             </header>
 
-            <main class="vc-page-wrap">
+            <main class="vc-page-wrap @yield('page_wrap_class')">
                 <nav class="mb-6 flex overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-1 md:space-x-2">
                         <li class="inline-flex items-center">
@@ -199,10 +223,10 @@
                     </div>
                 @endif
 
-                 @yield('content')
-             </main>
-         </div>
-     </div>
-     @stack('scripts')
- </body>
- </html>
+                @yield('content')
+            </main>
+        </div>
+    </div>
+    @stack('scripts')
+</body>
+</html>

@@ -74,6 +74,7 @@ class ThemeManager
         $candidates = [
             "themes.{$theme}.blocks.{$type}",
             "themes.default.blocks.{$type}",
+            "builder.blocks.{$type}",
         ];
 
         return $this->firstExistingView($candidates);

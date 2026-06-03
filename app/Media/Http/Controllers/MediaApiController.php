@@ -57,20 +57,7 @@ class MediaApiController extends Controller
         return response()->json(
             $query
                 ->paginate($request->integer('per_page', 18))
-                ->through(fn (Media $media) => [
-                    'id' => $media->id,
-                    'url' => $media->url,
-                    'title' => $media->title,
-                    'alt' => $media->alt,
-                    'caption' => $media->caption,
-                    'original_filename' => $media->original_filename,
-                    'mime_type' => $media->mime_type,
-                    'extension' => $media->extension,
-                    'size' => $media->size,
-                    'width' => $media->width,
-                    'height' => $media->height,
-                    'folder_id' => $media->folder_id,
-                ])
+                ->through(fn (Media $media) => $this->transformMedia($media))
         );
     }
 
@@ -83,11 +70,12 @@ class MediaApiController extends Controller
             'alt' => ['nullable', 'string', 'max:255'],
             'title' => ['nullable', 'string', 'max:255'],
             'caption' => ['nullable', 'string', 'max:1000'],
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
 
         $media = $this->media->upload($payload['file'], $request->user(), $payload);
 
-        return response()->json(['ok' => true, 'data' => $media], 201);
+        return response()->json(['ok' => true, 'data' => $this->transformMedia($media->fresh())], 201);
     }
 
     public function update(Request $request, Media $media): JsonResponse
@@ -103,7 +91,7 @@ class MediaApiController extends Controller
 
         $updated = $this->media->update($media, $payload);
 
-        return response()->json(['ok' => true, 'data' => $updated]);
+        return response()->json(['ok' => true, 'data' => $this->transformMedia($updated->fresh())]);
     }
 
     public function destroy(Media $media): JsonResponse
@@ -125,9 +113,25 @@ class MediaApiController extends Controller
 
         $this->media->move($media, $data['folder_id'] ?? null);
 
-        return response()->json(['ok' => true, 'data' => [
+        return response()->json(['ok' => true, 'data' => $this->transformMedia($media->fresh())]);
+    }
+
+    private function transformMedia(Media $media): array
+    {
+        return [
             'id' => $media->id,
+            'url' => $media->url,
+            'title' => $media->title,
+            'alt' => $media->alt,
+            'caption' => $media->caption,
+            'original_filename' => $media->original_filename,
+            'mime_type' => $media->mime_type,
+            'extension' => $media->extension,
+            'size' => $media->size,
+            'width' => $media->width,
+            'height' => $media->height,
             'folder_id' => $media->folder_id,
-        ]]);
+            'created_at' => optional($media->created_at)?->toIso8601String(),
+        ];
     }
 }

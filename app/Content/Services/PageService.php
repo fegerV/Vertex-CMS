@@ -87,21 +87,9 @@ class PageService
         $status = $payload['status'] ?? 'draft';
         $slug = $this->slug->make(($payload['slug'] ?? '') ?: $payload['title']);
 
-        if ($page && $parentId === $page->id) {
-            throw ValidationException::withMessages([
-                'parent_id' => 'Page cannot be its own parent.',
-            ]);
-        }
-
-        if ($slug === '') {
-            throw ValidationException::withMessages([
-                'slug' => 'Slug could not be generated.',
-            ]);
-        }
-
+        $this->validateParent($parentId, $page);
+        $this->validateSlug($slug);
         $this->ensureSlugIsUnique($slug, $parentId, $page?->id);
-
-        $content = $this->normalizeContent($payload['content_json'] ?? null);
 
         return [
             'parent_id' => $parentId,
@@ -110,9 +98,37 @@ class PageService
             'uri' => $this->buildUri($slug, $parentId),
             'status' => $status,
             'template' => $payload['template'] ?: 'default',
-            'content_json' => $content,
+            'content_json' => $this->normalizeContent($payload['content_json'] ?? null),
             'custom_fields_json' => $this->normalizeCustomFieldsPayload($payload['custom_fields_json'] ?? null),
             'published_at' => $this->publishedAt($status, $page),
+            ...$this->extractSeoPayload($payload),
+        ];
+    }
+
+    private function validateParent(?int $parentId, ?Page $page): void
+    {
+        if ($page && $parentId === $page->id) {
+            throw ValidationException::withMessages([
+                'parent_id' => 'Page cannot be its own parent.',
+            ]);
+        }
+    }
+
+    private function validateSlug(string $slug): void
+    {
+        if ($slug === '') {
+            throw ValidationException::withMessages([
+                'slug' => 'Slug could not be generated.',
+            ]);
+        }
+    }
+
+    /**
+     * Extract SEO-related fields from payload.
+     */
+    private function extractSeoPayload(array $payload): array
+    {
+        return [
             'seo_title' => $payload['seo_title'] ?? null,
             'seo_description' => $payload['seo_description'] ?? null,
             'seo_canonical_url' => $payload['seo_canonical_url'] ?? null,

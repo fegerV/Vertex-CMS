@@ -163,6 +163,6 @@ class TaxonomyPwaTest extends TestCase
         $this->assertSame('themes.default.page', $themes->pageView($page));
         $this->assertSame('themes.default.offline', $themes->offlineView());
         $this->assertSame('themes.default.term-archive', $themes->termArchiveView());
-        $this->assertSame('themes.default.blocks.heading', $themes->blockView('heading'));
+        $this->assertSame('builder.blocks.heading', $themes->blockView('heading'));
     }
 }

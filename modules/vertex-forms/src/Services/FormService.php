@@ -215,7 +215,7 @@ class FormService
         if ($settings["honeypot_enabled"] ?? config("forms.honeypot_enabled", true)) {
             $honeypotName = "form_" . md5($form->slug . "_hp");
             $rules[$honeypotName] = "nullable";
-            $messages[$honeypotName . ".filled"] = "Spam detected";
+            $messages[$honeypotName . ".filled"] = __('forms.validation_honeypot_spam');
         }
 
         if ($settings["recaptcha_enabled"] ?? config("forms.recaptcha_enabled", false)) {
@@ -242,7 +242,7 @@ class FormService
     {
         $validator = $this->validate($form, $request);
         if ($validator->fails()) {
-            throw new \Exception("Validation failed: " . json_encode($validator->errors()->all()));
+            throw new \Exception(__('forms.error_validation_failed') . ': ' . json_encode($validator->errors()->all()));
         }
 
         $this->checkLimits($form, $request);
@@ -320,11 +320,6 @@ class FormService
         }
 
         // Discount
-        $discountField = $form->fields->firstWhere("type", "discount");
-        if ($discountField && isset($data[$discountField->name])) {
-            $discount = (float) $data[$discountField->name];
-            $total -= $discount;
-        }
 
         return max(0, round($total, 2));
     }
@@ -344,13 +339,28 @@ class FormService
             case "email":
                 $rules[] = "email";
                 break;
+            case "url":
+                $rules[] = "url";
+                break;
             case "number":
                 $rules[] = "numeric";
                 if (isset($field->options["min"])) $rules[] = "min:" . $field->options["min"];
                 if (isset($field->options["max"])) $rules[] = "max:" . $field->options["max"];
                 break;
+            case "rating":
+                $rules[] = "integer";
+                $rules[] = "min:1";
+                $rules[] = "max:" . (int) ($field->options["scale"] ?? 5);
+                break;
             case "tel":
                 $rules[] = "regex:/^[\\d\\+\\-\\(\\) ]+$/";
+                break;
+            case "consent":
+                $rules[] = "accepted";
+                break;
+            case "name":
+            case "address":
+                $rules[] = "array";
                 break;
             case "file":
                 $rules[] = "file";
@@ -378,9 +388,17 @@ class FormService
     {
         $opts = $field->options ?? [];
 
-        if (in_array($field->type, ["select", "radio", "multiselect"]) && isset($opts["choices"])) {
+        if (in_array($field->type, ["select", "radio", "checkbox_group"]) && isset($opts["choices"])) {
             $choices = [];
             foreach ($opts["choices"] as $value => $label) {
+                if (is_array($label)) {
+                    $choices[] = [
+                        "value" => (string) ($label["value"] ?? $value),
+                        "label" => (string) ($label["label"] ?? $label["value"] ?? $value),
+                    ];
+                    continue;
+                }
+
                 $choices[] = ["value" => (string)$value, "label" => (string)$label];
             }
             $opts["choices"] = $choices;
@@ -391,12 +409,15 @@ class FormService
 
     /**
      * Check entry limits.
+     * Column `forms.daily_limit` is the per-form hard cap.
+     * Form setting `daily_limit_per_ip` in `forms.settings` overrides per-IP soft cap.
+     * Global fallbacks: `forms.daily_limit_per_ip_global`, `forms.max_entries_global`.
      */
     private function checkLimits(Form $form, Request $request): void
     {
         $settings = $form->settings ?? [];
 
-        $dailyLimit = $settings["daily_limit_per_ip"] ?? config("forms.daily_limit_per_ip", null);
+        $dailyLimit = $settings["daily_limit_per_ip"] ?? config("forms.daily_limit_per_ip_global", null);
         if ($dailyLimit) {
             $count = FormSubmission::where("form_id", $form->id)
                 ->where("ip_address", $request->ip())
@@ -404,15 +425,15 @@ class FormService
                 ->count();
 
             if ($count >= $dailyLimit) {
-                throw new \Exception("Daily submission limit reached.");
+                throw new \Exception(__('forms.error_daily_limit_reached'));
             }
         }
 
-        $maxEntries = $settings["max_entries"] ?? config("forms.max_entries", null);
+        $maxEntries = $settings["max_entries"] ?? config("forms.max_entries_global", null);
         if ($maxEntries) {
             $total = FormSubmission::where("form_id", $form->id)->count();
             if ($total >= $maxEntries) {
-                throw new \Exception("Form is closed: maximum submissions reached.");
+                throw new \Exception(__('forms.error_form_closed'));
             }
         }
 
@@ -421,10 +442,11 @@ class FormService
         $to = $form->available_to;
 
         if ($from && $now->lt($from)) {
-            throw new \Exception("Form not yet open.");
+            throw new \Exception(__('forms.error_form_not_open'));
         }
+
         if ($to && $now->gt($to)) {
-            throw new \Exception("Form has closed.");
+            throw new \Exception(__('forms.error_form_closed_date'));
         }
     }
 
@@ -436,7 +458,7 @@ class FormService
         $settings = $form->settings ?? [];
         $globalSettings = [
             "notify_admin" => config("forms.notify_admin", true),
-            "admin_emails" => config("forms.admin_emails", []),
+            "admin_emails" => config("forms.notify_admin_emails", []),
         ];
         $settings = array_merge($globalSettings, $settings);
 

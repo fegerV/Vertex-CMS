@@ -10,6 +10,7 @@ class Redirect extends Model
 
     protected $casts = [
         'enabled' => 'boolean',
+        'hits' => 'integer',
     ];
 }
 

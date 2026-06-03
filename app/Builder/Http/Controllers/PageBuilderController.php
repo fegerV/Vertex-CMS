@@ -10,6 +10,7 @@ use App\Models\Page;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -96,18 +97,62 @@ class PageBuilderController extends Controller
     {
         $payload = $request->validate([
             'content' => ['required', 'array'],
+            'document' => ['sometimes', 'boolean'],
         ]);
 
         $sections = $this->builder->normalizeSections($payload['content'] ?? []);
+        $errors = $this->builder->validateBlocks($sections);
 
-        $html = $this->renderer->render([
-            'version' => '1.0',
-            'layout' => 'default',
-            'sections' => $sections,
-        ]);
+        if ($errors !== []) {
+            Log::warning('Builder preview validation failed.', [
+                'page_id' => $page->id,
+                'document' => $request->boolean('document'),
+                'errors' => $errors,
+                'sections' => collect($sections)->map(fn (array $section): array => [
+                    'id' => $section['id'] ?? null,
+                    'blocks' => collect($section['blocks'] ?? [])->map(fn (array $block): array => [
+                        'id' => $block['id'] ?? null,
+                        'type' => $block['type'] ?? null,
+                    ])->values()->all(),
+                ])->values()->all(),
+            ]);
 
-        return response()->json([
-            'html' => (string) $html,
-        ]);
+            return response()->json([
+                'ok' => false,
+                'errors' => $errors,
+                'error' => 'Preview validation failed.',
+            ], 422);
+        }
+
+        try {
+            $content = [
+                'version' => '1.0',
+                'layout' => 'default',
+                'sections' => $sections,
+            ];
+            $wantsDocument = $request->boolean('document');
+            $html = $wantsDocument ? '' : (string) $this->renderer->render($content);
+            $document = $wantsDocument
+                ? view('frontend.page', [
+                    'page' => $page,
+                    'html' => (string) $this->renderer->render($content, editor: true),
+                    'builderPreview' => true,
+                ])->render()
+                : null;
+
+            return response()->json([
+                'ok' => true,
+                'html' => $html,
+                'document' => $document,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'error' => 'Preview rendering failed.',
+                'message' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 }
