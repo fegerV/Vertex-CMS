@@ -57,6 +57,17 @@
     </label>
 
     <label class="block">
+        <span class="mb-1 block text-sm font-medium">{{ __('pages.locale') }}</span>
+        <select name="locale" class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900">
+            <option value="ru" @selected(old('locale', $page->locale) === 'ru')>Русский</option>
+            <option value="en" @selected(old('locale', $page->locale) === 'en')>English</option>
+        </select>
+        @error('locale')
+            <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+        @enderror
+    </label>
+
+    <label class="block">
         <span class="mb-1 block text-sm font-medium">{{ __('pages.template') }}</span>
         <input
             type="text"
@@ -68,6 +79,34 @@
             <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
         @enderror
     </label>
+
+    <label class="block">
+        <span class="mb-1 block text-sm font-medium">Translation Group</span>
+        <input
+            type="text"
+            name="translation_group"
+            value="{{ old('translation_group', $page->translation_group) }}"
+            placeholder="auto-generated-uuid"
+            class="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
+        >
+        @error('translation_group')
+            <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+        @enderror
+    </label>
+
+    @if($page->exists && $page->translations->isNotEmpty())
+        <div class="sm:col-span-2">
+            <span class="mb-1 block text-sm font-medium">Translations</span>
+            <div class="flex flex-wrap gap-3">
+                @foreach($page->translations as $translation)
+                    <a href="{{ route('admin.pages.edit', $translation) }}" class="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                        <span class="mr-1.5 font-bold">{{ strtoupper($translation->locale) }}</span>
+                        {{ $translation->title }}
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
 </div>
 
 <label class="block">

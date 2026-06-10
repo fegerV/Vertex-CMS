@@ -18,6 +18,7 @@
             <thead class="bg-slate-50 text-slate-500">
                 <tr>
                     <th class="px-4 py-3 font-medium">{{ __('pages.name') }}</th>
+                    <th class="px-4 py-3 font-medium">Locale</th>
                     <th class="px-4 py-3 font-medium">{{ __('pages.uri') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('pages.status') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('pages.updated') }}</th>
@@ -28,6 +29,11 @@
                 @forelse ($pages as $page)
                     <tr class="border-t border-slate-100">
                         <td class="px-4 py-3 font-medium">{{ $page->title }}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                                {{ strtoupper($page->locale) }}
+                            </span>
+                        </td>
                         <td class="px-4 py-3 text-slate-600">{{ $page->uri }}</td>
                         <td class="px-4 py-3">
                             <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
@@ -59,7 +65,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-10 text-center text-slate-500">
+                        <td colspan="6" class="px-4 py-10 text-center text-slate-500">
                             {{ __('pages.no_pages') }}
                         </td>
                     </tr>

@@ -19,6 +19,8 @@ class Page extends Model
         'uri',
         'status',
         'template',
+        'locale',
+        'translation_group',
         'content_json',
         'custom_fields_json',
         'published_at',
@@ -45,6 +47,12 @@ class Page extends Model
     public function seoMeta(): MorphOne
     {
         return $this->morphOne(SeoMeta::class, 'entity');
+    }
+
+    public function translations(): HasMany
+    {
+        return $this->hasMany(Page::class, 'translation_group', 'translation_group')
+            ->where('id', '!=', $this->id);
     }
 
     public function isPublished(): bool

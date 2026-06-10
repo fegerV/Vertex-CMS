@@ -32,6 +32,7 @@ class PageController extends Controller
             'page' => new Page([
                 'status' => 'draft',
                 'template' => 'default',
+                'locale' => session('locale', setting('site.locale', config('app.locale'))),
                 'content_json' => $this->pages->defaultContent(),
             ]),
             'fieldGroups' => $this->fieldGroupsForTemplate('default'),
@@ -92,6 +93,8 @@ class PageController extends Controller
             'slug' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in(PageService::STATUSES)],
             'template' => ['nullable', 'string', 'max:255'],
+            'locale' => ['required', 'string', 'in:ru,en'],
+            'translation_group' => ['nullable', 'string', 'max:50'],
             'content_json' => ['nullable', 'string'],
             'custom_fields_json' => ['nullable', 'string'],
             'seo_title' => ['nullable', 'string', 'max:255'],

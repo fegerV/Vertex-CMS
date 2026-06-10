@@ -10,10 +10,5 @@ return [
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'ru'),
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
-    'providers' => [
-        Illuminate\Filesystem\FilesystemServiceProvider::class,
-        App\Providers\AppServiceProvider::class,
-        App\Providers\VertexServiceProvider::class,
-    ],
 ];
 
