@@ -6,6 +6,7 @@ use App\Content\Http\Controllers\CustomFieldGroupController;
 use App\Core\Http\Middleware\SetAdminLocale;
 use App\Media\Http\Controllers\MediaController;
 use App\Security\Login\Http\Controllers\TwoFactorController;
+use App\Admin\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::name("admin.")->prefix("admin")->group(function (): void {
@@ -37,6 +38,16 @@ Route::name("admin.")->prefix("admin")->group(function (): void {
         require __DIR__ . "/admin/system.php";
         require __DIR__ . "/admin/seo.php";
 
+        // Settings & Locale
+        Route::get('settings', [SettingsController::class, 'edit'])
+            ->middleware('vertex.permission:settings.view')
+            ->name('settings.edit');
+        Route::put('settings', [SettingsController::class, 'update'])
+            ->middleware('vertex.permission:settings.edit')
+            ->name('settings.update');
+        Route::get('locale/{locale}', [SettingsController::class, 'changeLocale'])
+            ->name('locale.change');
+
         // Custom Field Groups
         Route::get("custom-field-groups", [CustomFieldGroupController::class, "index"])->middleware("vertex.permission:pages.edit")->name("custom-field-groups.index");
         Route::post("custom-field-groups", [CustomFieldGroupController::class, "store"])->middleware("vertex.permission:pages.edit")->name("custom-field-groups.store");
@@ -50,6 +61,8 @@ Route::name("admin.")->prefix("admin")->group(function (): void {
         Route::delete("media/{media}", [MediaController::class, "destroy"])->middleware("vertex.permission:media.delete")->name("media.destroy");
 
         // Forms module routes (vertex-forms)
-        require base_path('modules/vertex-forms/routes/admin.php');
+        if (file_exists(base_path('modules/vertex-forms/routes/admin.php'))) {
+            require base_path('modules/vertex-forms/routes/admin.php');
+        }
     });
 });

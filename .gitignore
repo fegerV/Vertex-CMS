@@ -26,3 +26,4 @@
 /.kilo/
 /public/uploads/
 
+/database/database.sqlite

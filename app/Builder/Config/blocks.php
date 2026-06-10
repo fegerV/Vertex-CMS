@@ -3205,3 +3205,8 @@ foreach ($blocks as $type => $config) {
 }
 
 return $blocks;
+// Register all blocks
+foreach ($blocks as $type => $config) {
+    \App\Builder\Support\BlockRegistry::register($type, $config);
+}
+return $blocks;

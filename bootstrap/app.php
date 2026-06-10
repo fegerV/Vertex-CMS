@@ -18,10 +18,11 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         commands: __DIR__.'/../routes/console.php',
-        health: '/up'
+        health: '/up',
     )
-->withMiddleware(function (Middleware $middleware): void {
+    ->withMiddleware(function (Middleware $middleware): void {
          $middleware->append(EnsureInstalled::class);
+         $middleware->append(\App\Core\Http\Middleware\SetLocale::class);
          $middleware->append(CheckMaintenanceMode::class);
          $middleware->append(ResolveSeoRedirect::class);
 

@@ -4,7 +4,7 @@ namespace App\Content\Http\Controllers;
 
 use App\Analytics\Services\TrafficAnalyticsService;
 use App\Builder\Services\PageRenderer;
-use App\Http\Controllers\Controller;
+use App\Core\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Theme\Services\ThemeManager;
 use Illuminate\Http\Request;
@@ -19,11 +19,12 @@ class FrontendPageController extends Controller
     ) {
     }
 
-    public function home(Request $request): View
+    public function home(Request $request, ?string $locale = null): View
     {
+        $uri = $locale ? "/{$locale}" : "/";
         $page = Page::query()
             ->with('seoMeta.ogImage')
-            ->where('uri', '/')
+            ->where('uri', $uri)
             ->where('status', 'published')
             ->where(fn ($query) => $query->whereNull('published_at')->orWhere('published_at', '<=', now()))
             ->first();
@@ -39,11 +40,12 @@ class FrontendPageController extends Controller
         ]);
     }
 
-    public function show(Request $request, string $uri): View
+    public function show(Request $request, ?string $locale, string $uri): View
     {
+        $fullUri = $locale ? "/{$locale}/{$uri}" : "/{$uri}";
         $page = Page::query()
             ->with('seoMeta.ogImage')
-            ->where('uri', '/'.$uri)
+            ->where('uri', $fullUri)
             ->where('status', 'published')
             ->where(fn ($query) => $query->whereNull('published_at')->orWhere('published_at', '<=', now()))
             ->firstOrFail();

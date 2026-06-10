@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Seo\Services\SeoMetaService;
 use App\System\Services\ActivityLogService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class PageService
@@ -86,6 +87,8 @@ class PageService
         $parentId = filled($payload['parent_id'] ?? null) ? (int) $payload['parent_id'] : null;
         $status = $payload['status'] ?? 'draft';
         $slug = $this->slug->make(($payload['slug'] ?? '') ?: $payload['title']);
+        $locale = $payload['locale'] ?? config_value('site.locale', config('app.locale'));
+        $translationGroup = $payload['translation_group'] ?? ($page?->translation_group ?: (string) Str::uuid());
 
         $this->validateParent($parentId, $page);
         $this->validateSlug($slug);
@@ -95,10 +98,21 @@ class PageService
             'parent_id' => $parentId,
             'title' => $payload['title'],
             'slug' => $slug,
-            'uri' => $this->buildUri($slug, $parentId),
+            'uri' => $this->buildUri($slug, $parentId, $locale),
             'status' => $status,
             'template' => $payload['template'] ?: 'default',
-            'content_json' => $this->normalizeContent($payload['content_json'] ?? null),
+        $content = $this->normalizeContent($payload['content_json'] ?? null);
+
+        return [
+            'parent_id' => $parentId,
+            'title' => $payload['title'],
+            'slug' => $slug,
+            'uri' => $this->buildUri($slug, $parentId, $locale),
+            'status' => $status,
+            'template' => $payload['template'] ?: 'default',
+            'locale' => $locale,
+            'translation_group' => $translationGroup,
+            'content_json' => $content,
             'custom_fields_json' => $this->normalizeCustomFieldsPayload($payload['custom_fields_json'] ?? null),
             'published_at' => $this->publishedAt($status, $page),
             ...$this->extractSeoPayload($payload),
@@ -160,15 +174,19 @@ class PageService
         }
     }
 
-    private function buildUri(string $slug, ?int $parentId): string
+    private function buildUri(string $slug, ?int $parentId, string $locale): string
     {
         if ($parentId === null) {
-            return '/'.$slug;
+            $defaultLocale = config_value('site.locale', config('app.locale'));
+            if ($locale === $defaultLocale) {
+                return '/' . ltrim($slug, '/');
+            }
+            return '/' . $locale . '/' . ltrim($slug, '/');
         }
 
         $parent = Page::query()->findOrFail($parentId);
 
-        return rtrim($parent->uri, '/').'/'.$slug;
+        return rtrim($parent->uri, '/') . '/' . ltrim($slug, '/');
     }
 
     private function normalizeContent(mixed $content): array
@@ -228,6 +246,8 @@ class PageService
             'uri',
             'status',
             'template',
+            'locale',
+            'translation_group',
             'content_json',
             'custom_fields_json',
             'published_at',
