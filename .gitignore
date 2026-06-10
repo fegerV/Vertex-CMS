@@ -16,3 +16,4 @@
 /bootstrap/cache/*.php
 !.gitkeep
 
+/database/database.sqlite
