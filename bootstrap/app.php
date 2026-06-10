@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(EnsureInstalled::class);
+        $middleware->append(\App\Core\Http\Middleware\SetLocale::class);
 
         $middleware->alias([
             'vertex.not_installed' => EnsureNotInstalled::class,

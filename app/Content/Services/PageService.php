@@ -84,7 +84,7 @@ class PageService
         $parentId = filled($payload['parent_id'] ?? null) ? (int) $payload['parent_id'] : null;
         $status = $payload['status'] ?? 'draft';
         $slug = $this->slug->make(($payload['slug'] ?? '') ?: $payload['title']);
-        $locale = $payload['locale'] ?? setting('site.locale', config('app.locale'));
+        $locale = $payload['locale'] ?? config_value('site.locale', config('app.locale'));
         $translationGroup = $payload['translation_group'] ?? ($page?->translation_group ?: (string) Str::uuid());
 
         if ($page && $parentId === $page->id) {
@@ -149,7 +149,7 @@ class PageService
     private function buildUri(string $slug, ?int $parentId, string $locale): string
     {
         if ($parentId === null) {
-            $defaultLocale = setting('site.locale', config('app.locale'));
+            $defaultLocale = config_value('site.locale', config('app.locale'));
             if ($locale === $defaultLocale) {
                 return '/' . ltrim($slug, '/');
             }
