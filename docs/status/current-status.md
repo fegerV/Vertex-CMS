@@ -69,6 +69,12 @@ Last updated: `2026-06-18`
   - `resources/js/admin/builder/DesignLibraryApp.vue`
   - `resources/js/admin/builder/mountDesignLibrary.js`
   - JSON workspace endpoint: `/admin/api/pages/builder/design-library`
+- live preview canvas now includes Breakdance-style section controls for direct manipulation:
+  - quick block insertion
+  - add section
+  - duplicate section
+  - move section up/down
+  - delete section
 - UX Builder-inspired delivery planning is now documented in:
   - `docs/architecture/ux-builder-inspired-delivery-plan.md`
 
@@ -182,6 +188,11 @@ As documented in project docs before this update:
 - full Laravel suite now passes through bundled PHP runtime:
   - `78 tests`
   - `1239 assertions`
+- live preview section-controls pass also verified:
+  - `npm run build`
+  - `BuilderContractTest`: `17 passed`, `101 assertions`
+  - `php artisan view:cache`
+  - full suite remains `78 tests`, `1239 assertions`
 - builder registry API test was added in:
   - `tests/Feature/BuilderRegistryApiTest.php`
 - form field registry API test was added in:

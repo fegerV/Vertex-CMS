@@ -134,6 +134,16 @@ The third implementation slice connects the backend design-library workspace con
 - Shared templates and presets can be managed from the workspace when the current user owns them or has super-admin access.
 - The main advanced builder toolbar links to the design library and can pass `page_id` so visible templates can be merged back into the current page through the existing backend validation route.
 
+### Slice 4: Live Canvas Section Controls
+
+The fourth implementation slice moves the live preview closer to a Breakdance-style direct-manipulation canvas:
+
+- the iframe bridge now renders a dedicated floating section toolbar in addition to block controls;
+- section controls support quick block insertion, inserting a new section, duplicate, move up/down and delete;
+- the parent Vue shell handles `section-action` messages through the same normalized section/block state pipeline used by the editable canvas;
+- new sections created from the live preview immediately open quick-add so composition stays canvas-first;
+- public Blade rendering remains the preview source, and `content_json` stays the only persisted contract.
+
 ## Next Recommended Slice
 
-Continue the Breakdance-style canvas interaction pass: improve live preview chrome, add spots and direct manipulation while keeping `content_json` and backend validation as the source of truth.
+Continue Breakdance-style direct manipulation by improving inline text editing and responsive canvas chrome while keeping `content_json` and backend validation as the source of truth.

@@ -1374,6 +1374,44 @@ function handleLivePreviewMessage(event) {
     }
 
     if (
+        event.data.type === 'section-action'
+        && Number.isInteger(event.data.sectionIndex)
+    ) {
+        const sectionIndex = event.data.sectionIndex;
+        if (!sections.value[sectionIndex]) {
+            return;
+        }
+
+        baseCanvasState.selectSection(sectionIndex);
+        switch (event.data.action) {
+            case 'quick-add':
+                baseCanvasState.openQuickAdd(sectionIndex, sections.value[sectionIndex].blocks.length);
+                expandedSections.value = [...new Set([...expandedSections.value, sectionIndex])];
+                sidebarMode.value = 'library';
+                break;
+            case 'add-section':
+                insertSectionAfter(sectionIndex);
+                break;
+            case 'duplicate':
+                duplicateSection(sectionIndex);
+                break;
+            case 'move-up':
+                moveSectionUp(sectionIndex);
+                break;
+            case 'move-down':
+                moveSectionDown(sectionIndex);
+                break;
+            case 'delete':
+                if (window.confirm('Удалить эту секцию?')) {
+                    deleteSection(sectionIndex);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    if (
         event.data.type === 'block-action'
         && Number.isInteger(event.data.sectionIndex)
         && Number.isInteger(event.data.blockIndex)
@@ -1517,6 +1555,36 @@ const livePreviewSrcdoc = computed(() => {
             .vc-live-action-toolbar button[data-action="delete"] {
                 color: #fecdd3;
             }
+            .vc-live-section-toolbar {
+                position: fixed;
+                z-index: 10002;
+                display: none;
+                overflow: hidden;
+                border-radius: 999px;
+                background: #0f766e;
+                box-shadow: 0 14px 34px rgba(0,0,0,.3);
+            }
+            .vc-live-section-toolbar.is-visible {
+                display: inline-flex;
+            }
+            .vc-live-section-toolbar button {
+                border: 0;
+                border-left: 1px solid rgba(255,255,255,.16);
+                background: transparent;
+                color: #ecfeff;
+                padding: 8px 10px;
+                font: 700 11px/1 Arial, sans-serif;
+                cursor: pointer;
+            }
+            .vc-live-section-toolbar button:first-child {
+                border-left: 0;
+            }
+            .vc-live-section-toolbar button:hover {
+                background: rgba(255,255,255,.16);
+            }
+            .vc-live-section-toolbar button[data-action="delete"] {
+                color: #fecdd3;
+            }
             .vc-live-block:hover {
                 outline: 1px dashed rgba(0,194,168,.78);
                 outline-offset: 2px;
@@ -1543,14 +1611,28 @@ const livePreviewSrcdoc = computed(() => {
                     ['delete', '×']
                 ].map(([action, label]) => '<button type="button" data-action="' + action + '">' + label + '</button>').join('');
                 document.body.appendChild(actionToolbar);
+                const sectionToolbar = document.createElement('div');
+                sectionToolbar.className = 'vc-live-section-toolbar';
+                sectionToolbar.innerHTML = [
+                    ['quick-add', '+ Block'],
+                    ['add-section', '+ Sec'],
+                    ['duplicate', 'Copy'],
+                    ['move-up', '↑'],
+                    ['move-down', '↓'],
+                    ['delete', '×']
+                ].map(([action, label]) => '<button type="button" data-action="' + action + '">' + label + '</button>').join('');
+                document.body.appendChild(sectionToolbar);
                 let pendingAdd = null;
                 let pendingAction = null;
+                let pendingSectionAction = null;
                 const placeAddControl = (target, payload) => {
                     if (!target || !payload) {
                         addControl.classList.remove('is-visible');
                         actionToolbar.classList.remove('is-visible');
+                        sectionToolbar.classList.remove('is-visible');
                         pendingAdd = null;
                         pendingAction = null;
+                        pendingSectionAction = null;
                         return;
                     }
 
@@ -1573,6 +1655,19 @@ const livePreviewSrcdoc = computed(() => {
                     actionToolbar.style.top = Math.max(12, rect.top - 38) + 'px';
                     actionToolbar.classList.add('is-visible');
                 };
+                const placeSectionToolbar = (target, payload) => {
+                    if (!target || !payload) {
+                        sectionToolbar.classList.remove('is-visible');
+                        pendingSectionAction = null;
+                        return;
+                    }
+
+                    const rect = target.getBoundingClientRect();
+                    pendingSectionAction = payload;
+                    sectionToolbar.style.left = Math.max(12, rect.left + 12) + 'px';
+                    sectionToolbar.style.top = Math.max(12, rect.top + 10) + 'px';
+                    sectionToolbar.classList.add('is-visible');
+                };
                 const applySelection = (sectionIndex, blockIndex = null) => {
                     const sections = Array.from(document.querySelectorAll('.vc-section'));
                     const section = Number.isInteger(sectionIndex) ? sections[sectionIndex] : null;
@@ -1585,6 +1680,7 @@ const livePreviewSrcdoc = computed(() => {
                     }
 
                     section.setAttribute('data-vc-live-selected', 'true');
+                    placeSectionToolbar(section, { sectionIndex });
                     if (Number.isInteger(blockIndex)) {
                         const block = section.querySelector('.vc-live-block[data-vc-block-depth="0"][data-vc-block-index="' + blockIndex + '"]');
                         if (block) {
@@ -1613,6 +1709,7 @@ const livePreviewSrcdoc = computed(() => {
                         }, '*');
                         const blockCount = section.querySelectorAll(':scope > .vc-container > .vc-live-block[data-vc-block-depth="0"]').length;
                         placeAddControl(section, { sectionIndex, insertIndex: blockCount });
+                        placeSectionToolbar(section, { sectionIndex });
                         placeActionToolbar(null, null);
                     }
                 };
@@ -1641,6 +1738,7 @@ const livePreviewSrcdoc = computed(() => {
                     }, '*');
                     placeAddControl(topLevelBlock, { sectionIndex, insertIndex: blockIndex + 1 });
                     placeActionToolbar(topLevelBlock, { sectionIndex, blockIndex });
+                    placeSectionToolbar(section, { sectionIndex });
                 };
                 const requestEdit = (block) => {
                     const topLevelBlock = block.getAttribute('data-vc-block-depth') === '0'
@@ -1709,6 +1807,19 @@ const livePreviewSrcdoc = computed(() => {
                         blockIndex: pendingAction.blockIndex
                     }, '*');
                 });
+                sectionToolbar.addEventListener('click', (event) => {
+                    const button = event.target.closest('button[data-action]');
+                    if (!button || !pendingSectionAction) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    window.parent.postMessage({
+                        source: 'vertexcms-builder-live-preview',
+                        type: 'section-action',
+                        action: button.getAttribute('data-action'),
+                        sectionIndex: pendingSectionAction.sectionIndex
+                    }, '*');
+                });
                 window.addEventListener('scroll', () => {
                     if (!pendingAdd) return;
                     const section = document.querySelector('.vc-section[data-vc-section-index="' + pendingAdd.sectionIndex + '"]');
@@ -1719,6 +1830,10 @@ const livePreviewSrcdoc = computed(() => {
                     if (pendingAction) {
                         const actionTarget = section?.querySelector('.vc-live-block[data-vc-block-depth="0"][data-vc-block-index="' + pendingAction.blockIndex + '"]');
                         placeActionToolbar(actionTarget, pendingAction);
+                    }
+                    if (pendingSectionAction) {
+                        const sectionTarget = document.querySelector('.vc-section[data-vc-section-index="' + pendingSectionAction.sectionIndex + '"]');
+                        placeSectionToolbar(sectionTarget, pendingSectionAction);
                     }
                 }, { passive: true });
                 window.addEventListener('message', (event) => {
@@ -1868,6 +1983,29 @@ const createStarterPage = () => {
 
     saveToHistory('Создать стартовую секцию');
     baseCanvasState.selectBlock(0, 0);
+};
+
+const insertSectionAfter = (sectionIndex) => {
+    const defaults = sectionConfig.value?.default_settings || {};
+    const nextIndex = Math.min(sectionIndex + 1, sections.value.length);
+
+    sections.value.splice(nextIndex, 0, {
+        id: baseCanvasState.generateId(),
+        settings: {
+            padding_top: defaults.padding_top ?? 48,
+            padding_bottom: defaults.padding_bottom ?? 48,
+            background_color: defaults.background_color ?? null,
+            css_class: defaults.css_class ?? null,
+        },
+        blocks: [],
+    });
+
+    saveToHistory('Add section');
+    markContentChanged();
+    baseCanvasState.selectSection(nextIndex);
+    baseCanvasState.openQuickAdd(nextIndex, 0);
+    expandedSections.value = [...new Set([...expandedSections.value, nextIndex])];
+    sidebarMode.value = 'library';
 };
 
 const openDesignLibrary = () => {
