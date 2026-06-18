@@ -193,5 +193,6 @@ The latest builder pass has already moved part of **Phase 2** and **Phase 3** in
 - the live preview endpoint now avoids rendering both public HTML and editor document in the same request, while the server renderer avoids collection-heavy loops on the hot preview path
 - the design-library workspace contract is now connected to a dedicated Vue admin surface for templates, quick-start compositions and presets, with visual cards, category filters, search, preview metadata and owner-aware management actions
 - the live preview iframe now has Breakdance-style section action chrome for adding blocks, adding sections, duplicating, moving and deleting sections directly from the page-like canvas
+- the active builder shell now uses a Breakdance-like dark application frame with a global app bar, persistent dark side panels, central white page canvas and app-level Save/Preview/Library controls
 
-The next logical iteration is to continue Breakdance-style inline editing and responsive canvas polish, while keeping `blocks.php` as the single source for block editing metadata.
+The next logical iteration is to continue Breakdance-style inspector density, inline editing and add-panel polish, while keeping `blocks.php` as the single source for block editing metadata.

@@ -2011,11 +2011,172 @@ html[data-theme='dark'] .vc-builder-empty {
 
 .vc-builder-shell-modern {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr) 320px;
+    grid-template-columns: 320px minmax(0, 1fr) 360px;
+    grid-template-rows: 52px minmax(0, 1fr);
+    grid-template-areas:
+        "appbar appbar appbar"
+        "left main right";
     height: 100vh;
     min-height: 100vh;
-    background: #202020;
+    background: #16191d;
     border-top: 0;
+}
+
+.vc-builder-appbar {
+    grid-area: appbar;
+    display: grid;
+    grid-template-columns: 300px auto minmax(12rem, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #111417;
+    padding: 0 0.75rem;
+    color: #e8eaed;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.035), 0 18px 38px rgba(0, 0, 0, 0.28);
+    z-index: 50;
+}
+
+.vc-builder-appbar-brand,
+.vc-builder-appbar-actions,
+.vc-builder-appbar-device-group {
+    display: inline-flex;
+    align-items: center;
+}
+
+.vc-builder-appbar-brand {
+    min-width: 0;
+    gap: 0.65rem;
+}
+
+.vc-builder-appbar-logo {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: #00a0d2;
+    color: #fff;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.vc-builder-appbar-title-wrap {
+    display: grid;
+    min-width: 0;
+    gap: 0.05rem;
+}
+
+.vc-builder-appbar-title {
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.vc-builder-appbar-subtitle {
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.68rem;
+    color: #9aa4ad;
+}
+
+.vc-builder-appbar-device-group {
+    gap: 0.25rem;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.035);
+    padding: 0.18rem;
+}
+
+.vc-builder-appbar-device,
+.vc-builder-appbar-button,
+.vc-builder-appbar-save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    border-radius: 3px;
+    padding: 0.34rem 0.62rem;
+    font-size: 0.68rem;
+    font-weight: 850;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: background-color 140ms ease, color 140ms ease, opacity 140ms ease;
+}
+
+.vc-builder-appbar-device,
+.vc-builder-appbar-button {
+    color: #aab4be;
+}
+
+.vc-builder-appbar-device:hover,
+.vc-builder-appbar-button:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+.vc-builder-appbar-device-active,
+.vc-builder-appbar-button-active {
+    background: #2a2f34;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(0, 160, 210, 0.35);
+}
+
+.vc-builder-appbar-selection {
+    display: grid;
+    min-width: 0;
+    justify-self: center;
+    text-align: center;
+}
+
+.vc-builder-appbar-selection span {
+    max-width: 28rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #f4f7fb;
+}
+
+.vc-builder-appbar-selection small {
+    max-width: 28rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.64rem;
+    color: #7f8a96;
+}
+
+.vc-builder-appbar-actions {
+    justify-content: flex-end;
+    gap: 0.32rem;
+}
+
+.vc-builder-appbar-status {
+    min-height: 2rem;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.vc-builder-appbar-button:disabled {
+    opacity: 0.36;
+    pointer-events: none;
+}
+
+.vc-builder-appbar-save {
+    background: #00a0d2;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(0, 160, 210, 0.28);
+}
+
+.vc-builder-appbar-save:hover {
+    background: #0798c6;
 }
 
 .vc-builder-shell-pane {
@@ -2026,18 +2187,30 @@ html[data-theme='dark'] .vc-builder-empty {
 .vc-builder-shell-pane-right {
     min-height: 0;
     overflow-y: auto;
-    background: #191d21;
+    background: #1e2227;
+}
+
+.vc-builder-shell-pane-left {
+    grid-area: left;
+}
+
+.vc-builder-shell-pane-main {
+    grid-area: main;
+}
+
+.vc-builder-shell-pane-right {
+    grid-area: right;
 }
 
 .vc-builder-sidebar-mode-library,
 .vc-builder-sidebar-mode-templates {
-    background: #f7f7f7;
-    color: #333333;
+    background: #1e2227;
+    color: #e8eaed;
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-surface-card,
 .vc-builder-sidebar-mode-templates .vc-builder-surface-card {
-    border-bottom-color: #e2e2e2;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-eyebrow,
@@ -2048,14 +2221,14 @@ html[data-theme='dark'] .vc-builder-empty {
 .vc-builder-sidebar-mode-templates .vc-builder-sidebar-copy,
 .vc-builder-sidebar-mode-templates .vc-builder-panel-subtitle,
 .vc-builder-sidebar-mode-templates .vc-builder-template-group-title {
-    color: #555555;
+    color: #aab4be;
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-sidebar-title,
 .vc-builder-sidebar-mode-templates .vc-builder-sidebar-title,
 .vc-builder-sidebar-mode-library .vc-builder-panel-subtitle,
 .vc-builder-sidebar-mode-templates .vc-builder-panel-subtitle {
-    color: #222222;
+    color: #f4f7fb;
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-segment,
@@ -2064,9 +2237,9 @@ html[data-theme='dark'] .vc-builder-empty {
 .vc-builder-sidebar-mode-templates .vc-builder-segment,
 .vc-builder-sidebar-mode-templates .vc-builder-tab,
 .vc-builder-sidebar-mode-templates .vc-builder-chip {
-    border-color: #d7d7d7;
-    background: #ffffff;
-    color: #555555;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: #2a2f34;
+    color: #aab4be;
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-segment-active,
@@ -2076,40 +2249,40 @@ html[data-theme='dark'] .vc-builder-empty {
 .vc-builder-sidebar-mode-templates .vc-builder-tab-active,
 .vc-builder-sidebar-mode-templates .vc-builder-chip-active {
     border-color: #00a0d2;
-    background: #eaf8fc;
-    color: #0073aa;
+    background: rgba(0, 160, 210, 0.16);
+    color: #ffffff;
 }
 
 .vc-builder-sidebar-mode-library .vc-input,
 .vc-builder-sidebar-mode-templates .vc-input,
 .vc-builder-sidebar-mode-library .vc-select,
 .vc-builder-sidebar-mode-templates .vc-select {
-    border-color: #c7d7e2;
-    background: #ffffff;
-    color: #222222;
+    border-color: rgba(255, 255, 255, 0.12);
+    background: #15191d;
+    color: #e8eaed;
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-library-card,
 .vc-builder-sidebar-mode-templates .vc-builder-template-card {
-    border-color: #d8d8d8;
-    background: #ffffff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
+    background: #2a2f34;
+    box-shadow: none;
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-library-card:hover,
 .vc-builder-sidebar-mode-templates .vc-builder-template-card:hover {
     border-color: #00a0d2;
-    outline: 1px solid #00a0d2;
+    outline: 1px solid rgba(0, 160, 210, 0.5);
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-library-card .text-\[var\(--vc-text\)\],
 .vc-builder-sidebar-mode-templates .vc-builder-template-card .text-\[var\(--vc-text\)\] {
-    color: #222222;
+    color: #f4f7fb;
 }
 
 .vc-builder-sidebar-mode-library .vc-builder-library-card .text-\[var\(--vc-text-soft\)\],
 .vc-builder-sidebar-mode-templates .vc-builder-template-card .text-\[var\(--vc-text-soft\)\] {
-    color: #666666;
+    color: #aab4be;
 }
 
 .vc-builder-sidebar,
@@ -2601,7 +2774,7 @@ html[data-theme='dark'] .vc-builder-empty {
 }
 
 .vc-builder-toolbar-modern {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: space-between;
     gap: 0.45rem;
@@ -2789,12 +2962,18 @@ html[data-theme='dark'] .vc-builder-empty {
 .vc-builder-canvas-modern {
     flex: 1;
     overflow: auto;
-    padding: 0;
-    background: #242424;
+    padding: clamp(1.25rem, 2vw, 2.25rem);
+    background:
+        radial-gradient(circle at 50% 0, rgba(0, 160, 210, 0.12), transparent 28rem),
+        linear-gradient(135deg, rgba(255,255,255,0.025) 25%, transparent 25%) 0 0 / 22px 22px,
+        #25282d;
 }
 
 html[data-theme='dark'] .vc-builder-canvas-modern {
-    background: #242424;
+    background:
+        radial-gradient(circle at 50% 0, rgba(0, 160, 210, 0.12), transparent 28rem),
+        linear-gradient(135deg, rgba(255,255,255,0.025) 25%, transparent 25%) 0 0 / 22px 22px,
+        #25282d;
 }
 
 .vc-builder-viewport {
@@ -2802,19 +2981,42 @@ html[data-theme='dark'] .vc-builder-canvas-modern {
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    padding-bottom: 4rem;
 }
 
 .vc-builder-page-frame {
     width: 100%;
-    border: 0;
-    border-radius: 0;
-    background: #202020;
+    max-width: 1280px;
+    --vc-text: #111827;
+    --vc-text-soft: #64748b;
+    --vc-text-muted: #475569;
+    --vc-surface: #ffffff;
+    --vc-surface-strong: #ffffff;
+    --vc-surface-muted: #f8fafc;
+    --vc-border: #e2e8f0;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    border-radius: 2px;
+    background: #ffffff;
     padding: 0;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.36);
+}
+
+.vc-builder-shell-modern .vc-builder-live-stage {
+    min-height: calc(100vh - 9rem);
+    background: #ffffff;
     box-shadow: none;
 }
 
+.vc-builder-shell-modern .vc-builder-live-toolbar {
+    display: none;
+}
+
+.vc-builder-shell-modern .vc-builder-live-frame {
+    min-height: calc(100vh - 9rem);
+}
+
 html[data-theme='dark'] .vc-builder-page-frame {
-    background: #202020;
+    background: #ffffff;
 }
 
 .vc-builder-page-hero {
@@ -3417,7 +3619,11 @@ html[data-theme='dark'] .vc-builder-pack {
 
 @media (max-width: 1440px) {
     .vc-builder-shell-modern {
-        grid-template-columns: 280px minmax(0, 1fr) 320px;
+        grid-template-columns: 300px minmax(0, 1fr) 340px;
+    }
+
+    .vc-builder-appbar {
+        grid-template-columns: 250px auto minmax(10rem, 1fr) auto;
     }
 
     .vc-builder-toolbar-main-editor {
@@ -3450,6 +3656,33 @@ html[data-theme='dark'] .vc-builder-pack {
 @media (max-width: 1200px) {
     .vc-builder-shell-modern {
         grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(32rem, auto) auto auto;
+        grid-template-areas:
+            "appbar"
+            "main"
+            "left"
+            "right";
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+    }
+
+    .vc-builder-appbar {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+        padding: 0.65rem;
+    }
+
+    .vc-builder-appbar-brand,
+    .vc-builder-appbar-device-group,
+    .vc-builder-appbar-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .vc-builder-appbar-selection {
+        justify-self: stretch;
+        text-align: left;
     }
 
     .vc-builder-shell-pane-main {

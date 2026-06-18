@@ -75,6 +75,11 @@ Last updated: `2026-06-18`
   - duplicate section
   - move section up/down
   - delete section
+- advanced builder shell now uses a Breakdance-like app frame:
+  - global dark app bar
+  - app-level device, selection, save, preview and library controls
+  - dark left/right workspace panels
+  - white central page canvas on a dark work area
 - UX Builder-inspired delivery planning is now documented in:
   - `docs/architecture/ux-builder-inspired-delivery-plan.md`
 
@@ -189,6 +194,11 @@ As documented in project docs before this update:
   - `78 tests`
   - `1239 assertions`
 - live preview section-controls pass also verified:
+  - `npm run build`
+  - `BuilderContractTest`: `17 passed`, `101 assertions`
+  - `php artisan view:cache`
+  - full suite remains `78 tests`, `1239 assertions`
+- Breakdance-like shell redesign pass also verified:
   - `npm run build`
   - `BuilderContractTest`: `17 passed`, `101 assertions`
   - `php artisan view:cache`

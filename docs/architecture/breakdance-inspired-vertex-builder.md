@@ -144,6 +144,16 @@ The fourth implementation slice moves the live preview closer to a Breakdance-st
 - new sections created from the live preview immediately open quick-add so composition stays canvas-first;
 - public Blade rendering remains the preview source, and `content_json` stays the only persisted contract.
 
+### Slice 5: Breakdance-Style Builder Shell
+
+The fifth implementation slice moves the builder UI shell away from an admin-form feeling and closer to a dedicated Breakdance-like application:
+
+- the advanced builder now has a full-width dark app bar with page identity, responsive preview controls, selection context, undo/redo, Live/Edit switching, Preview, Library and Save actions;
+- the old inner toolbar is visually removed so the workspace reads as one focused builder app;
+- left library/structure/template modes stay in the same dark workspace instead of switching to a generic light admin panel;
+- the center canvas now presents a white page preview on a darker patterned workspace background;
+- the right inspector remains a dedicated editing panel, visually separated from the page canvas.
+
 ## Next Recommended Slice
 
-Continue Breakdance-style direct manipulation by improving inline text editing and responsive canvas chrome while keeping `content_json` and backend validation as the source of truth.
+Continue Breakdance-style refinement by improving inspector control density, inline text editing and visual add-panel interactions while keeping `content_json` and backend validation as the source of truth.

@@ -1,5 +1,49 @@
 ﻿<template>
     <div class="vc-builder-shell vc-builder-shell-modern">
+        <header class="vc-builder-appbar">
+            <div class="vc-builder-appbar-brand">
+                <span class="vc-builder-appbar-logo">V</span>
+                <span class="vc-builder-appbar-title-wrap">
+                    <span class="vc-builder-appbar-title">Vertex Builder</span>
+                    <span class="vc-builder-appbar-subtitle">{{ page.title || 'Страница без названия' }}</span>
+                </span>
+            </div>
+
+            <div class="vc-builder-appbar-device-group" aria-label="Responsive preview">
+                <button
+                    v-for="bp in breakpoints"
+                    :key="bp.name"
+                    type="button"
+                    class="vc-builder-appbar-device"
+                    :class="{ 'vc-builder-appbar-device-active': activeBreakpoint === bp.name }"
+                    @click="activeBreakpoint = bp.name"
+                >
+                    {{ bp.label }}
+                </button>
+            </div>
+
+            <div class="vc-builder-appbar-selection">
+                <span>{{ selectionSummary.title }}</span>
+                <small>{{ selectionSummary.path }}</small>
+            </div>
+
+            <div class="vc-builder-appbar-actions">
+                <span class="vc-builder-status-chip vc-builder-appbar-status">
+                    <span class="vc-builder-status-dot" :class="`vc-builder-status-dot-${autoSaveStatus}`"></span>
+                    {{ autoSaveStatusText }}
+                </span>
+                <button type="button" class="vc-builder-appbar-button" :disabled="!canUndo" @click="undo">Undo</button>
+                <button type="button" class="vc-builder-appbar-button" :disabled="!canRedo" @click="redo">Redo</button>
+                <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'live' }" @click="canvasMode = 'live'">Live</button>
+                <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'edit' }" @click="canvasMode = 'edit'">Edit</button>
+                <button type="button" class="vc-builder-appbar-button" @click="previewContent">Preview</button>
+                <button type="button" class="vc-builder-appbar-button" @click="openDesignLibrary">Library</button>
+                <button type="button" class="vc-builder-appbar-save" :disabled="saving" @click="saveContent">
+                    {{ saving ? 'Saving...' : 'Save' }}
+                </button>
+            </div>
+        </header>
+
         <aside class="vc-builder-sidebar vc-builder-shell-pane vc-builder-shell-pane-left vc-builder-scroll" :class="`vc-builder-sidebar-mode-${sidebarMode}`">
             <div class="vc-builder-sidebar-stack">
                 <section class="vc-builder-surface-card">
