@@ -195,6 +195,19 @@
                         >
                     </div>
 
+                    <div class="vc-builder-library-filters mt-3">
+                        <select v-model="librarySourceFilter" class="vc-select">
+                            <option value="all">Все источники</option>
+                            <option value="native">Native Vertex</option>
+                            <option value="breakdance-native">Breakdance-native</option>
+                            <option value="breakdance-reference">Breakdance-reference</option>
+                        </select>
+                        <select v-model="libraryCategoryFilter" class="vc-select">
+                            <option value="all">Все категории</option>
+                            <option v-for="category in libraryCategoryOptions" :key="category" :value="category">{{ categoryLabel(category) }}</option>
+                        </select>
+                    </div>
+
                     <div class="mt-4 space-y-3">
                         <button
                             v-for="[type, block] in filteredBlockEntries"
@@ -209,6 +222,10 @@
                             <span class="min-w-0 flex-1 text-left">
                                 <span class="block text-sm font-semibold text-[var(--vc-text)]">{{ block.name }}</span>
                                 <span class="mt-1 block text-xs text-[var(--vc-text-soft)]">{{ block.description || 'Добавьте блок в выбранную секцию или начните новую структуру страницы.' }}</span>
+                                <span class="mt-2 flex flex-wrap gap-2 text-[11px] text-[var(--vc-text-soft)]">
+                                    <span class="vc-builder-library-pill">{{ categoryLabel(block.category) }}</span>
+                                    <span class="vc-builder-library-pill">{{ blockSourceLabel(block) }}</span>
+                                </span>
                             </span>
                             <span class="vc-builder-library-card-add">+</span>
                         </button>
@@ -946,6 +963,8 @@ const activeBreakpoint = ref('desktop');
 const searchQuery = ref('');
 const templateSearchQuery = ref('');
 const contentSearchQuery = ref('');
+const librarySourceFilter = ref('all');
+const libraryCategoryFilter = ref('all');
 const selectedSection = ref(null);
 const selectedBlock = ref(null);
 const selectedBlockData = ref(null);
@@ -973,6 +992,16 @@ const allBlocks = ref(props.config.blocks || window.availableBlocks || {});
 
 const totalBlockTypes = computed(() => Object.keys(allBlocks.value || {}).length);
 const totalCanvasBlocks = computed(() => sections.value.reduce((sum, section) => sum + (section.blocks?.length || 0), 0));
+const libraryCategoryOptions = computed(() => {
+    const categories = new Set();
+
+    Object.entries(allBlocks.value || {}).forEach(([type, block]) => {
+        if (resolveLibraryTab(type, block) !== libraryTab.value) return;
+        if (block?.category) categories.add(String(block.category));
+    });
+
+    return Array.from(categories).sort((left, right) => left.localeCompare(right));
+});
 
 const libraryTabs = [
     { id: 'content', label: 'Контент' },
@@ -1012,16 +1041,48 @@ const resolveLibraryTab = (type, block = {}) => {
     return 'content';
 };
 
+const categoryLabel = (value) => {
+    if (!value) return 'General';
+
+    return String(value)
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const blockSource = (block = {}) => {
+    return block?.editor?.source || (String(block?.type || '').startsWith('breakdance-') ? 'breakdance-reference' : 'native');
+};
+
+const blockSourceLabel = (block = {}) => {
+    return {
+        native: 'Vertex',
+        'breakdance-native': 'Breakdance native',
+        'breakdance-reference': 'Breakdance ref',
+    }[blockSource(block)] || 'Catalog';
+};
+
 const filteredBlockEntries = computed(() => {
     const query = searchQuery.value.trim().toLowerCase();
 
     return Object.entries(allBlocks.value || {})
         .filter(([type, block]) => resolveLibraryTab(type, block) === libraryTab.value)
+        .filter(([, block]) => librarySourceFilter.value === 'all' || blockSource(block) === librarySourceFilter.value)
+        .filter(([, block]) => libraryCategoryFilter.value === 'all' || String(block.category || '') === libraryCategoryFilter.value)
         .filter(([type, block]) => {
             if (!query) return true;
             return type.toLowerCase().includes(query)
                 || String(block.name || '').toLowerCase().includes(query)
                 || String(block.description || '').toLowerCase().includes(query);
+        })
+        .sort((left, right) => {
+            const leftBlock = left[1] || {};
+            const rightBlock = right[1] || {};
+            const sourceCompare = blockSource(leftBlock).localeCompare(blockSource(rightBlock));
+            if (sourceCompare !== 0) return sourceCompare;
+            const categoryCompare = String(leftBlock.category || '').localeCompare(String(rightBlock.category || ''));
+            if (categoryCompare !== 0) return categoryCompare;
+
+            return String(leftBlock.name || left[0]).localeCompare(String(rightBlock.name || right[0]));
         });
 });
 
@@ -1057,6 +1118,12 @@ const blockIconPaths = {
     tooltip: '<path d="M5 6h10v6H9l-3 3v-3H5V6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
     'seo-meta': '<path d="M4 6h12M4 10h8M4 14h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 10l2 2-2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
     hero: '<path d="M4 14l3.5-4 2.5 2.5L12 10l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 6h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    cart: '<path d="M4 5h2l1 7h8l2-5H7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 15h.01M15 15h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+    'breakdance-rich-text': '<path d="M5 6h10M5 10h8M5 14h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    'breakdance-icon-list': '<path d="M8 6h8M8 10h8M8 14h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 10l1 1 2-2M4 14l1 1 2-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+    'breakdance-social-icons': '<path d="M5 10a2.5 2.5 0 015 0 2.5 2.5 0 005 0 2.5 2.5 0 015 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M5 10a2.5 2.5 0 005 0 2.5 2.5 0 005 0 2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+    'breakdance-logo-list': '<rect x="4" y="5" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="12" y="5" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="11" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="12" y="11" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/>',
+    'breakdance-search-form': '<circle cx="9" cy="9" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12.5 12.5L16 16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
 };
 
 const blockIconPath = (type) => blockIconPaths[type] || defaultBlockIconPath;

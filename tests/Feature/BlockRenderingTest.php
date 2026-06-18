@@ -186,4 +186,23 @@ class BlockRenderingTest extends TestCase
         $this->assertStringContainsString('data-vc-lightbox', $html);
         $this->assertStringContainsString('data-vc-gallery-prev', $html);
     }
+
+    public function test_cart_rendering()
+    {
+        $html = $this->service->compileBlock('cart', [
+            'items' => [
+                ['title' => 'Starter plan', 'quantity' => 1, 'price' => 49],
+                ['title' => 'Support add-on', 'quantity' => 2, 'price' => 9],
+            ],
+            'currency' => '$',
+            'show_coupon' => true,
+            'show_shipping' => true,
+        ]);
+
+        $this->assertStringContainsString('Cart Summary', $html);
+        $this->assertStringContainsString('Starter plan', $html);
+        $this->assertStringContainsString('Support add-on', $html);
+        $this->assertStringContainsString('Proceed to checkout', $html);
+        $this->assertStringContainsString('Apply', $html);
+    }
 }

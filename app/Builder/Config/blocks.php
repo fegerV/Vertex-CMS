@@ -2906,13 +2906,57 @@ $blocks = array (
       array (
         'items' => 
         array (
+          0 => 
+          array (
+            'title' => 'Starter plan',
+            'quantity' => 1,
+            'price' => 49,
+          ),
+          1 => 
+          array (
+            'title' => 'Support add-on',
+            'quantity' => 1,
+            'price' => 19,
+          ),
         ),
+        'currency' => '$',
         'show_coupon' => true,
         'show_shipping' => true,
       ),
     ),
     'fields' => 
     array (
+      'items' => 
+      array (
+        'type' => 'repeater',
+        'label' => 'Items',
+        'fields' => 
+        array (
+          0 => 
+          array (
+            'type' => 'text',
+            'key' => 'title',
+            'label' => 'Title',
+          ),
+          1 => 
+          array (
+            'type' => 'number',
+            'key' => 'quantity',
+            'label' => 'Quantity',
+          ),
+          2 => 
+          array (
+            'type' => 'number',
+            'key' => 'price',
+            'label' => 'Price',
+          ),
+        ),
+      ),
+      'currency' => 
+      array (
+        'type' => 'text',
+        'label' => 'Currency',
+      ),
       'show_coupon' => 
       array (
         'type' => 'toggle',
@@ -2922,6 +2966,34 @@ $blocks = array (
       array (
         'type' => 'toggle',
         'label' => 'Show shipping',
+      ),
+    ),
+    'editor' => 
+    array (
+      'packs' => 
+      array (
+        'cart-items-pack' => 
+        array (
+          'label' => 'Cart items',
+          'description' => 'Preview line items and pricing rows.',
+          'icon' => 'shopping-cart',
+          'fields' => 
+          array (
+            0 => 'items',
+            1 => 'currency',
+          ),
+        ),
+        'cart-behavior-pack' => 
+        array (
+          'label' => 'Cart behavior',
+          'description' => 'Coupon and shipping rows.',
+          'icon' => 'toggle',
+          'fields' => 
+          array (
+            0 => 'show_coupon',
+            1 => 'show_shipping',
+          ),
+        ),
       ),
     ),
   ),
@@ -3198,6 +3270,11 @@ $blocks = array (
       ),
     ),
   ),
+);
+
+$blocks = array_merge(
+    $blocks,
+    require __DIR__ . '/breakdance_reference_blocks.php'
 );
 
 foreach ($blocks as $type => $config) {

@@ -141,6 +141,12 @@ export default {
                         'text-align': settings.align,
                         'font-size': this.size(settings.font_size),
                     })}">${this.nl2br(settings.text || settings.content || '')}</div>`;
+                case 'breakdance-rich-text':
+                    return `<div class="vc-text" style="${this.inlineStyle({
+                        color: settings.color,
+                        'text-align': settings.align,
+                        'font-size': this.size(settings.font_size),
+                    })}">${this.nl2br(settings.content || '')}</div>`;
                 case 'list': {
                     const tag = settings.type === 'decimal' ? 'ol' : 'ul';
                     const markerClass = settings.type === 'none' ? 'vc-list-none' : (settings.type === 'decimal' ? 'vc-list-decimal' : 'vc-list-disc');
@@ -245,6 +251,30 @@ export default {
 
                     return `<div class="vc-container-block" style="${style}">${this.renderChildren(settings.blocks)}</div>`;
                 }
+                case 'cart': {
+                    const items = Array.isArray(settings.items) ? settings.items : [];
+                    const currency = this.escapeHtml(settings.currency || '$');
+                    const subtotal = items.reduce((sum, item) => sum + ((Number(item.quantity || 1) || 1) * (Number(item.price || 0) || 0)), 0);
+                    const shipping = settings.show_shipping ? 9 : 0;
+                    const total = subtotal + shipping;
+
+                    return `<div class="vc-builder-renderer-fallback"><strong>Cart preview</strong><span>${items.length} items · ${subtotal.toFixed(2)}${currency} subtotal · ${total.toFixed(2)}${currency} total</span></div>`;
+                }
+                case 'breakdance-icon-list': {
+                    const items = Array.isArray(settings.items) ? settings.items : [];
+                    return `<ul class="vc-icon-list">${items.map((item) => `<li class="vc-icon-list-item"><span style="color:${this.escapeHtml(settings.color || '#10b981')};margin-right:0.5rem;">${this.escapeHtml(settings.icon || 'check')}</span>${this.escapeHtml(item.content || '')}</li>`).join('')}</ul>`;
+                }
+                case 'breakdance-social-icons': {
+                    const items = Array.isArray(settings.items) ? settings.items : [];
+                    return `<div class="vc-social-icons" style="display:flex;flex-wrap:wrap;gap:0.5rem;">${items.map((item) => `<span style="padding:0.45rem 0.7rem;border-radius:999px;background:${this.escapeHtml(settings.background_color || '#f3f4f6')};color:${this.escapeHtml(settings.icon_color || '#111827')};">${this.escapeHtml(item.platform || 'social')}</span>`).join('')}</div>`;
+                }
+                case 'breakdance-logo-list': {
+                    const logos = Array.isArray(settings.logos) ? settings.logos : [];
+                    const columns = Math.max(2, Math.min(Number(settings.columns || 4), 6));
+                    return `<div class="vc-logo-list" style="display:grid;gap:0.75rem;grid-template-columns:repeat(${columns}, minmax(0, 1fr));">${logos.map((logo) => `<div class="vc-builder-renderer-fallback" style="min-height:72px;">${this.escapeHtml(logo.alt || 'Logo')}</div>`).join('')}</div>`;
+                }
+                case 'breakdance-search-form':
+                    return `<div class="vc-search-form" style="display:flex;gap:0.75rem;"><input type="search" value="" placeholder="${this.escapeHtml(settings.placeholder || 'Search content')}" class="vc-input"><button class="vc-button vc-button-primary" type="button">${this.escapeHtml(settings.button_text || 'Search')}</button></div>`;
                 case 'spacer':
                     return `<div class="vc-spacer" style="height: ${this.escapeHtml(this.size(settings.height || 32))};"></div>`;
                 case 'html':

@@ -92,9 +92,15 @@ class PageRenderer
                  'gallery' => $this->gallery($settings),
                  'columns' => $this->columns($settings, $editor, $depth + 1),
                  'container' => $this->container($settings, $editor, $depth + 1),
+                 'cart' => $this->cart($settings),
+                 'breakdance-rich-text' => $this->text($settings),
+                 'breakdance-icon-list' => $this->iconList($settings),
+                 'breakdance-social-icons' => $this->socialIcons($settings),
+                 'breakdance-logo-list' => $this->logoList($settings),
+                 'breakdance-search-form' => $this->searchForm($settings),
                  'spacer' => '<div class="vc-spacer" style="height: '.e($this->size($settings['height'] ?? 32)).';"></div>',
                  default => '<!-- Unknown VertexCMS block: '.e($type).' -->',
-             };
+              };
         }
 
         if (! $editor) {
@@ -351,6 +357,73 @@ HTML;
         $blocks = is_array($settings['blocks'] ?? null) ? $settings['blocks'] : [];
 
         return '<div class="vc-container-block" style="'.e($style).'">'.$this->renderBlocks($blocks, $editor, $depth).'</div>';
+    }
+
+    private function cart(array $settings): string
+    {
+        return view('builder.blocks.cart', [
+            'settings' => $settings,
+        ])->render();
+    }
+
+    private function iconList(array $settings): string
+    {
+        $icon = e((string) ($settings['icon'] ?? 'check'));
+        $color = e((string) ($settings['color'] ?? '#10b981'));
+        $items = is_array($settings['items'] ?? null) ? $settings['items'] : [];
+        $html = '';
+
+        foreach ($items as $item) {
+            $content = e((string) ($item['content'] ?? ''));
+            $html .= '<li class="vc-icon-list-item" style="display:flex;gap:0.75rem;align-items:flex-start;"><span class="vc-icon-list-mark" style="color: '.$color.';font-weight:700;">'.$icon.'</span><span>'.$content.'</span></li>';
+        }
+
+        return '<ul class="vc-icon-list" style="display:grid;gap:0.75rem;">'.$html.'</ul>';
+    }
+
+    private function socialIcons(array $settings): string
+    {
+        $items = is_array($settings['items'] ?? null) ? $settings['items'] : [];
+        $iconColor = e((string) ($settings['icon_color'] ?? '#111827'));
+        $backgroundColor = e((string) ($settings['background_color'] ?? '#f3f4f6'));
+        $html = '';
+
+        foreach ($items as $item) {
+            $platform = e(ucfirst((string) ($item['platform'] ?? 'social')));
+            $url = e((string) ($item['url'] ?? '#'));
+            $html .= '<a class="vc-social-icon" href="'.$url.'" style="display:inline-flex;align-items:center;justify-content:center;padding:0.65rem 0.9rem;border-radius:999px;background:'.$backgroundColor.';color:'.$iconColor.';text-decoration:none;font-weight:600;">'.$platform.'</a>';
+        }
+
+        return '<div class="vc-social-icons" style="display:flex;flex-wrap:wrap;gap:0.75rem;">'.$html.'</div>';
+    }
+
+    private function logoList(array $settings): string
+    {
+        $logos = is_array($settings['logos'] ?? null) ? $settings['logos'] : [];
+        $columns = max(2, min(6, (int) ($settings['columns'] ?? 4)));
+        $html = '';
+
+        foreach ($logos as $logo) {
+            $image = $logo['image'] ?? null;
+            $src = is_array($image) ? ($image['url'] ?? '') : (string) $image;
+            $alt = e((string) ($logo['alt'] ?? 'Logo'));
+            $url = e((string) ($logo['url'] ?? '#'));
+            $content = $src !== ''
+                ? '<img src="'.e($src).'" alt="'.$alt.'" style="max-height:48px;max-width:100%;object-fit:contain;">'
+                : '<span style="font-size:0.875rem;color:#64748b;">Logo</span>';
+            $html .= '<a href="'.$url.'" class="vc-logo-item" style="display:flex;align-items:center;justify-content:center;min-height:96px;padding:1rem;border:1px solid #e2e8f0;border-radius:1rem;background:#fff;">'.$content.'</a>';
+        }
+
+        return '<div class="vc-logo-list" style="display:grid;grid-template-columns:repeat('.$columns.', minmax(0, 1fr));gap:1rem;">'.$html.'</div>';
+    }
+
+    private function searchForm(array $settings): string
+    {
+        $placeholder = e((string) ($settings['placeholder'] ?? 'Search content'));
+        $buttonText = e((string) ($settings['button_text'] ?? 'Search'));
+        $actionUrl = e((string) ($settings['action_url'] ?? '/search'));
+
+        return '<form class="vc-search-form" action="'.$actionUrl.'" method="get" style="display:flex;gap:0.75rem;"><input type="search" name="q" placeholder="'.$placeholder.'" style="flex:1;min-width:0;padding:0.8rem 1rem;border:1px solid #cbd5e1;border-radius:0.9rem;"><button type="submit" style="padding:0.8rem 1rem;border-radius:0.9rem;background:#0f172a;color:#fff;font-weight:600;">'.$buttonText.'</button></form>';
     }
 
     private function renderBlocks(array $blocks, bool $editor = false, int $depth = 0): string
