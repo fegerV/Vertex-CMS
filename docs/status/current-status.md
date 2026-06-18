@@ -2,7 +2,7 @@
 
 ## Updated
 
-Last updated: `2026-05-14`
+Last updated: `2026-06-18`
 
 ## What Is Implemented
 
@@ -64,6 +64,11 @@ Last updated: `2026-05-14`
   - `resources/js/admin/builder/components/BuilderBlockRenderer.vue`
   - `resources/js/admin/builder/components/BuilderBlockSettings.vue`
   - `resources/js/admin/builder/components/BuilderSectionSettings.vue`
+- Breakdance-inspired Design Library workspace now exists as a dedicated compiled Vue surface:
+  - `resources/views/admin/builder/design-library.blade.php`
+  - `resources/js/admin/builder/DesignLibraryApp.vue`
+  - `resources/js/admin/builder/mountDesignLibrary.js`
+  - JSON workspace endpoint: `/admin/api/pages/builder/design-library`
 - UX Builder-inspired delivery planning is now documented in:
   - `docs/architecture/ux-builder-inspired-delivery-plan.md`
 
@@ -169,6 +174,14 @@ As documented in project docs before this update:
   - `BuilderRegistryApiTest`: `1 passed`, `339 assertions`
   - `BuilderContractTest`: `4 passed`, `29 assertions`
   - `php artisan view:cache`
+- Breakdance-inspired Design Library pass now also passes with bundled PHP runtime `tools/php/php.exe`:
+  - `npm run build`
+  - `BuilderContractTest`: `17 passed`, `101 assertions`
+  - `BuilderLibraryManagerTest`: `3 passed`, `21 assertions`
+  - `php artisan view:cache`
+- full Laravel suite now passes through bundled PHP runtime:
+  - `78 tests`
+  - `1239 assertions`
 - builder registry API test was added in:
   - `tests/Feature/BuilderRegistryApiTest.php`
 - form field registry API test was added in:
@@ -263,7 +276,7 @@ These remain experimental and are not backend-registry-first block types.
 
 ### Remaining verification still needed
 
-- full `php artisan test` run across the whole suite after broader runtime cleanup
+- browser/manual QA of the mounted Design Library workspace and template apply flow
 - browser/manual QA of the mounted page editor builder shell
 - browser/manual QA of the future Forminator-style Vue form builder
 - end-to-end form submission QA against the new Vue builder-created payloads
@@ -273,13 +286,13 @@ These remain experimental and are not backend-registry-first block types.
 - module bootstrap is still in transition from manual wiring to manifest-driven loading
 - old docs remain partially affected by encoding issues, so status is being centralized in newer markdown files
 - some legacy builder views still exist alongside the new mounted runtime and should be consolidated
-- local runtime verification currently relies on a direct vendor autoload patch because `composer dump-autoload` was not available in this environment
+- local Artisan verification uses the bundled `tools/php/php.exe` runtime because `php` is not expected to be globally available in `PATH`
 - the new forms builder runtime is production-shaped, but advanced tabs such as integrations/reports still expose partial settings rather than the full final UX
 
 ## Next Recommended Steps
 
 1. Finish module bootstrap cleanup so all builtin modules resolve cleanly at runtime.
-2. Run the full Laravel test suite again and record the updated count/assertions.
-3. Consolidate the legacy builder screens behind the new schema-driven runtime.
-4. Expand frontend rendering parity so more backend-defined block types have first-class public renderers, not only editor schemas.
-5. Replace the current `vertex-forms` Alpine builder with the Forminator-style Vue app defined in the new architecture spec.
+2. Consolidate the legacy builder screens behind the new schema-driven runtime.
+3. Expand frontend rendering parity so more backend-defined block types have first-class public renderers, not only editor schemas.
+4. Replace the current `vertex-forms` Alpine builder with the Forminator-style Vue app defined in the new architecture spec.
+5. Continue browser/manual QA for builder, Design Library, media picker and form-builder workflows.

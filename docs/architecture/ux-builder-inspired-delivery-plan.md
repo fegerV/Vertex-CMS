@@ -191,5 +191,6 @@ The latest builder pass has already moved part of **Phase 2** and **Phase 3** in
 - legacy mojibake strings were removed from the active builder SFC layer
 - the live canvas runtime now prefers explicit dirty signals over deep-watching the full page tree, and preview/autosave skip duplicate JSON payloads to keep large pages more responsive during inspector edits
 - the live preview endpoint now avoids rendering both public HTML and editor document in the same request, while the server renderer avoids collection-heavy loops on the hot preview path
+- the design-library workspace contract is now connected to a dedicated Vue admin surface for templates, quick-start compositions and presets, with visual cards, category filters, search, preview metadata and owner-aware management actions
 
-The next logical iteration is to connect the dedicated design-library workspace contract to a richer Vue/Inertia browser surface for templates, starters and reusable sections, while keeping `blocks.php` as the single source for block editing metadata.
+The next logical iteration is to continue Breakdance-style canvas direct manipulation: stronger live-preview chrome, add controls, section handles and safer inline edit affordances, while keeping `blocks.php` as the single source for block editing metadata.

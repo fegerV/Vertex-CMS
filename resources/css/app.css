@@ -1932,6 +1932,83 @@ html[data-theme='dark'] .vc-builder-empty {
     min-height: 100vh;
 }
 
+.vc-design-library-host {
+    min-height: 100vh;
+    overflow-y: auto;
+    padding: clamp(1rem, 2vw, 2rem);
+    background:
+        radial-gradient(circle at top left, rgba(45, 212, 191, 0.18), transparent 28rem),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.14), transparent 24rem),
+        #111827;
+}
+
+.vc-design-library-shell {
+    max-width: 1680px;
+    margin: 0 auto;
+}
+
+.vc-design-library-card {
+    overflow: hidden;
+    border: 1px solid var(--vc-border);
+    border-radius: 1.5rem;
+    background: var(--vc-surface-strong);
+    box-shadow: var(--vc-shadow-soft);
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.vc-design-library-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(45, 212, 191, 0.48);
+    box-shadow: 0 24px 58px rgba(2, 6, 23, 0.16);
+}
+
+.vc-design-library-thumb {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    background: #0f172a;
+    aspect-ratio: 16 / 9;
+}
+
+.vc-design-library-thumb img {
+    transition: transform 220ms ease, filter 220ms ease;
+}
+
+.vc-design-library-card:hover .vc-design-library-thumb img {
+    transform: scale(1.035);
+    filter: saturate(1.08);
+}
+
+.vc-design-library-thumb-fallback,
+.vc-design-library-thumb-preview {
+    display: grid;
+    min-height: 14rem;
+    place-items: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #0f172a, #0f766e 62%, #22c55e);
+    color: #fff;
+    font-size: clamp(1.25rem, 3vw, 2.75rem);
+    font-weight: 800;
+    text-align: center;
+}
+
+.vc-design-library-card-copy {
+    display: -webkit-box;
+    min-height: 3.75rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.vc-design-library-shell .vc-builder-modal-card {
+    background: var(--vc-surface-strong);
+}
+
+.vc-builder-badge-quiet {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--vc-text-soft);
+}
+
 .vc-builder-shell-modern {
     display: grid;
     grid-template-columns: 300px minmax(0, 1fr) 320px;

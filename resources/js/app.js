@@ -7,6 +7,7 @@ window.Vue = { createApp, ref, reactive, computed, onMounted };
 import './admin/app';
 import { mountBuilderPrototype } from './components/builder/mountPrototype';
 import { mountAdvancedBuilder } from './admin/builder/mountAdvancedBuilder';
+import { mountDesignLibrary } from './admin/builder/mountDesignLibrary';
 import { mountFormBuilder } from './admin/forms/mountFormBuilder';
 import { mountMediaManager } from './admin/media/mountMediaManager';
 import { mountMediaPicker, unmountMediaPicker } from './admin/media/mountMediaPicker';
@@ -15,6 +16,7 @@ if (typeof window !== 'undefined') {
     window.Vertex = window.Vertex || {};
     window.Vertex.mountBuilderPrototype = mountBuilderPrototype;
     window.Vertex.mountAdvancedBuilder = mountAdvancedBuilder;
+    window.Vertex.mountDesignLibrary = mountDesignLibrary;
     window.Vertex.mountFormBuilder = mountFormBuilder;
     window.Vertex.mountMediaManager = mountMediaManager;
     window.Vertex.mountMediaPicker = mountMediaPicker;
@@ -148,6 +150,7 @@ function mountFrontendLightbox(root = document) {
 document.addEventListener('DOMContentLoaded', () => {
     mountBuilderPrototype();
     mountAdvancedBuilder();
+    mountDesignLibrary();
     mountFormBuilder();
     mountMediaManager();
     mountFrontendGalleries();

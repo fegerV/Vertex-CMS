@@ -357,7 +357,7 @@ class BuilderContractTest extends TestCase
         $editor = $this->makeUserWithRole('editor');
 
         $this->actingAs($editor)
-            ->getJson(route('admin.pages.builder.design-library.index'))
+            ->getJson(route('admin.pages.builder.design-library.api'))
             ->assertOk()
             ->assertJsonPath('ok', true)
             ->assertJsonPath('data.version', '1.0')
@@ -376,6 +376,18 @@ class BuilderContractTest extends TestCase
                     'empty_states',
                 ],
             ]);
+    }
+
+    public function test_builder_design_library_screen_mounts_vue_workspace(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+
+        $this->actingAs($editor)
+            ->get(route('admin.pages.builder.design-library.index'))
+            ->assertOk()
+            ->assertSee('data-vc-design-library', false)
+            ->assertSee('data-api-url', false)
+            ->assertSee('Design Library', false);
     }
 
     public function test_builder_autosave_rejects_invalid_blocks_and_does_not_create_revision(): void

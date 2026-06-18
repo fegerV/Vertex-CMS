@@ -124,6 +124,16 @@ The second implementation slice rewrote `app/Builder/Config/blocks.php` into a c
 - The catalog documents itself as the backend source of truth for builder availability and metadata.
 - Existing save, preview, revisions, library and registry API tests stay green.
 
+### Slice 3: Design Library Workspace UI
+
+The third implementation slice connects the backend design-library workspace contract to a dedicated Vue screen:
+
+- `/admin/pages/builder/design-library` is now a first-class builder workspace surface.
+- `/admin/api/pages/builder/design-library` keeps the JSON workspace contract separate from the HTML shell.
+- Templates, quick-start compositions and block presets are browsable through one visual library with stats, category filters, search and preview cards.
+- Shared templates and presets can be managed from the workspace when the current user owns them or has super-admin access.
+- The main advanced builder toolbar links to the design library and can pass `page_id` so visible templates can be merged back into the current page through the existing backend validation route.
+
 ## Next Recommended Slice
 
-Connect the new design-library workspace contract to a richer Vue/Inertia browser surface for templates and starter pages, keeping `app/Builder/Config/blocks.php` as the single source of truth for block pack recipes.
+Continue the Breakdance-style canvas interaction pass: improve live preview chrome, add spots and direct manipulation while keeping `content_json` and backend validation as the source of truth.

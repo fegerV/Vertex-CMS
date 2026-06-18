@@ -377,6 +377,13 @@ class AdvancedBuilderController extends Controller
         ]);
     }
 
+    public function designLibrary(Request $request): View
+    {
+        return view('admin.builder.design-library', [
+            'workspace' => $this->library->designLibraryWorkspace($request),
+        ]);
+    }
+
     public function storeSharedTemplate(Request $request): JsonResponse
     {
         $payload = $request->validate([
@@ -509,6 +516,7 @@ class AdvancedBuilderController extends Controller
             'quick_add' => [
                 'templates' => $this->library->quickAddTemplates(),
             ],
+            'design_library_url' => route('admin.pages.builder.design-library.index'),
             'media' => [
                 'api_base' => url('/admin/api/media'),
                 'folder_api_base' => url('/admin/api/media/folders'),

@@ -333,6 +333,7 @@
                         <button type="button" class="vc-button vc-button-secondary vc-builder-toolbar-tool" @click="exportCurrentSections">Экспорт</button>
                         <button type="button" class="vc-button vc-button-secondary vc-builder-toolbar-tool" @click="importSectionsPrompt">Импорт</button>
                         <button type="button" class="vc-button vc-button-secondary vc-builder-toolbar-tool" @click="previewContent">Preview</button>
+                        <button type="button" class="vc-button vc-button-secondary vc-builder-toolbar-tool" @click="openDesignLibrary">Библиотека</button>
                     </div>
                     <button type="button" class="vc-button vc-button-primary vc-builder-save-action vc-builder-toolbar-tool-primary" :disabled="saving" @click="saveContent">
                         {{ saving ? 'Сохранение...' : 'Сохранить страницу' }}
@@ -1867,6 +1868,17 @@ const createStarterPage = () => {
 
     saveToHistory('Создать стартовую секцию');
     baseCanvasState.selectBlock(0, 0);
+};
+
+const openDesignLibrary = () => {
+    const url = props.config?.design_library_url || '/admin/pages/builder/design-library';
+    if (!props.page?.id) {
+        window.location.href = url;
+        return;
+    }
+
+    const separator = url.includes('?') ? '&' : '?';
+    window.location.href = `${url}${separator}page_id=${encodeURIComponent(props.page.id)}`;
 };
 
 const sectionPresetLabel = (section) => {
