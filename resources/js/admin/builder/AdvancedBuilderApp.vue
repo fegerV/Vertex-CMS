@@ -146,7 +146,9 @@
                                     @click="selectBlock(sIndex, bIndex)"
                                 >
                                     <span class="vc-builder-structure-node-rail"></span>
-                                    <span class="vc-builder-library-card-mark">{{ blockMark(block.type) }}</span>
+                                    <span class="vc-builder-library-card-mark" aria-hidden="true">
+                                        <svg viewBox="0 0 20 20" fill="none" v-html="blockIconPath(block.type)"></svg>
+                                    </span>
                                     <span class="min-w-0 flex-1 text-left">
                                         <span class="block text-sm font-semibold text-[var(--vc-text)]">{{ blockLabel(block.type) }}</span>
                                         <span class="block text-xs text-[var(--vc-text-soft)]">{{ block.type }}</span>
@@ -201,7 +203,9 @@
                             class="vc-builder-library-card"
                             @click="addLibraryBlock(type)"
                         >
-                            <span class="vc-builder-library-card-mark">{{ blockMark(type) }}</span>
+                            <span class="vc-builder-library-card-mark" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" fill="none" v-html="blockIconPath(type)"></svg>
+                            </span>
                             <span class="min-w-0 flex-1 text-left">
                                 <span class="block text-sm font-semibold text-[var(--vc-text)]">{{ block.name }}</span>
                                 <span class="mt-1 block text-xs text-[var(--vc-text-soft)]">{{ block.description || 'Добавьте блок в выбранную секцию или начните новую структуру страницы.' }}</span>
@@ -568,7 +572,9 @@
                                         >
                                             <div class="vc-builder-block-head">
                                                 <div class="flex min-w-0 items-center gap-3">
-                                                    <span class="vc-builder-block-mark">{{ blockMark(block.type) }}</span>
+                                                    <span class="vc-builder-block-mark" aria-hidden="true">
+                                                        <svg viewBox="0 0 20 20" fill="none" v-html="blockIconPath(block.type)"></svg>
+                                                    </span>
                                                     <div class="min-w-0 vc-builder-block-copy">
                                                         <div class="vc-builder-block-kicker">
                                                             <span class="vc-builder-technical-label">BLK {{ String(bIndex + 1).padStart(2, '0') }}</span>
@@ -1019,26 +1025,41 @@ const filteredBlockEntries = computed(() => {
         });
 });
 
-const blockMark = (type) => {
-    const registryMark = allBlocks.value?.[type]?.editor?.preview?.badge;
-    if (registryMark) {
-        return registryMark;
-    }
-
-    const map = {
-        heading: 'H',
-        text: 'T',
-        button: 'B',
-        image: 'I',
-        video: 'V',
-        gallery: 'G',
-        columns: '2C',
-        container: 'BX',
-        faq: '?',
-        form: 'F',
-    };
-    return map[type] || String(type || '?').slice(0, 1).toUpperCase();
+const defaultBlockIconPath = '<rect x="4" y="4" width="12" height="12" rx="2.4" stroke="currentColor" stroke-width="1.7"/><path d="M7 8h6M7 12h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>';
+const blockIconPaths = {
+    heading: '<path d="M4 5v10M16 5v10M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M11.5 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+    text: '<path d="M5 6h10M5 10h8M5 14h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    list: '<path d="M8 6h8M8 10h8M8 14h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 6h.01M4 10h.01M4 14h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+    button: '<rect x="4" y="7" width="12" height="6" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8 10h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    divider: '<path d="M4 10h12" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
+    faq: '<path d="M7.5 7.2a2.6 2.6 0 115 1.1c-.7.6-1.5 1-1.5 2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M10 15h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+    image: '<rect x="4" y="5" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M6.5 13l2.8-3 2 2 1.2-1.2L15 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.8 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+    video: '<rect x="4" y="5" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M9 8l4 2-4 2V8z" fill="currentColor"/>',
+    gallery: '<rect x="3.8" y="6.5" width="9.8" height="8" rx="1.7" stroke="currentColor" stroke-width="1.5"/><path d="M6.4 6.5V5.8A1.8 1.8 0 018.2 4h6a1.8 1.8 0 011.8 1.8v5.1" stroke="currentColor" stroke-width="1.5"/><path d="M5.7 13l2.1-2.2 1.5 1.4 1-1L12 13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>',
+    icon: '<path d="M10 3.8l1.7 3.4 3.8.6-2.8 2.7.7 3.8-3.4-1.8-3.4 1.8.7-3.8-2.8-2.7 3.8-.6L10 3.8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+    columns: '<rect x="4" y="5" width="5" height="10" rx="1.4" stroke="currentColor" stroke-width="1.6"/><rect x="11" y="5" width="5" height="10" rx="1.4" stroke="currentColor" stroke-width="1.6"/>',
+    container: '<rect x="3.8" y="5" width="12.4" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 8h6M7 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+    spacer: '<path d="M10 4v12M7.5 6.5L10 4l2.5 2.5M7.5 13.5L10 16l2.5-2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    accordion: '<path d="M5 6h10M5 10h10M5 14h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 5l1 1-1 1M14 9l1 1-1 1M14 13l1 1-1 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>',
+    tabs: '<path d="M4 7h4l1 2h7v6H4V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 7h4l1 2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+    collapse: '<path d="M5 7h10M7 11h6M9 15h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+    modal: '<rect x="4" y="5" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 8h6M7 11h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+    form: '<rect x="5" y="4" width="10" height="12" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M7.5 8h5M7.5 11h5M7.5 14h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+    'news-feed': '<path d="M5 5h10v10H5z" stroke="currentColor" stroke-width="1.6"/><path d="M7 8h6M7 11h6M7 14h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+    testimonials: '<path d="M5 6h10v6H8l-3 3V6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+    counter: '<path d="M5 14V9M10 14V6M15 14v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4 16h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+    'pricing-table': '<path d="M6 5h8a2 2 0 012 2v8H4V7a2 2 0 012-2z" stroke="currentColor" stroke-width="1.7"/><path d="M7 9h6M7 12h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+    'product-card': '<path d="M5 7h10l-1 8H6L5 7z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 7a2 2 0 014 0" stroke="currentColor" stroke-width="1.5"/>',
+    'product-list': '<path d="M5 6h3v3H5zM5 11h3v3H5zM10 7h5M10 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+    alert: '<path d="M10 4l7 12H3L10 4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 8.5v3M10 14h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    'progress-bar': '<rect x="4" y="8" width="12" height="4" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M6 10h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+    breadcrumbs: '<path d="M4 10h3M9 10h3M14 10h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7 7l3 3-3 3M12 7l3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    tooltip: '<path d="M5 6h10v6H9l-3 3v-3H5V6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+    'seo-meta': '<path d="M4 6h12M4 10h8M4 14h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 10l2 2-2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    hero: '<path d="M4 14l3.5-4 2.5 2.5L12 10l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 6h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
 };
+
+const blockIconPath = (type) => blockIconPaths[type] || defaultBlockIconPath;
 
 const sectionStructureLabel = (section, index) => sectionPresetLabel(section)
     || section.settings?.css_class
