@@ -5,6 +5,10 @@
 @section('page_title', 'Page Builder')
 @section('page_subtitle', $page->title)
 
+@push('styles')
+    <link rel="stylesheet" href="{{ mix('css/builder-editor.css', 'build') }}">
+@endpush
+
 @section('content')
 <div id="page-builder" class="flex h-[calc(100vh-80px)]">
     <!-- Sidebar: Blocks Library -->
@@ -12,16 +16,11 @@
         <div class="p-4 border-b border-slate-200 bg-white">
             <h3 class="font-semibold text-sm uppercase tracking-wide">Блоки</h3>
         </div>
-        <div class="flex-1 overflow-y-auto p-3 space-y-2">
-            <template v-for="(block, type) in availableBlocks" :key="type">
-                <div 
-                    @click="addBlock(type)"
-                    class="block-item p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-slate-400 hover:shadow transition-all"
-                >
-                    <div class="font-medium text-sm">{{ block.name }}</div>
-                    <div class="text-xs text-slate-500 mt-1">Нажми чтобы добавить</div>
-                </div>
-            </template>
+        <div data-block-library class="flex-1 overflow-y-auto p-3">
+            <!-- Block library rendered by JS -->
+            <div class="text-center text-slate-400 py-8">
+                Загрузка библиотеки блоков...
+            </div>
         </div>
         <div class="p-3 border-t border-slate-200 bg-white">
             <button 
@@ -63,7 +62,7 @@
             </div>
 
             <!-- Blocks Canvas -->
-            <div class="space-y-4">
+            <div data-canvas class="space-y-4">
                 <div 
                     v-if="content.length === 0"
                     class="text-center py-20 bg-white rounded-lg border-2 border-dashed border-slate-300"
@@ -74,6 +73,7 @@
                 <div 
                     v-for="(block, index) in content" 
                     :key="block._id"
+                    data-block-index
                     class="relative bg-white rounded-lg border-2 transition-all"
                     :class="{ 'border-slate-200': selectedIndex !== index, 'border-blue-500 shadow-lg': selectedIndex === index }"
                     @click="selectBlock(index)"
@@ -188,7 +188,7 @@
     </main>
 
     <!-- Settings Panel -->
-    <aside class="w-96 border-l border-slate-200 bg-white overflow-y-auto">
+    <aside data-settings-panel class="w-96 border-l border-slate-200 bg-white overflow-y-auto">
         <div v-if="selectedBlock !== null" class="p-6">
             <h3 class="font-semibold mb-4">Настройки блока</h3>
             
