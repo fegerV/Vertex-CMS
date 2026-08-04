@@ -88,7 +88,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4">
                         <a href="{{ url('/') }}" target="_blank" class="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-950 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                             <span>Перейти на сайт</span>
@@ -96,12 +96,26 @@
 
                         <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
 
-                        <form method="POST" action="{{ route('admin.logout') }}">
-                            @csrf
-                            <button class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 transition-colors">
-                                Выйти
-                            </button>
-                        </form>
+                        @if(auth()->check())
+                        <div class="flex items-center gap-3">
+                            <div class="hidden sm:flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-slate-950 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="font-medium text-slate-950">{{ auth()->user()->name }}</p>
+                                    <p class="text-xs text-slate-500">{{ auth()->user()->email }}</p>
+                                </div>
+                            </div>
+                            <form method="POST" action="{{ route('admin.logout') }}">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-red-600 transition-colors" title="Выйти">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                    <span class="hidden sm:inline">Выйти</span>
+                                </button>
+                            </form>
+                        </div>
+                        @endif
                     </div>
                 </div>
             </header>
