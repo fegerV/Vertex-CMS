@@ -11,6 +11,8 @@ use App\Content\Http\Controllers\CustomFieldGroupController;
 use App\Content\Http\Controllers\PageController;
 use App\Media\Http\Controllers\MediaController;
 use App\Seo\Http\Controllers\RedirectController;
+use App\System\Http\Controllers\QueueController;
+use App\System\Http\Controllers\SecurityController;
 use App\System\Http\Controllers\SystemController;
 use Illuminate\Support\Facades\Route;
 
@@ -178,5 +180,42 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::post('system/cache/clear', [SystemController::class, 'clearCache'])
             ->middleware('vertex.permission:cache.clear')
             ->name('system.cache.clear');
+
+        // Queue monitoring routes
+        Route::get('system/queues', [QueueController::class, 'index'])
+            ->middleware('vertex.permission:system.view')
+            ->name('system.queues');
+        Route::get('system/queues/{queue}', [QueueController::class, 'show'])
+            ->middleware('vertex.permission:system.view')
+            ->name('system.queues.show');
+        Route::post('system/queues/failed/{id}/retry', [QueueController::class, 'retryFailed'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('system.queues.retry-failed');
+        Route::post('system/queues/failed/{id}/delete', [QueueController::class, 'deleteFailed'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('system.queues.delete-failed');
+        Route::post('system/queues/failed/flush', [QueueController::class, 'flushFailed'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('system.queues.flush-failed');
+
+        // Security routes (GDPR & IP Filters)
+        Route::get('security/gdpr', [SecurityController::class, 'gdpr'])
+            ->middleware('vertex.permission:settings.edit')
+            ->name('security.gdpr');
+        Route::post('security/gdpr', [SecurityController::class, 'updateGdpr'])
+            ->middleware('vertex.permission:settings.edit')
+            ->name('security.gdpr.update');
+        Route::get('security/ip-filters', [SecurityController::class, 'ipFilters'])
+            ->middleware('vertex.permission:settings.edit')
+            ->name('security.ip-filters');
+        Route::post('security/ip-filters', [SecurityController::class, 'storeIpFilter'])
+            ->middleware('vertex.permission:settings.edit')
+            ->name('security.ip-filters.store');
+        Route::put('security/ip-filters/{ipFilter}', [SecurityController::class, 'updateIpFilter'])
+            ->middleware('vertex.permission:settings.edit')
+            ->name('security.ip-filters.update');
+        Route::delete('security/ip-filters/{ipFilter}', [SecurityController::class, 'destroyIpFilter'])
+            ->middleware('vertex.permission:settings.edit')
+            ->name('security.ip-filters.destroy');
     });
 });
