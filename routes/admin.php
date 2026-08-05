@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 Route::name("admin.")->prefix("admin")->group(function (): void {
      Route::middleware("guest")->group(function (): void {
          Route::get("/login", [AdminAuthController::class, "showLogin"])->name("login");
-         Route::post("/login", [AdminAuthController::class, "login"])->middleware("throttle:5,15");
+         Route::post("/login", [AdminAuthController::class, "login"])->middleware("throttle:10,5");
      });
 
      // Two-Factor Authentication (requires auth but not yet 2FA verified)
