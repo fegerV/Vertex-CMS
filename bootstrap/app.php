@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->reportable(function (\Throwable $e) {
+            if (class_exists(\Sentry\Laravel\Integration::class)) {
+                \Sentry\Laravel\Integration::captureUnhandledException($e);
+            }
+        });
     })
     ->create();
