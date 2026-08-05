@@ -1,7 +1,1 @@
-```
-# Build artifacts
-public/build/
-
-# Dependencies
-node_modules/
-```
+Nothing should be ignored based on the provided file changes. The modified file 'app/Core/Support/SettingCatalog.php' is a source code file that should not be added to .gitignore. Since there are no build artifacts, dependencies, or temporary files in the changes, no additional ignore rules are needed.
