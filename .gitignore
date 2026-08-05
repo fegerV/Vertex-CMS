@@ -1,39 +1,7 @@
 ```
-# Laravel-specific ignores
-bootstrap/cache/
-storage/framework/cache/
-storage/framework/sessions/
-storage/framework/views/
-database/database.sqlite
+# Build artifacts
+public/build/
 
 # Dependencies
-vendor/
 node_modules/
-
-# Environment
-.env
-.env.local
-.env.*
-
-# Logs
-*.log
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Editor backups
-*.swp
-*.swo
-*.tmp
-
-# Coverage reports
-coverage/
-htmlcov/
-.coverage
-
-# PHP specific
-*.php~
-**/vendor/**/*
-composer.lock
 ```
