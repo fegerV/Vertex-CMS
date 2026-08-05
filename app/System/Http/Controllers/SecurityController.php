@@ -11,13 +11,13 @@ use Illuminate\View\View;
 
 class SecurityController extends Controller
 {
-    public function gdprSettings(): View
+    public function gdpr(): View
     {
         $settings = GdprSetting::first() ?? new GdprSetting();
         return view('admin.security.gdpr', compact('settings'));
     }
 
-    public function updateGdprSettings(Request $request): RedirectResponse
+    public function updateGdpr(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'enabled' => 'boolean',
