@@ -1,19 +1,47 @@
-/vendor
-/node_modules
-/.idea
-/.vscode
-/.phpunit.cache
-/.env
-/public/build
-/public/hot
-/storage/*.key
-/storage/logs/*.log
-/storage/framework/cache/*
-/storage/framework/sessions/*
-/storage/framework/testing/*
-/storage/framework/views/*
-/storage/app/*.sqlite
-/bootstrap/cache/*.php
-!.gitkeep
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
 
-/database/database.sqlite
+# Dependencies
+vendor/
+node_modules/
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# PHP specific
+*.php~
+.php_cs.cache
+
+# Laravel specific
+storage/
+bootstrap/cache/
+```
