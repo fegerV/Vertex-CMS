@@ -1,0 +1,117 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: vertex_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, mysql, gd, zip
+          coverage: xdebug
+      
+      - name: Install Dependencies
+        run: |
+          composer install --no-progress --prefer-dist --optimize-autoloader
+          npm install
+          npm run build
+      
+      - name: Copy Environment File
+        run: cp .env.example .env
+      
+      - name: Generate Application Key
+        run: php artisan key:generate
+      
+      - name: Run Migrations
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: vertex_test
+          DB_USERNAME: root
+          DB_PASSWORD: password
+      
+      - name: Run Tests
+        run: php artisan test --coverage-clover=coverage.xml
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: vertex_test
+          DB_USERNAME: root
+          DB_PASSWORD: password
+          REDIS_HOST: 127.0.0.1
+      
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: phpstan, pint
+      
+      - name: Install Dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+      
+      - name: Run PHPStan
+        run: phpstan analyse --memory-limit=1G
+      
+      - name: Run Pint (Code Style)
+        run: pint --test
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [tests, static-analysis]
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Docker Image
+        run: docker-compose build app
+      
+      - name: Run Security Scan
+        run: echo "Security scan would run here"
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Deploy to Production
+        run: echo "Deployment would happen here"
