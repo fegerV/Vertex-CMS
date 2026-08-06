@@ -1,3 +1,5 @@
+@import "./builder-components.css";
+@import "./builder-editor.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

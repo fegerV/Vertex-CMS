@@ -1,3 +1,4 @@
+{{-- resources/views/builder/blocks/product-list.blade.php --}}
 @php
     $products = $settings['products'] ?? [];
     $columns = $settings['columns'] ?? 4;
@@ -5,52 +6,31 @@
     $showRating = $settings['show_rating'] ?? true;
     $showPrice = $settings['show_price'] ?? true;
     $showAddToCart = $settings['show_add_to_cart'] ?? true;
-    
-    $gridCols = [
-        1 => 'grid-cols-1',
-        2 => 'grid-cols-2',
-        3 => 'grid-cols-2 md:grid-cols-3',
-        4 => 'grid-cols-2 md:grid-cols-4',
-        5 => 'grid-cols-2 md:grid-cols-5',
-        6 => 'grid-cols-3 md:grid-cols-6',
-    ];
+    $cssClass = $settings['css_class'] ?? '';
 @endphp
 
-<div class="vc-product-list">
-    @if($layout === 'list')
-        <div class="space-y-4">
-            @foreach($products as $product)
-                {{-- Horizontal card layout --}}
-                <div class="flex bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                    <div class="w-32 h-32 flex-shrink-0 bg-gray-100">
-                        @if(!empty($product['image']))
-                            <img src="{{ $product['image'] }}" alt="{{ $product['title'] ?? '' }}" class="w-full h-full object-cover">
-                        @endif
+<div class="vc-product-list {{ $cssClass }}">
+    <div class="grid {{ $layout === 'grid' ? 'grid-cols-' . $columns : 'grid-cols-1' }} gap-6">
+        @foreach($products as $product)
+            <div class="vc-product-item border rounded-lg p-4 hover:shadow-lg transition-shadow">
+                @if(isset($product['image']))
+                    <img src="{{ $product['image'] }}" alt="{{ $product['title'] ?? '' }}" class="w-full h-48 object-cover rounded mb-4">
+                @endif
+                <h3 class="font-semibold text-lg mb-2">{{ $product['title'] ?? 'Товар' }}</h3>
+                @if($showRating && isset($product['rating']))
+                    <div class="flex items-center mb-2">
+                        @for($i = 0; $i < 5; $i++)
+                            <span class="{{ $i < ($product['rating'] ?? 0) ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                        @endfor
                     </div>
-                    <div class="p-4 flex flex-col justify-center flex-grow">
-                        <h4 class="font-bold text-gray-900 mb-1">{{ $product['title'] ?? '' }}</h4>
-                        @if($showPrice)
-                            <div class="text-lg font-black text-blue-600">{{ $product['price'] ?? 0 }}₽</div>
-                        @endif
-                    </div>
-                    @if($showAddToCart)
-                        <div class="p-4 flex items-center">
-                            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-bold">Add</button>
-                        </div>
-                    @endif
-                </div>
-            @endforeach
-        </div>
-    @else
-        <div class="grid {{ $gridCols[$columns] ?? 'grid-cols-4' }} gap-4">
-            @foreach($products as $product)
-                {!! app(\App\Builder\Services\PageBuilderService::class)->compileBlock('product-card', [
-                    'title' => $product['title'] ?? '',
-                    'price' => $product['price'] ?? 0,
-                    'image' => $product['image'] ?? null,
-                    'rating' => $showRating ? 5 : 0,
-                ]) !!}
-            @endforeach
-        </div>
-    @endif
+                @endif
+                @if($showPrice && isset($product['price']))
+                    <p class="text-xl font-bold text-slate-900 mb-3">${{ number_format($product['price'], 2) }}</p>
+                @endif
+                @if($showAddToCart)
+                    <button class="w-full bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800">В корзину</button>
+                @endif
+            </div>
+        @endforeach
+    </div>
 </div>

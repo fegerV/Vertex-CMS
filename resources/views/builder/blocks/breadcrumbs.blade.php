@@ -1,24 +1,21 @@
+{{-- resources/views/builder/blocks/breadcrumbs.blade.php --}}
 @php
-    $items = $settings['items'] ?? [];
+    $items = $settings['items'] ?? [['title' => 'Главная', 'url' => '/'], ['title' => 'Текущая страница', 'url' => null]];
     $separator = $settings['separator'] ?? '/';
+    $cssClass = $settings['css_class'] ?? '';
 @endphp
 
-<nav class="vc-breadcrumbs flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+<nav class="vc-breadcrumbs {{ $cssClass }}" aria-label="Хлебные крошки">
+    <ol class="flex items-center space-x-2 text-sm">
         @foreach($items as $index => $item)
-            <li class="inline-flex items-center">
+            <li class="flex items-center">
                 @if($index > 0)
-                    <span class="mx-2 text-gray-400">{{ $separator }}</span>
+                    <span class="mx-2 text-slate-400">{{ $separator }}</span>
                 @endif
-                
-                @if(!empty($item['url']))
-                    <a href="{{ $item['url'] }}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                        {{ $item['title'] ?? '' }}
-                    </a>
+                @if(isset($item['url']) && $item['url'] !== null && $index < count($items) - 1)
+                    <a href="{{ $item['url'] }}" class="text-blue-600 hover:underline">{{ $item['title'] }}</a>
                 @else
-                    <span class="text-sm font-medium text-gray-500">
-                        {{ $item['title'] ?? '' }}
-                    </span>
+                    <span class="text-slate-500">{{ $item['title'] }}</span>
                 @endif
             </li>
         @endforeach

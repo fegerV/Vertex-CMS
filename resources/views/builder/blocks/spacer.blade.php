@@ -2,4 +2,4 @@
     $height = $settings['height'] ?? 32;
 @endphp
 
-<div class="vc-spacer" style="height: {{ $height }}px;"></div>
+<div class="pb-spacer" style="height: {{ $height }}px;"></div>

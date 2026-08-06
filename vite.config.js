@@ -38,6 +38,7 @@ export default defineConfig({
                 // Separate entry points for admin and frontend
                 app: resolve(__dirname, 'resources/js/app.js'),
                 admin: resolve(__dirname, 'resources/js/admin/app.js'),
+                builder: resolve(__dirname, 'resources/js/builder/index.js'),
             },
         },
         // Minification
@@ -57,10 +58,14 @@ export default defineConfig({
     },
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/admin/app.js'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.js',
+                'resources/js/admin/app.js',
+                'resources/js/builder/index.js',
+            ],
             refresh: true,
         }),
         vue(),
     ],
 });
-

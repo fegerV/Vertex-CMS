@@ -1,42 +1,41 @@
 @php
-    $type = $settings['type'] ?? 'youtube';
-    $url = $settings['url'] ?? '';
+    $videoType = $settings['type'] ?? 'youtube';
+    $videoUrl = $settings['url'] ?? '';
+    $autoplay = $settings['autoplay'] ?? false;
+    $loop = $settings['loop'] ?? false;
+    $muted = $settings['muted'] ?? false;
+    $controls = $settings['controls'] ?? true;
     $ratio = $settings['ratio'] ?? '16:9';
     
-    $ratios = [
-        '16:9' => 'aspect-video',
-        '4:3' => 'aspect-square',
-        '1:1' => 'aspect-square',
-        '21:9' => 'aspect-[21/9]',
-    ];
-    
-    $ratioClass = $ratios[$ratio] ?? 'aspect-video';
+    // Получаем embed URL
+    $embedUrl = '';
+    if ($videoType === 'youtube') {
+        preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\?\/]+)/', $videoUrl, $matches);
+        $embedUrl = isset($matches[1]) ? 'https://www.youtube.com/embed/' . $matches[1] : '';
+    } elseif ($videoType === 'vimeo') {
+        preg_match('/vimeo\.com\/(\d+)/', $videoUrl, $matches);
+        $embedUrl = isset($matches[1]) ? 'https://player.vimeo.com/video/' . $matches[1] : '';
+    }
 @endphp
 
-<div class="vc-video w-full {{ $ratioClass }}">
-    @if($url === '')
-        <div class="vc-media-placeholder vc-video-placeholder flex h-full items-center justify-center bg-gray-100 text-gray-500">Video placeholder</div>
-    @elseif($type === 'youtube')
-        @php
-            preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $matches);
-            $id = $matches[1] ?? '';
-        @endphp
-        @if($id)
-            <iframe class="w-full h-full" src="https://www.youtube.com/embed/{{ $id }}" frameborder="0" allowfullscreen></iframe>
-        @else
-            <div class="flex items-center justify-center bg-gray-100 text-gray-500 h-full">Invalid YouTube URL</div>
+<div class="pb-video pb-video--{{ $ratio }}">
+    <div class="pb-video__wrapper">
+        @if($embedUrl)
+            <iframe 
+                src="{{ $embedUrl }}?@if($autoplay)autoplay=1@endif@if($loop)&loop=1@endif@if($muted)&muted=1@endif"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                @if(!$controls) style="pointer-events: none;"@endif
+            ></iframe>
+        @elseif($videoType === 'html5' && $videoUrl)
+            <video 
+                src="{{ $videoUrl }}"
+                @if($autoplay)autoplay muted@endif
+                @if($loop)loop@endif
+                @if($controls)controls@endif
+                class="pb-video__html5"
+            ></video>
         @endif
-    @elseif($type === 'vimeo')
-        @php
-            preg_match('/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/|\?)/', $url, $matches);
-            $id = $matches[1] ?? '';
-        @endphp
-        @if($id)
-            <iframe class="w-full h-full" src="https://player.vimeo.com/video/{{ $id }}" frameborder="0" allowfullscreen></iframe>
-        @else
-            <div class="flex items-center justify-center bg-gray-100 text-gray-500 h-full">Invalid Vimeo URL</div>
-        @endif
-    @else
-        <video src="{{ $url }}" class="w-full h-full" controls></video>
-    @endif
+    </div>
 </div>

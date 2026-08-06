@@ -1,30 +1,19 @@
+{{-- resources/views/builder/blocks/collapse.blade.php --}}
 @php
-    $title = $settings['title'] ?? 'Title';
-    $content = $settings['content'] ?? '';
+    $title = $settings['title'] ?? 'Заголовок';
+    $content = $settings['content'] ?? 'Скрытый контент...';
     $open = $settings['open'] ?? false;
+    $cssClass = $settings['css_class'] ?? '';
+    $uniqueId = 'collapse-' . uniqid();
 @endphp
 
-<div class="vc-collapse border border-gray-200 rounded-lg mb-4" x-data="{ isOpen: {{ $open ? 'true' : 'false' }} }">
-    <button 
-        @click="isOpen = !isOpen" 
-        class="w-full flex items-center justify-between p-4 focus:outline-none"
-    >
-        <span class="font-medium text-gray-900">{{ $title }}</span>
-        <svg 
-            class="w-5 h-5 transition-transform duration-200" 
-            :class="isOpen ? 'rotate-180' : ''" 
-            fill="none" viewBox="0 0 24 24" stroke="currentColor"
-        >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+<div class="vc-collapse {{ $cssClass }}" id="{{ $uniqueId }}">
+    <button class="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
+            onclick="document.getElementById('{{ $uniqueId }}-content').classList.toggle('hidden'); this.querySelector('.chevron').style.transform = this.querySelector('.chevron').style.transform === 'rotate(180deg)' ? 'rotate(0deg)' : 'rotate(180deg)';">
+        <span class="font-medium">{{ $title }}</span>
+        <span class="chevron transition-transform {{ $open ? '' : '-rotate-90' }}" style="transition: transform 0.3s;">▼</span>
     </button>
-    <div 
-        x-show="isOpen" 
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 max-h-0"
-        x-transition:enter-end="opacity-100 max-h-screen"
-        class="p-4 border-t border-gray-200 bg-gray-50 overflow-hidden"
-    >
-        {!! $content !!}
+    <div id="{{ $uniqueId }}-content" class="{{ $open ? '' : 'hidden' }} p-4">
+        <div class="text-slate-600">{{ $content }}</div>
     </div>
 </div>

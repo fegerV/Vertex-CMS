@@ -1,32 +1,18 @@
 @php
-    $value = $settings['value'] ?? 0;
+    $value = $settings['value'] ?? 100;
+    $suffix = $settings['suffix'] ?? '+';
     $prefix = $settings['prefix'] ?? '';
-    $suffix = $settings['suffix'] ?? '';
     $duration = $settings['duration'] ?? 2000;
     $label = $settings['label'] ?? '';
 @endphp
 
-<div class="vc-counter text-center p-4" x-data="{ 
-    current: 0, 
-    target: {{ $value }}, 
-    duration: {{ $duration }},
-    start() {
-        let startTimestamp = null;
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / this.duration, 1);
-            this.current = Math.floor(progress * this.target);
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
-            }
-        };
-        window.requestAnimationFrame(step);
-    }
-}" x-intersect.once="start()">
-    <div class="text-4xl font-bold text-blue-600 mb-1">
-        <span>{{ $prefix }}</span><span x-text="current">0</span><span>{{ $suffix }}</span>
+<div class="pb-counter" data-value="{{ $value }}" data-duration="{{ $duration }}">
+    <div class="pb-counter__number">
+        <span class="pb-counter__prefix">{{ $prefix }}</span>
+        <span class="pb-counter__value">0</span>
+        <span class="pb-counter__suffix">{{ $suffix }}</span>
     </div>
     @if($label)
-        <div class="text-gray-600 font-medium">{{ $label }}</div>
+        <div class="pb-counter__label">{{ $label }}</div>
     @endif
 </div>

@@ -5,4 +5,10 @@
     $width = $settings['width'] ?? '100%';
 @endphp
 
-<hr class="vc-divider" style="border: none; border-top: {{ $thickness }}px {{ $style }} {{ $color }}; width: {{ $width }}; margin: 1rem 0;">
+<hr 
+    class="pb-divider pb-divider--{{ $style }}"
+    style="
+        border-top: {{ $thickness }}px {{ $style }} {{ $color }};
+        width: {{ $width }};
+    "
+/>

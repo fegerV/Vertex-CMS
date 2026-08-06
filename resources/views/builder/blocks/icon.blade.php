@@ -1,48 +1,28 @@
 @php
     $icon = $settings['icon'] ?? 'star';
     $size = $settings['size'] ?? 'md';
-    $color = $settings['color'] ?? 'currentColor';
+    $color = $settings['color'] ?? '#6b7280';
     $background = $settings['background'] ?? null;
     $radius = $settings['radius'] ?? 'none';
     
-    $sizes = [
-        'sm' => 'w-4 h-4',
-        'md' => 'w-6 h-6',
-        'lg' => 'w-8 h-8',
-        'xl' => 'w-12 h-12',
+    // SVG иконки
+    $icons = [
+        'star' => '<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+        'heart' => '<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+        'check' => '<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
+        'x' => '<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
+        'arrow' => '<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>',
+        'dots' => '<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="12" cy="19" r="2"/></svg>',
     ];
-    
-    $containerSizes = [
-        'sm' => 'p-1',
-        'md' => 'p-2',
-        'lg' => 'p-3',
-        'xl' => 'p-4',
-    ];
-    
-    $radii = [
-        'none' => 'rounded-none',
-        'sm' => 'rounded-sm',
-        'md' => 'rounded-full',
-        'lg' => 'rounded-lg',
-    ];
-    
-    $iconClass = $sizes[$size] ?? $sizes['md'];
-    $containerClass = $radii[$radius] ?? 'rounded-none';
+    $svgContent = $icons[$icon] ?? $icons['star'];
 @endphp
 
-<div class="vc-icon inline-flex items-center justify-center {{ $containerClass }}" 
-     style="@if($background) background-color: {{ $background }}; @endif color: {{ $color }};">
-    @if($icon === 'star')
-        <svg class="{{ $iconClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.175 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
-    @elseif($icon === 'heart')
-        <svg class="{{ $iconClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-    @elseif($icon === 'check')
-        <svg class="{{ $iconClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-    @elseif($icon === 'x')
-        <svg class="{{ $iconClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-    @elseif($icon === 'arrow')
-        <svg class="{{ $iconClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-    @else
-        <svg class="{{ $iconClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
-    @endif
-</div>
+<span 
+    class="pb-icon pb-icon--{{ $size }} pb-icon--radius-{{ $radius }}"
+    style="
+        @if($color) color: {{ $color }}; @endif
+        @if($background) background-color: {{ $background }}; @endif
+    "
+>
+    {!! $svgContent !!}
+</span>
