@@ -310,3 +310,14 @@ Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function ()
     Route::get('ecommerce/cart', [App\Ecommerce\Http\Controllers\CartController::class, 'index'])
         ->name('ecommerce.cart.index');
 });
+
+// E-commerce settings and notifications routes (placeholder)
+Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function (): void {
+    Route::get('ecommerce/settings', function() {
+        return view('admin.ecommerce.settings.index');
+    })->name('ecommerce.settings');
+    
+    Route::get('ecommerce/notifications', function() {
+        return view('admin.ecommerce.notifications.index');
+    })->name('ecommerce.notifications');
+});
