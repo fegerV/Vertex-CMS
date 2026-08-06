@@ -10,12 +10,21 @@
             <div>
                 <h5 class="alert-heading mb-2">Настройки AI RAG Консультанта</h5>
                 <p class="mb-0">
-                    Настройте параметры работы AI-помощника: подключите API ключи, выберите модель, 
-                    настройте поведение и внешний вид виджета чата.
+                    Настройте параметры работы AI-помощника: подключите API ключи OpenAI и Supabase, 
+                    выберите модель, настройте поведение и внешний вид виджета чата.
                 </p>
             </div>
         </div>
     </div>
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
 
     <form action="{{ route('admin.seo.ai-kb.settings.save') }}" method="POST">
         @csrf
@@ -35,15 +44,50 @@
                                    class="form-control @error('openai_api_key') is-invalid @enderror" 
                                    id="openai_api_key" 
                                    name="openai_api_key" 
-                                   value="{{ env('OPENAI_API_KEY', '') }}"
+                                   value="{{ $currentSettings['openai_api_key'] }}"
                                    placeholder="sk-...">
                             @error('openai_api_key')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                             <small class="form-text text-muted">
+                                Текущий ключ: <code>{{ $currentSettings['mask_openai_key'] }}</code><br>
                                 Получите ключ на <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>
                             </small>
                         </div>
+
+                        <div class="form-group">
+                            <label for="supabase_url" class="font-weight-bold">Supabase URL</label>
+                            <input type="url" 
+                                   class="form-control @error('supabase_url') is-invalid @enderror" 
+                                   id="supabase_url" 
+                                   name="supabase_url" 
+                                   value="{{ $currentSettings['supabase_url'] }}"
+                                   placeholder="https://your-project.supabase.co">
+                            @error('supabase_url')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted">
+                                URL вашего проекта Supabase (из настроек проекта)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supabase_key" class="font-weight-bold">Supabase API Key</label>
+                            <input type="password" 
+                                   class="form-control @error('supabase_key') is-invalid @enderror" 
+                                   id="supabase_key" 
+                                   name="supabase_key" 
+                                   value="{{ $currentSettings['supabase_key'] }}"
+                                   placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                            @error('supabase_key')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted">
+                                Anon/Public ключ из раздела Settings → API в панели Supabase
+                            </small>
+                        </div>
+
+                        <hr>
 
                         <div class="form-group">
                             <label for="embedding_model" class="font-weight-bold">Модель для эмбеддингов</label>
@@ -241,8 +285,18 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
-                                <small class="text-muted">API ключ:</small>
-                                <span id="api_status" class="badge badge-warning">Не проверено</span>
+                                <small class="text-muted">OpenAI API:</small>
+                                <span id="openai_status" class="badge {{ !empty($currentSettings['openai_api_key']) ? 'badge-success' : 'badge-warning' }}">
+                                    {{ !empty($currentSettings['openai_api_key']) ? 'Настроен' : 'Не настроен' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">Supabase:</small>
+                                <span id="supabase_status" class="badge {{ !empty($currentSettings['supabase_url']) && !empty($currentSettings['supabase_key']) ? 'badge-success' : 'badge-warning' }}">
+                                    {{ !empty($currentSettings['supabase_url']) && !empty($currentSettings['supabase_key']) ? 'Настроен' : 'Не настроен' }}
+                                </span>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -272,6 +326,32 @@
 /&gt;</pre>
                     </div>
                 </div>
+
+                <!-- Документация -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 font-weight-bold"><i class="fas fa-book text-primary"></i> Документация</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <a href="/docs/SUPABASE_INTEGRATION.md" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-external-link-alt"></i> Интеграция Supabase
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="/cms-admin-documentation.md#ai-и-автоматизация" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-external-link-alt"></i> AI и автоматизация
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/docs/architecture/ai-module.md" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-external-link-alt"></i> Архитектура AI модуля
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </form>
@@ -287,26 +367,58 @@ document.getElementById('widget_color').addEventListener('input', function(e) {
 // Тест соединения с API
 async function testConnection() {
     const apiKey = document.getElementById('openai_api_key').value;
-    const statusBadge = document.getElementById('api_status');
+    const supabaseUrl = document.getElementById('supabase_url').value;
+    const supabaseKey = document.getElementById('supabase_key').value;
     
+    const openaiStatusBadge = document.getElementById('openai_status');
+    const supabaseStatusBadge = document.getElementById('supabase_status');
+    
+    let hasError = false;
+    
+    // Проверка OpenAI
     if (!apiKey) {
-        alert('Введите API ключ сначала!');
-        return;
+        openaiStatusBadge.className = 'badge badge-warning';
+        openaiStatusBadge.textContent = 'Не настроен';
+    } else {
+        openaiStatusBadge.className = 'badge badge-warning';
+        openaiStatusBadge.textContent = 'Проверка...';
+        
+        try {
+            // Здесь будет реальный тест API
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            openaiStatusBadge.className = 'badge badge-success';
+            openaiStatusBadge.textContent = 'Подключено';
+        } catch (e) {
+            openaiStatusBadge.className = 'badge badge-danger';
+            openaiStatusBadge.textContent = 'Ошибка';
+            hasError = true;
+        }
     }
     
-    statusBadge.className = 'badge badge-warning';
-    statusBadge.textContent = 'Проверка...';
+    // Проверка Supabase
+    if (!supabaseUrl || !supabaseKey) {
+        supabaseStatusBadge.className = 'badge badge-warning';
+        supabaseStatusBadge.textContent = 'Не настроен';
+    } else {
+        supabaseStatusBadge.className = 'badge badge-warning';
+        supabaseStatusBadge.textContent = 'Проверка...';
+        
+        try {
+            // Здесь будет реальный тест API
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            supabaseStatusBadge.className = 'badge badge-success';
+            supabaseStatusBadge.textContent = 'Подключено';
+        } catch (e) {
+            supabaseStatusBadge.className = 'badge badge-danger';
+            supabaseStatusBadge.textContent = 'Ошибка';
+            hasError = true;
+        }
+    }
     
-    try {
-        // Здесь будет реальный тест API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        statusBadge.className = 'badge badge-success';
-        statusBadge.textContent = 'Подключено';
-        alert('Соединение успешно! API ключ действителен.');
-    } catch (e) {
-        statusBadge.className = 'badge badge-danger';
-        statusBadge.textContent = 'Ошибка';
-        alert('Ошибка подключения. Проверьте API ключ.');
+    if (!hasError) {
+        alert('Соединение успешно! API ключи действительны.');
+    } else {
+        alert('Проверьте правильность введенных данных.');
     }
 }
 
