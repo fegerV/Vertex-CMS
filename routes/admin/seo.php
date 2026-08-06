@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Seo\SearchConsoleController;
 use App\Http\Controllers\Admin\Seo\DuplicatesController;
 use App\Http\Controllers\Admin\Seo\AiImagesController;
 use App\Http\Controllers\Admin\Seo\SocialMediaController;
+use App\Http\Controllers\Admin\Seo\ImageSeoController;
 use App\Seo\Http\Controllers\RedirectController;
 use App\Seo\Http\Controllers\RobotsController;
 use App\Seo\Http\Controllers\SeoDashboardController;
@@ -200,3 +201,15 @@ Route::get('seo/settings', [SeoDashboardController::class, 'settings'])
 Route::post('seo/settings/update', [SeoDashboardController::class, 'updateSettings'])
     ->middleware('vertex.permission:seo.settings')
     ->name('seo.settings.update');
+
+// ==========================================
+// Image SEO Analyzer Routes
+// ==========================================
+Route::prefix('images')->name('images.')->group(function () {
+    Route::get('/', [ImageSeoController::class, 'index'])->name('index');
+    Route::post('/update-alt', [ImageSeoController::class, 'updateAlt'])->name('update-alt');
+    Route::post('/generate-alt', [ImageSeoController::class, 'generateAltAi'])->name('generate-alt');
+    Route::post('/lazy-load', [ImageSeoController::class, 'enableLazyLoad'])->name('lazy-load');
+    Route::post('/compress', [ImageSeoController::class, 'compressImages'])->name('compress');
+    Route::post('/sitemap', [ImageSeoController::class, 'generateImageSitemap'])->name('sitemap');
+});
