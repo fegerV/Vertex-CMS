@@ -1,1 +1,32 @@
-Nothing should be ignored in this case, as the changes consist only of source code files (`.php`, `.blade.php`) and there are no build artifacts, dependencies, or temporary files present in the file change list.
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
+coverage/
+htmlcov/
+.coverage
+
+# Dependencies
+vendor/
+node_modules/
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+```
