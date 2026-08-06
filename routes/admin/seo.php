@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Seo\DuplicatesController;
 use App\Http\Controllers\Admin\Seo\AiImagesController;
 use App\Http\Controllers\Admin\Seo\SocialMediaController;
 use App\Http\Controllers\Admin\Seo\ImageSeoController;
+use App\Http\Controllers\Admin\Seo\KeywordMapsController;
 use App\Seo\Http\Controllers\RedirectController;
 use App\Seo\Http\Controllers\RobotsController;
 use App\Seo\Http\Controllers\SeoDashboardController;
@@ -256,4 +257,20 @@ Route::prefix('images')->name('images.')->group(function () {
     Route::post('/lazy-load', [ImageSeoController::class, 'enableLazyLoad'])->name('lazy-load');
     Route::post('/compress', [ImageSeoController::class, 'compressImages'])->name('compress');
     Route::post('/sitemap', [ImageSeoController::class, 'generateImageSitemap'])->name('sitemap');
+});
+
+// ==========================================
+// Keyword Maps (Auto-Linking) Routes
+// ==========================================
+Route::prefix('keyword-maps')->name('keyword-maps.')->middleware('vertex.permission:seo.edit')->group(function () {
+    Route::get('/', [KeywordMapsController::class, 'index'])->name('index');
+    Route::get('/create', [KeywordMapsController::class, 'create'])->name('create');
+    Route::post('/', [KeywordMapsController::class, 'store'])->name('store');
+    Route::get('/{keywordMap}', [KeywordMapsController::class, 'show'])->name('show');
+    Route::get('/{keywordMap}/edit', [KeywordMapsController::class, 'edit'])->name('edit');
+    Route::put('/{keywordMap}', [KeywordMapsController::class, 'update'])->name('update');
+    Route::delete('/{keywordMap}', [KeywordMapsController::class, 'destroy'])->name('destroy');
+    Route::post('/{keywordMap}/generate-ai', [KeywordMapsController::class, 'generateAiVariants'])->name('generate-ai');
+    Route::post('/preview', [KeywordMapsController::class, 'preview'])->name('preview');
+    Route::post('/bulk-toggle', [KeywordMapsController::class, 'bulkToggle'])->name('bulk-toggle');
 });

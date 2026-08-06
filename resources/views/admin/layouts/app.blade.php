@@ -97,6 +97,7 @@
                     ['label' => 'Анализатор Изображений', 'route' => 'admin.seo.images.index', 'permission' => 'seo.edit'],
                     ['label' => 'Соцсети (OG)', 'route' => 'admin.seo.social-media', 'permission' => 'seo.edit'],
                     ['label' => 'AI Мониторинг', 'route' => 'admin.seo.ai-monitor.index', 'permission' => 'seo.view'],
+                    ['label' => 'Карты ключевых слов', 'route' => 'admin.seo.keyword-maps.index', 'permission' => 'seo.edit'],
                     ['label' => 'Настройки SEO', 'route' => 'admin.seo.settings', 'permission' => 'seo.settings'],
                 ]
             ],
