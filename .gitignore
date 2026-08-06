@@ -1,10 +1,24 @@
+```
 # Compiled and build artifacts
 *.pyc
 __pycache__/
+*.o
+*.obj
+dist/
+build/
+target/
 
 # Dependencies
-vendor/
 node_modules/
+vendor/
+*.lock
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
 .env
 .env.local
 .env.*
@@ -12,33 +26,27 @@ node_modules/
 # Editors
 .vscode/
 .idea/
-
-# Logs and temp files
-*.log
-*.tmp
 *.swp
+*.swo
 
 # OS generated files
 .DS_Store
 Thumbs.db
 
-# Build and distribution
-dist/
-build/
-target/
+# Laravel specific
+bootstrap/cache/
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+public/storage
+
+# Coverage reports
 coverage/
 htmlcov/
+.coverage
+
+# MyPy cache
 .mypy_cache/
 .pytest_cache/
-
-# PHP specific
-*.php~
-*.php.bak
-*.php.swp
-
-# Laravel/PHP frameworks
-storage/
-bootstrap/cache/
-.npm/
-.yarn/
-composer.lock
+```
