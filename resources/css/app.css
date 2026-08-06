@@ -963,6 +963,46 @@ html[data-theme='dark'] .vc-file-input {
     box-shadow: var(--vc-shadow-soft);
 }
 
+/* Compact admin density: keep descriptions, reduce decorative whitespace. */
+.vc-admin-density-compact .vc-button {
+    gap: 0.4rem;
+    border-radius: 0.65rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.84rem;
+}
+
+.vc-admin-density-compact .vc-input,
+.vc-admin-density-compact .vc-select,
+.vc-admin-density-compact .vc-textarea {
+    border-radius: 0.65rem;
+    padding: 0.62rem 0.75rem;
+}
+
+.vc-admin-density-compact .vc-checkbox-row {
+    gap: 0.5rem;
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.75rem;
+}
+
+.vc-admin-density-compact .vc-form-surface {
+    border-radius: var(--vc-radius-lg);
+    padding: 1rem;
+}
+
+.vc-admin-density-compact:not(.vc-admin-body-builder) .vc-panel[class*="p-6"] {
+    padding: 1rem;
+}
+
+.vc-admin-density-compact:not(.vc-admin-body-builder) table th {
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+}
+
+.vc-admin-density-compact:not(.vc-admin-body-builder) table td {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+
 .vc-section-divider {
     border-top: 1px solid var(--vc-border);
     padding-top: 1.5rem;

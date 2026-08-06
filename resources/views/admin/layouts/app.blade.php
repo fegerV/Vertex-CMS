@@ -53,7 +53,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100" x-data="{ sidebarOpen: false, sidebarCollapsed: false, searchOpen: false, userMenuOpen: false }" :class="{ 'sidebar-collapsed': sidebarCollapsed && !sidebarOpen }">
+<body class="vc-admin-density-compact @yield('body_class') bg-slate-100 text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100" x-data="{ sidebarOpen: false, sidebarCollapsed: false, searchOpen: false, userMenuOpen: false }" :class="{ 'sidebar-collapsed': sidebarCollapsed && !sidebarOpen }">
     @php
         $user = auth()->user();
         $navigation = [
@@ -152,11 +152,11 @@
         <!-- Sidebar -->
         <aside 
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-            class="fixed inset-y-0 left-0 z-50 w-72 transform bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 ease-in-out lg:static lg:min-h-screen"
+            class="fixed inset-y-0 left-0 z-50 w-60 transform bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 ease-in-out lg:static lg:min-h-screen"
             :class="{ 'lg:w-18': sidebarCollapsed && !sidebarOpen }"
         >
             <!-- Logo & Collapse toggle -->
-            <div class="sidebar-header flex items-center justify-between px-4 py-4 border-b border-slate-100 dark:border-slate-700">
+            <div class="sidebar-header flex items-center justify-between px-3 py-3 border-b border-slate-100 dark:border-slate-700">
                 <div class="sidebar-logo-text overflow-hidden transition-all duration-300" x-show="!sidebarCollapsed || sidebarOpen">
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">VertexCMS</p>
                     <p class="mt-1 text-lg font-bold text-slate-800 dark:text-slate-100">{{ config_value('site.name', config('app.name')) }}</p>
@@ -190,7 +190,7 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+            <nav class="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
                 @foreach ($navigation as $item)
                     @continue($item['permission'] && ! $user?->hasPermission($item['permission']))
                     
@@ -199,7 +199,7 @@
                         <div x-data="{ expanded: false }">
                             <button
                                 @click="expanded = !expanded"
-                                class="sidebar-nav-item group flex items-center justify-between gap-3 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-all {{ request()->routeIs($item['active']) ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white' }}"
+                                class="sidebar-nav-item group flex items-center justify-between gap-2 w-full rounded-md px-2.5 py-2 text-sm font-medium transition-all {{ request()->routeIs($item['active']) ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white' }}"
                                 :title="sidebarCollapsed && !sidebarOpen ? '{{ $item['label'] }}' : ''"
                             >
                                 <div class="flex items-center gap-3">
@@ -228,7 +228,7 @@
                         {{-- Regular menu item --}}
                         <a
                             href="{{ route($item['route']) }}"
-                            class="sidebar-nav-item group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all {{ request()->routeIs($item['active']) ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white' }}"
+                            class="sidebar-nav-item group flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-all {{ request()->routeIs($item['active']) ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white' }}"
                             :title="sidebarCollapsed && !sidebarOpen ? '{{ $item['label'] }}' : ''"
                         >
                             <span class="sidebar-nav-icon {{ request()->routeIs($item['active']) ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' }}">
@@ -241,9 +241,9 @@
             </nav>
 
             <!-- User info at bottom -->
-            <div class="sidebar-user-info border-t border-slate-100 dark:border-slate-700 p-4" x-show="!sidebarCollapsed || sidebarOpen">
-                <div class="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-sm">
+            <div class="sidebar-user-info border-t border-slate-100 dark:border-slate-700 p-2" x-show="!sidebarCollapsed || sidebarOpen">
+                <div class="flex items-center gap-2 rounded-md bg-slate-50 dark:bg-slate-700 p-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-xs">
                         {{ strtoupper(substr($user->name ?? 'U', 0, 2)) }}
                     </div>
                     <div class="flex-1 min-w-0">
@@ -258,7 +258,7 @@
         <div class="flex-1 flex flex-col min-w-0">
             <!-- Top header -->
             <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md">
-                <div class="flex items-center justify-between gap-4 px-6 py-3">
+                <div class="flex items-center justify-between gap-3 px-4 py-2">
                     <!-- Left: Menu button & Page title -->
                     <div class="flex items-center gap-4">
                         <button 
@@ -280,32 +280,11 @@
 
                     <!-- Right: Search, Notifications, User menu -->
                     <div class="flex items-center gap-3">
-                        <!-- Search -->
-                        <div class="relative hidden md:block">
-                            <input
-                                type="text"
-                                placeholder="Поиск... (Ctrl+K)"
-                                class="w-64 rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                            >
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                                {!! $icons['search'] !!}
-                            </span>
-                            <kbd class="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline-flex h-5 items-center gap-1 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-medium text-slate-500">
-                                <span class="text-xs">⌃</span>K
-                            </kbd>
-                        </div>
-
                         <!-- Language switcher -->
                         <div class="flex items-center gap-1 border-r border-slate-200 pr-3">
                             <a href="{{ route('admin.locale.change', 'ru') }}" class="px-2 py-1 text-xs font-medium rounded {{ app()->getLocale() === 'ru' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">RU</a>
                             <a href="{{ route('admin.locale.change', 'en') }}" class="px-2 py-1 text-xs font-medium rounded {{ app()->getLocale() === 'en' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">EN</a>
                         </div>
-
-                        <!-- Notifications -->
-                        <button class="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors">
-                            {!! $icons['bell'] !!}
-                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-                        </button>
 
                         <!-- User dropdown -->
                         <div class="relative" x-data="{ open: false }">
@@ -332,14 +311,12 @@
                                 class="absolute right-0 mt-2 w-56 rounded-xl bg-white py-2 shadow-lg border border-slate-200 z-50"
                                 style="display: none;"
                             >
-                                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
-                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                    Профиль
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
+                                @if($user?->hasPermission('settings.view'))
+                                <a href="{{ route('admin.settings.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                     Настройки
                                 </a>
+                                @endif
                                 <hr class="my-2 border-slate-100">
                                 <form method="POST" action="{{ route('admin.logout') }}">
                                     @csrf
@@ -355,18 +332,18 @@
             </header>
 
             <!-- Page content -->
-            <main class="flex-1 px-6 py-6 overflow-y-auto">
+            <main class="@yield('page_wrap_class') flex-1 px-4 py-4 overflow-y-auto">
                 <!-- Page header with title and actions -->
-                <div class="mb-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="mb-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
-                            <h1 class="text-2xl font-bold text-slate-900">@yield('page_title', __('admin.dashboard'))</h1>
+                            <h1 class="text-xl font-bold text-slate-900">@yield('page_title', __('admin.dashboard'))</h1>
                             @hasSection('page_subtitle')
                                 <p class="mt-1 text-sm text-slate-500">@yield('page_subtitle')</p>
                             @endif
                         </div>
                         @hasSection('page_actions')
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
                                 @yield('page_actions')
                             </div>
                         @endif
