@@ -64,6 +64,25 @@
 
     <section class="media-main">
       <div class="media-toolbar">
+        <!-- Хлебные крошки -->
+        <div v-if="selectedFolderPath.length > 0" class="media-breadcrumbs">
+          <button type="button" class="media-breadcrumb-item" @click="selectFolder(null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
+          </button>
+          <template v-for="(folderName, index) in selectedFolderPath" :key="index">
+            <span class="media-breadcrumb-separator">/</span>
+            <button 
+              type="button" 
+              class="media-breadcrumb-item"
+              @click="navigateToBreadcrumb(index)"
+            >
+              {{ folderName }}
+            </button>
+          </template>
+        </div>
+
         <div v-if="isPickerMode" class="media-picker-bar">
           <div class="media-picker-copy">
             <strong>Выбор файла для конструктора</strong>
@@ -81,6 +100,26 @@
               Использовать файл
             </button>
           </div>
+        </div>
+
+        <!-- Массовые операции -->
+        <div v-if="selectedItems.length > 0" class="media-bulk-actions">
+          <span class="media-bulk-count">{{ selectedItems.length }} выбрано</span>
+          <button type="button" class="media-button media-button-secondary" @click="bulkDelete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166M18.16 5.79 17.25 19.5A2.25 2.25 0 0 1 15.006 21.75H8.994A2.25 2.25 0 0 1 6.75 19.5L5.84 5.79m12.32 0A48.108 48.108 0 0 0 12 5.25c-2.102 0-4.16.18-6.16.54m12.32 0L19.5 5.25M5.84 5.79 4.5 5.25m0 0c.34-.059.68-.114 1.022-.166M4.5 5.25h15M9.75 5.25V4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V5.25" />
+            </svg>
+            Удалить
+          </button>
+          <button type="button" class="media-button media-button-secondary" @click="openBulkMoveModal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5h5.379a1.5 1.5 0 0 1 1.06.44l1.122 1.12a1.5 1.5 0 0 0 1.06.44h7.879a1.5 1.5 0 0 1 1.5 1.5v6.75a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.75V8.25A.75.75 0 0 1 3.75 7.5Z" />
+            </svg>
+            Переместить
+          </button>
+          <button type="button" class="media-button media-button-secondary" @click="clearSelection">
+            Снять выделение
+          </button>
         </div>
 
         <div class="media-context">
@@ -127,6 +166,26 @@
               placeholder="Поиск по имени, alt, title или подписи"
             >
           </div>
+          
+          <!-- Фильтры и сортировка -->
+          <div class="media-toolbar-filters">
+            <select v-model="filterType" class="vc-select">
+              <option value="all">Все типы</option>
+              <option value="image">Изображения</option>
+              <option value="pdf">PDF</option>
+              <option value="document">Документы</option>
+            </select>
+            
+            <select v-model="sortBy" class="vc-select">
+              <option value="created_at_desc">Новые сверху</option>
+              <option value="created_at_asc">Старые сверху</option>
+              <option value="name_asc">По имени (А-Я)</option>
+              <option value="name_desc">По имени (Я-А)</option>
+              <option value="size_desc">По размеру (убыв.)</option>
+              <option value="size_asc">По размеру (возр.)</option>
+            </select>
+          </div>
+          
           <div class="media-toolbar-actions">
             <button type="button" class="media-button media-button-secondary" @click="refreshAll">Обновить</button>
             <button
