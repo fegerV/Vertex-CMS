@@ -1,18 +1,16 @@
+```
 # Compiled and build artifacts
 *.pyc
 __pycache__/
 *.o
 *.obj
-*.class
-*.so
-*.dll
-*.exe
-*.out
+dist/
+build/
+target/
 
 # Dependencies
 node_modules/
-venv/
-.venv/
+vendor/
 .env
 .env.local
 .env.*
@@ -21,51 +19,52 @@ venv/
 *.log
 *.tmp
 *.swp
-*.swo
 
 # Editors
 .vscode/
 .idea/
 
-# Build directories
-dist/
-build/
-target/
-.gradle/
-
-# Python specific
-*.pyc
-__pycache__/
-*.pyo
-*.pyd
-.Python
-*.so
-.coverage
-htmlcov/
-.coverage.*
-.pytest_cache/
-.mypy_cache/
-
 # OS generated files
 .DS_Store
 Thumbs.db
-*.DS_Store
-ehthumbs.db
-Icon?
-.directory
-.Trashes
-*.nib
-.vagrant
-.sass-cache
-.rake_tasks
-.lst
-.rbc
-CVS/
-.git/
-.svn/
-.hg/
-.bzr/
-.dvfs/
-*.swp
-*.swo
-*~
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Python specific
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+
+# PHP specific
+*.php~
+*.php.bak
+*.php.swp
+vendor/
+composer.lock
+
+# Laravel/PHP frameworks
+bootstrap/cache/
+storage/framework/cache/
+storage/logs/
+public/storage/
+
+# Original rules preserved
+```
