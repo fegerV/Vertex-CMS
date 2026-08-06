@@ -189,7 +189,31 @@ class AiKnowledgeBaseController extends Controller
      */
     public function settings()
     {
-        return view('admin.seo.ai-kb.settings');
+        $currentSettings = [
+            'openai_api_key' => env('OPENAI_API_KEY', ''),
+            'supabase_url' => env('SUPABASE_URL', ''),
+            'supabase_key' => env('SUPABASE_KEY', ''),
+            'mask_openai_key' => $this->maskApiKey(env('OPENAI_API_KEY', '')),
+        ];
+        
+        return view('admin.seo.ai-kb.settings', compact('currentSettings'));
+    }
+
+    /**
+     * Маскировка API ключа для отображения
+     */
+    private function maskApiKey(?string $key): string
+    {
+        if (empty($key)) {
+            return 'Не настроен';
+        }
+        
+        $length = strlen($key);
+        if ($length <= 8) {
+            return str_repeat('*', $length);
+        }
+        
+        return substr($key, 0, 4) . str_repeat('*', $length - 8) . substr($key, -4);
     }
 
     /**
@@ -197,7 +221,51 @@ class AiKnowledgeBaseController extends Controller
      */
     public function saveSettings(Request $request)
     {
-        // Реализация сохранения настроек
-        return redirect()->back()->with('success', 'Настройки сохранены');
+        $validated = $request->validate([
+            'openai_api_key' => 'nullable|string',
+            'supabase_url' => 'nullable|url',
+            'supabase_key' => 'nullable|string',
+            'embedding_model' => 'nullable|string',
+            'chat_model' => 'nullable|string',
+            'temperature' => 'nullable|numeric|min:0|max:1',
+            'widget_title' => 'nullable|string|max:255',
+            'widget_welcome' => 'nullable|string',
+            'widget_color' => 'nullable|string',
+            'widget_position' => 'nullable|in:left,right',
+            'widget_enabled' => 'boolean',
+            'max_chunks' => 'nullable|integer|min:1|max:20',
+            'min_similarity' => 'nullable|integer|min:0|max:100',
+            'chunk_size' => 'nullable|integer|min:100|max:2000',
+        ]);
+
+        // Сохранение настроек в .env файл или базу данных
+        $this->saveEnvSetting('OPENAI_API_KEY', $validated['openai_api_key'] ?? '');
+        $this->saveEnvSetting('SUPABASE_URL', $validated['supabase_url'] ?? '');
+        $this->saveEnvSetting('SUPABASE_KEY', $validated['supabase_key'] ?? '');
+        
+        // Очистка кэша конфигурации
+        \Artisan::call('config:clear');
+        
+        return redirect()->back()->with('success', 'Настройки сохранены. Необходимо перезагрузить страницу для применения изменений.');
+    }
+
+    /**
+     * Сохранение переменной окружения
+     */
+    private function saveEnvSetting(string $key, string $value): void
+    {
+        $envPath = base_path('.env');
+        $envContent = file_get_contents($envPath);
+        
+        // Экранирование специальных символов в значении
+        $escapedValue = str_replace(['\\'], ['\\\\'], $value);
+        
+        if (preg_match("/^{$key}=.*/m", $envContent, $matches)) {
+            $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$escapedValue}", $envContent);
+        } else {
+            $envContent .= "\n{$key}={$escapedValue}";
+        }
+        
+        file_put_contents($envPath, $envContent);
     }
 }

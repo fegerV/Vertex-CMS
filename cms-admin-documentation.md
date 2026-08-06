@@ -1812,6 +1812,58 @@ Action: Send Slack notification
 
 ## AI и автоматизация
 
+### RAG Консультант (AI Chat Bot)
+
+**Настройка AI консультанта:**
+
+1. Перейдите в `SEO → AI Knowledge Base → Настройки`
+2. Настройте API ключи:
+   - **OpenAI API Key**: получите на [platform.openai.com](https://platform.openai.com)
+   - **Supabase URL**: URL вашего проекта Supabase
+   - **Supabase API Key**: anon/public ключ из настроек Supabase
+
+**Конфигурация моделей:**
+
+```json
+{
+  "embedding_model": "text-embedding-ada-002",
+  "chat_model": "gpt-3.5-turbo",
+  "temperature": 0.3,
+  "max_chunks": 5,
+  "min_similarity": 30,
+  "chunk_size": 500
+}
+```
+
+**Управление базой знаний:**
+
+1. Перейдите в `SEO → AI Knowledge Base`
+2. Создайте категории для документов
+3. Добавьте документы (текст или файлы)
+4. Дождитесь автоматической обработки (разбиение на чанки, генерация эмбеддингов)
+
+**Установка виджета на сайт:**
+
+Добавьте в шаблон перед `</body>`:
+
+```blade
+<x-ai-chat.widget 
+    title="Онлайн-помощник"
+    color="#4f46e5"
+    position="right"
+/>
+```
+
+**Мониторинг:**
+
+- История чатов: `SEO → AI Knowledge Base → История чатов`
+- Логи: `storage/logs/laravel.log`
+- Статистика: главная страница AI Knowledge Base
+
+**Подробная документация:** См. [`/docs/RAG_MODULE_ADMIN_GUIDE.md`](/docs/RAG_MODULE_ADMIN_GUIDE.md)
+
+---
+
 ### Авто-заполнение контента
 
 **Настройка AI помощника:**
