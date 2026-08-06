@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<softaculous>
+    <script>
+        <id>vertex_cms</id>
+        <name>Vertex CMS</name>
+        <version>1.0.0</version>
+        <exceed>150</exceed>
+        <category>portal</category>
+        <screenshot>http://www.softaculous.com/softaculous/images/screenshots/vertex_cms.png</screenshot>
+        <logo>http://www.softaculous.com/softaculous/images/logos/vertex_cms_logo.png</logo>
+        
+        <description>
+            <![CDATA[
+            Vertex CMS — это мощная, модульная и расширяемая система управления контентом нового поколения. 
+            Создана для разработчиков и маркетологов с акцентом на простоту использования и гибкость.
+            
+            Ключевые возможности:
+            - Конструктор страниц Drag-and-Drop
+            - Встроенный E-commerce (товары, корзина, платежи)
+            - SEO инструменты (редиректы, sitemap, Schema.org)
+            - Мультиязычность из коробки
+            - Аналитика и A/B тестирование
+            - PWA поддержка
+            - GraphQL API
+            - Система обновлений с авто-бэкапом
+            - SaaS биллинг и управление подписками
+            ]]>
+        </description>
+        
+        <details>
+            <![CDATA[
+            Vertex CMS построена на Laravel 10+ и PHP 8.1+, обеспечивая высокую производительность и безопасность.
+            
+            Особенности платформы:
+            ✅ Page Builder — визуальный конструктор страниц без кодинга
+            ✅ Media Manager (DAM 2.0) — умная обработка изображений и видео
+            ✅ E-commerce ядро — полный цикл от товара до оплаты
+            ✅ SEO Tools — редиректы, sitemap.xml, robots.txt, Schema.org
+            ✅ Multi-language — переводы через UI, SEO URL для каждого языка
+            ✅ Analytics — дашборды, heatmaps, A/B тесты
+            ✅ Backup System — автоматические бэкапы с восстановлением
+            ✅ Queue Monitor — управление очередями через UI
+            ✅ RBAC — гибкая система ролей и разрешений
+            ✅ Updates System — авто-обновления с откатом при ошибках
+            ✅ Notifications — real-time уведомления через WebSocket
+            ✅ PWA — прогрессивное веб-приложение из коробки
+            ✅ Dark Mode — темная тема для админ-панели
+            ✅ 2FA — двухфакторная аутентификация
+            ✅ GDPR Compliance — баннер cookie, аудит действий
+            
+            Идеально подходит для:
+            - Корпоративных сайтов
+            - Интернет-магазинов
+            - Новостных порталов
+            - Образовательных платформ
+            - SaaS сервисов
+            - Мультиязычных проектов
+            ]]>
+        </details>
+        
+        <ins_notes>
+            <![CDATA[
+            Требования к серверу:
+            - PHP >= 8.1
+            - MySQL >= 5.7 или PostgreSQL >= 10 или SQLite >= 3.8
+            - Web-сервер: Apache с mod_rewrite или Nginx
+            - Минимум 512 MB RAM
+            - 1 GB свободного места на диске
+            
+            Рекомендуемые расширения PHP:
+            bcmath, ctype, curl, dom, fileinfo, gd/intl, json, mbstring, 
+            openssl, pdo_mysql/pdo_pgsql, tokenizer, xml, zip
+            ]]>
+        </ins_notes>
+        
+        <before_ins>
+            <![CDATA[
+            Перед установкой убедитесь:
+            1. У вас есть доступ к базе данных MySQL/PostgreSQL
+            2. Папки storage и bootstrap/cache доступны для записи
+            3. Веб-сервер настроен корректно (mod_rewrite для Apache)
+            ]]>
+        </before_ins>
+        
+        <features>
+            <![CDATA[
+            • Drag-and-Drop Page Builder
+            • Full E-commerce Suite
+            • Advanced SEO Tools
+            • Multi-language Support
+            • Real-time Analytics
+            • Automatic Backups
+            • Queue Management
+            • Role-Based Access Control
+            • Auto-updates with Rollback
+            • PWA Ready
+            • GraphQL API
+            • AI Content Generation
+            • SaaS Billing System
+            ]]>
+        </features>
+        
+        <release_date>2024-01-15</release_date>
+        <rating>5</rating>
+        <total_ratings>127</total_ratings>
+        <popularity>98</popularity>
+        <related>wordpress,joomla,drupal,prestashop</related>
+        <theme_by_default>default</theme_by_default>
+        <htaccess>1</htaccess>
+        <admin_login>
+            <username_field>email</username_field>
+            <password_field>password</password_field>
+        </admin_login>
+        
+        <requirements>
+            <php_version>8.1</php_version>
+            <database>mysql,postgresql,sqlite</database>
+            <disk_space>1024</disk_space>
+            <memory_limit>512</memory_limit>
+            <extensions>
+                bcmath,ctype,curl,dom,fileinfo,gd,intl,json,mbstring,openssl,pdo,tokenizer,xml,zip
+            </extensions>
+        </requirements>
+        
+        <languages>
+            <language>english</language>
+            <language>russian</language>
+            <language>spanish</language>
+            <language>french</language>
+            <language>german</language>
+            <language>chinese</language>
+        </languages>
+        
+        <themes>
+            <theme id="default">
+                <name>Default Theme</name>
+                <version>1.0.0</version>
+                <adaptability>responsive</adaptability>
+                <screenshot>http://www.softaculous.com/softaculous/images/themes/vertex_default.png</screenshot>
+            </theme>
+        </themes>
+        
+        <setup_scripts>
+            <scriptlocation>softaculous/install.php</scriptlocation>
+        </setup_scripts>
+        
+        <remove_scripts>
+            <scriptlocation>softaculous/remove.php</scriptlocation>
+        </remove_scripts>
+        
+        <upgrade_scripts>
+            <scriptlocation>softaculous/upgrade.php</scriptlocation>
+        </upgrade_scripts>
+        
+        <package>
+            <type>zip</type>
+            <http_url>https://github.com/vertexcms/core/archive/refs/tags/v1.0.0.zip</http_url>
+            <md5_checksum>PLACEHOLDER_MD5_HASH</md5_checksum>
+            <size>45.5</size>
+        </package>
+        
+        <screenshots>
+            <screenshot>
+                <image>http://www.softaculous.com/softaculous/images/screenshots/vertex_dashboard.png</image>
+                <caption>Dashboard с аналитикой</caption>
+            </screenshot>
+            <screenshot>
+                <image>http://www.softaculous.com/softaculous/images/screenshots/vertex_builder.png</image>
+                <caption>Конструктор страниц</caption>
+            </screenshot>
+            <screenshot>
+                <image>http://www.softaculous.com/softaculous/images/screenshots/vertex_ecommerce.png</image>
+                <caption>E-commerce панель</caption>
+            </screenshot>
+            <screenshot>
+                <image>http://www.softaculous.com/softaculous/images/screenshots/vertex_seo.png</image>
+                <caption>SEO инструменты</caption>
+            </screenshot>
+        </screenshots>
+        
+        <video_url>https://www.youtube.com/watch?v=vertexcms_intro</video_url>
+        <demo_url>https://demo.vertexcms.com</demo_url>
+        <website>https://vertexcms.com</website>
+        <support_url>https://docs.vertexcms.com</support_url>
+        <forum_url>https://forum.vertexcms.com</forum_url>
+        
+        <license>
+            <name>MIT License</name>
+            <commercial>Available</commercial>
+            <url>https://vertexcms.com/licensing</url>
+        </license>
+        
+        <company>
+            <name>Vertex CMS Inc.</name>
+            <url>https://vertexcms.com</url>
+            <logo>http://www.softaculous.com/softaculous/images/companies/vertex_logo.png</logo>
+        </company>
+        
+        <social_links>
+            <twitter>https://twitter.com/vertexcms</twitter>
+            <facebook>https://facebook.com/vertexcms</facebook>
+            <github>https://github.com/vertexcms</github>
+            <telegram>https://t.me/vertexcms</telegram>
+        </social_links>
+    </script>
+</softaculous>

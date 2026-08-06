@@ -1,1 +1,48 @@
-Nothing should be ignored based on the provided file changes. The modified file 'app/Core/Support/SettingCatalog.php' is a source code file that should not be added to .gitignore. Since there are no build artifacts, dependencies, or temporary files in the changes, no additional ignore rules are needed.
+# Dependencies
+vendor/
+node_modules/
+
+# Build artifacts
+dist/
+build/
+target/
+*.phar
+
+# Cache and temporary files
+.cache/
+*.cache
+*.tmp
+*.log
+**/logs/
+!logs/.gitkeep
+
+# Environment specific
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# PHP specific
+*.php~
+**/vendor/composer.lock
+!composer.lock
+
+# Coverage and testing
+coverage/
+htmlcov/
+.coverage
+*.gcda
+*.gcno
+
+# Docker
+.dockerenv

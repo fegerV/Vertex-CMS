@@ -2,6 +2,8 @@
 
 use App\Core\Http\Middleware\EnsureInstalled;
 use App\Core\Http\Middleware\EnsureNotInstalled;
+use App\Core\Http\Middleware\GdprCookieMiddleware;
+use App\Core\Http\Middleware\IpFilterMiddleware;
 use App\Core\Http\Middleware\RequirePermission;
 use App\Seo\Http\Middleware\ResolveSeoRedirect;
 use App\System\Http\Middleware\CheckMaintenanceMode;
@@ -26,21 +28,24 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up'
     )
-->withMiddleware(function (Middleware $middleware): void {
-         $middleware->append(EnsureInstalled::class);
-         $middleware->append(CheckMaintenanceMode::class);
-         $middleware->append(ResolveSeoRedirect::class);
+    ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(EnsureInstalled::class);
+        $middleware->append(\App\Core\Http\Middleware\SetLocale::class);
+        $middleware->append(GdprCookieMiddleware::class);
+        $middleware->append(IpFilterMiddleware::class);
+        $middleware->append(CheckMaintenanceMode::class);
+        $middleware->append(ResolveSeoRedirect::class);
 
-         $middleware->redirectGuestsTo(function (Request $request) {
+        $middleware->redirectGuestsTo(function (Request $request) {
             return $request->is('admin', 'admin/*') ? route('admin.login') : null;
-         });
+        });
 
-         $middleware->alias([
-             'vertex.not_installed' => EnsureNotInstalled::class,
-             'vertex.permission' => RequirePermission::class,
-             'maintenance.check' => CheckMaintenanceMode::class,
-         ]);
-     })
+        $middleware->alias([
+            'vertex.not_installed' => EnsureNotInstalled::class,
+            'vertex.permission' => RequirePermission::class,
+            'maintenance.check' => CheckMaintenanceMode::class,
+        ]);
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $exception): bool {
             return ApiResponse::isApiRequest($request);
@@ -88,6 +93,12 @@ return Application::configure(basePath: dirname(__DIR__))
             };
 
             return ApiResponse::error($code, $message, status: $status);
+        });
+
+        $exceptions->reportable(function (\Throwable $e) {
+            if (class_exists(\Sentry\Laravel\Integration::class)) {
+                \Sentry\Laravel\Integration::captureUnhandledException($e);
+            }
         });
     })
     ->create();
