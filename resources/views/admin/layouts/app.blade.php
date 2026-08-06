@@ -1,155 +1,275 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'VertexCMS')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
+        
+        /* Focus visible for better accessibility */
+        :focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Loading animation */
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .loading { animation: pulse-subtle 1.5s ease-in-out infinite; }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-950">
+<body class="bg-slate-100 text-slate-900 antialiased" x-data="{ sidebarOpen: false, searchOpen: false, userMenuOpen: false }">
     @php
         $user = auth()->user();
         $navigation = [
-            ['label' => 'Панель управления', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />'],
-            ['label' => 'Страницы', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />'],
-            ['label' => 'Медиа', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z" />'],
-            ['label' => 'Пользователи', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0z" />'],
-            ['label' => 'Роли', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />'],
-            ['label' => 'Настройки', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />'],
-            ['label' => 'Система', 'route' => 'admin.system.info', 'active' => 'admin.system.info', 'permission' => 'system.view', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.83-5.83m0 0a2.968 2.968 0 0 1 0-4.183L15.75 6m-2.25 8.25a2.968 2.968 0 0 1-4.183 0L3.75 8.25" />'],
-            ['label' => 'Кеш', 'route' => 'admin.system.cache', 'active' => 'admin.system.cache*', 'permission' => 'system.view', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />'],
-            ['label' => 'Логи', 'route' => 'admin.system.logs', 'active' => 'admin.system.logs', 'permission' => 'system.view', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3z" />'],
+            ['label' => __('admin.dashboard'), 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access', 'icon' => 'home'],
+            ['label' => __('admin.pages'), 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view', 'icon' => 'document'],
+            ['label' => __('admin.media'), 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view', 'icon' => 'image'],
+            ['label' => __('admin.users'), 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'icon' => 'users'],
+            ['label' => __('admin.roles'), 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'icon' => 'shield'],
+            ['label' => __('admin.settings'), 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'icon' => 'cog'],
+            ['label' => __('admin.system'), 'route' => 'admin.system.info', 'active' => 'admin.system.*', 'permission' => 'system.view', 'icon' => 'server'],
         ];
-
-        $segments = request()->segments();
-        $translations = [
-            'admin' => 'Панель управления',
-            'pages' => 'Страницы',
-            'media' => 'Медиа',
-            'users' => 'Пользователи',
-            'roles' => 'Роли',
-            'settings' => 'Настройки',
-            'system' => 'Система',
-            'info' => 'Информация',
-            'cache' => 'Кеш',
-            'logs' => 'Логи',
-            'create' => 'Создать',
-            'edit' => 'Редактировать',
-            'builder' => 'Конструктор',
-            'revisions' => 'Версии',
-            'redirects' => 'Перенаправления',
-            'custom-field-groups' => 'Группы полей',
+        
+        $icons = [
+            'home' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>',
+            'document' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>',
+            'image' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>',
+            'users' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>',
+            'shield' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>',
+            'cog' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>',
+            'server' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>',
+            'search' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>',
+            'bell' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>',
+            'menu' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>',
+            'close' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+            'chevron-down' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>',
         ];
     @endphp
 
-    <!-- Mobile backdrop -->
-    <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
+    <!-- Mobile sidebar backdrop -->
+    <div 
+        x-show="sidebarOpen" 
+        @click="sidebarOpen = false"
+        x-transition:enter="transition-opacity ease-linear duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-opacity ease-linear duration-300"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-slate-900/50 z-40 lg:hidden"
+        style="display: none;"
+    ></div>
 
     <div class="min-h-screen lg:flex">
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-0 lg:min-h-screen overflow-y-auto">
-            <div class="px-6 py-5 flex items-center justify-between lg:block">
+        <aside 
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+            class="fixed inset-y-0 left-0 z-50 w-72 transform bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out lg:static lg:min-h-screen"
+        >
+            <!-- Logo -->
+            <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
                 <div>
-                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">VertexCMS</p>
-                    <p class="mt-1 text-lg font-semibold">{{ config_value('site.name', config('app.name')) }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">VertexCMS</p>
+                    <p class="mt-1 text-lg font-bold text-slate-800">{{ config_value('site.name', config('app.name')) }}</p>
                 </div>
-                <button onclick="toggleSidebar()" class="lg:hidden p-2 text-slate-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <button 
+                    @click="sidebarOpen = false" 
+                    class="lg:hidden p-2 rounded-md text-slate-500 hover:bg-slate-100"
+                >
+                    {!! $icons['close'] !!}
                 </button>
             </div>
 
-            <nav class="px-4 space-y-1">
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
                 @foreach ($navigation as $item)
                     @continue($item['permission'] && ! $user?->hasPermission($item['permission']))
                     <a
                         href="{{ route($item['route']) }}"
-                        class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs($item['active']) ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}"
+                        class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all {{ request()->routeIs($item['active']) ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}"
                     >
-                        @if(isset($item['icon']))
-                            <svg class="mr-3 h-5 w-5 flex-shrink-0 {{ request()->routeIs($item['active']) ? 'text-white' : 'text-slate-400' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                {!! $item['icon'] !!}
-                            </svg>
-                        @endif
+                        <span class="{{ request()->routeIs($item['active']) ? 'text-white' : 'text-slate-400 group-hover:text-slate-600' }}">
+                            {!! $icons[$item['icon']] !!}
+                        </span>
                         {{ $item['label'] }}
                     </a>
                 @endforeach
             </nav>
+
+            <!-- User info at bottom -->
+            <div class="border-t border-slate-100 p-4">
+                <div class="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-sm">
+                        {{ strtoupper(substr($user->name ?? 'U', 0, 2)) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-slate-900 truncate">{{ $user->name ?? 'User' }}</p>
+                        <p class="text-xs text-slate-500 truncate">{{ $user->email ?? '' }}</p>
+                    </div>
+                </div>
+            </div>
         </aside>
 
-        <div class="min-w-0 flex-1 flex flex-col">
-            <header class="border-b border-slate-200 bg-white sticky top-0 z-30">
-                <div class="flex items-center justify-between gap-4 px-6 py-4">
+        <!-- Main content -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Top header -->
+            <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+                <div class="flex items-center justify-between gap-4 px-6 py-3">
+                    <!-- Left: Menu button & Page title -->
                     <div class="flex items-center gap-4">
-                        <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-md">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        <button 
+                            @click="sidebarOpen = true" 
+                            class="lg:hidden p-2 rounded-md text-slate-500 hover:bg-slate-100"
+                        >
+                            {!! $icons['menu'] !!}
                         </button>
-                        <div>
-                            <h1 class="text-xl font-semibold">@yield('page_title', 'Панель управления')</h1>
-                        </div>
+                        
+                        <!-- Breadcrumbs -->
+                        <nav class="hidden sm:flex items-center gap-2 text-sm text-slate-500">
+                            <a href="{{ route('admin.dashboard') }}" class="hover:text-slate-900">Dashboard</a>
+                            @hasSection('breadcrumbs')
+                                <span class="text-slate-300">/</span>
+                                @yield('breadcrumbs')
+                            @endif
+                        </nav>
                     </div>
 
-    <div class="flex items-center gap-4">
-                        <a href="{{ url('/') }}" target="_blank" class="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-950 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            <span>Перейти на сайт</span>
-                        </a>
-
-                        <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
-
-                        @if(auth()->check())
-                        <div class="flex items-center gap-3">
-                            <div class="hidden sm:flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-full bg-slate-950 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                </div>
-                                <div class="text-sm">
-                                    <p class="font-medium text-slate-950">{{ auth()->user()->name }}</p>
-                                    <p class="text-xs text-slate-500">{{ auth()->user()->email }}</p>
-                                </div>
-                            </div>
-                            <form method="POST" action="{{ route('admin.logout') }}">
-                                @csrf
-                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-red-600 transition-colors" title="Выйти">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                    <span class="hidden sm:inline">Выйти</span>
-                                </button>
-                            </form>
+                    <!-- Right: Search, Notifications, User menu -->
+                    <div class="flex items-center gap-3">
+                        <!-- Search -->
+                        <div class="relative hidden md:block">
+                            <input
+                                type="text"
+                                placeholder="Поиск... (Ctrl+K)"
+                                class="w-64 rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            >
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                {!! $icons['search'] !!}
+                            </span>
+                            <kbd class="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline-flex h-5 items-center gap-1 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-medium text-slate-500">
+                                <span class="text-xs">⌃</span>K
+                            </kbd>
                         </div>
-                        @endif
+
+                        <!-- Language switcher -->
+                        <div class="flex items-center gap-1 border-r border-slate-200 pr-3">
+                            <a href="{{ route('admin.locale.change', 'ru') }}" class="px-2 py-1 text-xs font-medium rounded {{ app()->getLocale() === 'ru' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">RU</a>
+                            <a href="{{ route('admin.locale.change', 'en') }}" class="px-2 py-1 text-xs font-medium rounded {{ app()->getLocale() === 'en' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">EN</a>
+                        </div>
+
+                        <!-- Notifications -->
+                        <button class="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors">
+                            {!! $icons['bell'] !!}
+                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+                        </button>
+
+                        <!-- User dropdown -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button 
+                                @click="open = !open" 
+                                @click.away="open = false"
+                                class="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all"
+                            >
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-xs">
+                                    {{ strtoupper(substr($user->name ?? 'U', 0, 2)) }}
+                                </div>
+                                <span class="hidden md:inline">{{ $user->name ?? 'User' }}</span>
+                                {!! $icons['chevron-down'] !!}
+                            </button>
+                            
+                            <div 
+                                x-show="open"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 translate-y-1"
+                                x-transition:enter-end="opacity-100 translate-y-0"
+                                x-transition:leave="transition ease-in duration-150"
+                                x-transition:leave-start="opacity-100 translate-y-0"
+                                x-transition:leave-end="opacity-0 translate-y-1"
+                                class="absolute right-0 mt-2 w-56 rounded-xl bg-white py-2 shadow-lg border border-slate-200 z-50"
+                                style="display: none;"
+                            >
+                                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    Профиль
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Настройки
+                                </a>
+                                <hr class="my-2 border-slate-100">
+                                <form method="POST" action="{{ route('admin.logout') }}">
+                                    @csrf
+                                    <button type="submit" class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                        {{ __('admin.logout') }}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
 
-            <main class="px-6 py-8">
-                <!-- Breadcrumbs -->
-                <nav class="flex mb-6 overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-2">
-                        <li class="inline-flex items-center">
-                            <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center text-xs font-medium text-slate-500 hover:text-slate-950">
-                                <svg class="w-3.5 h-3.5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-                                VertexCMS
-                            </a>
-                        </li>
-                        @php $currentUrl = ''; @endphp
-                        @foreach($segments as $segment)
-                            @if($segment !== 'admin')
-                                @php $currentUrl .= '/' . $segment; @endphp
-                                <li>
-                                    <div class="flex items-center">
-                                        <svg class="w-5 h-5 text-slate-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                                        <a href="{{ url('admin' . $currentUrl) }}" class="ml-1 text-xs font-medium text-slate-500 hover:text-slate-950 md:ml-2">
-                                            {{ $translations[$segment] ?? ucfirst($segment) }}
-                                        </a>
-                                    </div>
-                                </li>
+            <!-- Page content -->
+            <main class="flex-1 px-6 py-6 overflow-y-auto">
+                <!-- Page header with title and actions -->
+                <div class="mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-900">@yield('page_title', __('admin.dashboard'))</h1>
+                            @hasSection('page_subtitle')
+                                <p class="mt-1 text-sm text-slate-500">@yield('page_subtitle')</p>
                             @endif
-                        @endforeach
-                    </ol>
-                </nav>
+                        </div>
+                        @hasSection('page_actions')
+                            <div class="flex items-center gap-3">
+                                @yield('page_actions')
+                            </div>
+                        @endif
+                    </div>
+                </div>
 
+                <!-- Flash messages -->
                 @if (session('status'))
-                    <div class="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex items-center gap-3">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         {{ session('status') }}
+                        <button @click="$el.parentElement.remove()" class="ml-auto text-emerald-600 hover:text-emerald-800">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex items-center gap-3">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        {{ session('error') }}
+                        <button @click="$el.parentElement.remove()" class="ml-auto text-red-600 hover:text-red-800">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                @endif
+
+                @if (session('warning'))
+                    <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center gap-3">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        {{ session('warning') }}
+                        <button @click="$el.parentElement.remove()" class="ml-auto text-amber-600 hover:text-amber-800">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
                     </div>
                 @endif
 
@@ -158,13 +278,61 @@
         </div>
     </div>
 
+    <!-- Keyboard shortcuts modal (hidden by default) -->
+    <div 
+        x-show="searchOpen"
+        @keydown.escape.window="searchOpen = false"
+        class="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-slate-900/50 backdrop-blur-sm"
+        style="display: none;"
+    >
+        <div 
+            class="w-full max-w-2xl rounded-xl bg-white shadow-2xl border border-slate-200"
+            @click.away="searchOpen = false"
+        >
+            <div class="flex items-center border-b border-slate-200 px-4 py-3">
+                {!! $icons['search'] !!}
+                <input
+                    type="text"
+                    placeholder="Поиск по админ-панели..."
+                    class="flex-1 ml-3 text-base focus:outline-none"
+                    autofocus
+                >
+                <kbd class="rounded border border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-500">ESC</kbd>
+            </div>
+            <div class="p-2">
+                <div class="px-3 py-2 text-xs font-medium text-slate-500 uppercase">Быстрые действия</div>
+                <a href="{{ route('admin.pages.create') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Создать страницу
+                </a>
+                <a href="{{ route('admin.users.create') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    Добавить пользователя
+                </a>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            sidebar.classList.toggle('-translate-x-full');
-            backdrop.classList.toggle('hidden');
-        }
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+K or Cmd+K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.dispatchEvent(new CustomEvent('toggle-search'));
+            }
+        });
+        
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('globalSearch', () => ({
+                searchOpen: false,
+                init() {
+                    window.addEventListener('toggle-search', () => {
+                        this.searchOpen = !this.searchOpen;
+                    });
+                }
+            }));
+        });
     </script>
 </body>
 </html>
