@@ -2,7 +2,18 @@
 
 ## Updated
 
-Last updated: `2026-06-18`
+Last updated: `2026-08-06`
+
+## Builder usability update
+
+- Builder persistence feedback is readable again: corrupted Cyrillic status,
+  error, import/export, revision and template messages were repaired.
+- Save, preview, import/export, revision and template operations now use a
+  non-blocking, accessible notification surface instead of browser alerts.
+- Failed manual saves remain visible and expose a retry action in the builder
+  app bar; successful operations provide concise confirmation.
+- Duplicate Vue bindings in the template search and persistence destructuring
+  were removed, reducing ambiguity in the compiled builder runtime.
 
 ## What Is Implemented
 
