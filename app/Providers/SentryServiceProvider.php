@@ -10,7 +10,7 @@ class SentryServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(\HubInterface::class, function ($app) {
+        $this->app->bind(HubInterface::class, function ($app) {
             return \Sentry\SentrySdk::getCurrentHub();
         });
     }
@@ -30,7 +30,7 @@ class SentryServiceProvider extends ServiceProvider
             'environment' => config('sentry.environment', env('APP_ENV')),
             'release' => config('sentry.release', '0.1.0'),
             'integrations' => [
-                Integration::createIntegration(),
+                new Integration(),
             ],
         ]);
 

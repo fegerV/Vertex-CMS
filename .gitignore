@@ -1,1 +1,38 @@
-Nothing should be ignored in this case, as only a PHP route file was modified and no build artifacts, dependencies, or temporary files were detected.
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+
+# Dependencies
+vendor/
+node_modules/
+composer.lock
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Laravel specific
+storage/
+bootstrap/cache/
+public/storage
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# OS
+.DS_Store
+Thumbs.db
