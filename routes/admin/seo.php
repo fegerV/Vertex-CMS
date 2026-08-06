@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\Seo\AiBrandMonitorController;
 use App\Http\Controllers\Admin\Seo\SchemaController;
 use App\Http\Controllers\Admin\Seo\SearchConsoleController;
 use App\Http\Controllers\Admin\Seo\DuplicatesController;
@@ -192,6 +193,31 @@ Route::post('seo/social-media/preview', [SocialMediaController::class, 'preview'
 Route::get('seo/social-media/page-meta/{page}', [SocialMediaController::class, 'generatePageMeta'])
     ->middleware('vertex.permission:seo.view')
     ->name('seo.social.page-meta');
+
+// AI Мониторинг Бренда
+Route::get('seo/ai-monitor', [AiBrandMonitorController::class, 'index'])
+    ->middleware('vertex.permission:seo.view')
+    ->name('seo.ai-monitor.index');
+
+Route::post('seo/ai-monitor/refresh', [AiBrandMonitorController::class, 'refresh'])
+    ->middleware('vertex.permission:seo.edit')
+    ->name('seo.ai-monitor.refresh');
+
+Route::get('seo/ai-monitor/mentions', [AiBrandMonitorController::class, 'mentions'])
+    ->middleware('vertex.permission:seo.view')
+    ->name('seo.ai-monitor.mentions');
+
+Route::get('seo/ai-monitor/sources', [AiBrandMonitorController::class, 'sources'])
+    ->middleware('vertex.permission:seo.view')
+    ->name('seo.ai-monitor.sources');
+
+Route::get('seo/ai-monitor/competitors', [AiBrandMonitorController::class, 'competitors'])
+    ->middleware('vertex.permission:seo.view')
+    ->name('seo.ai-monitor.competitors');
+
+Route::get('seo/ai-monitor/opportunities', [AiBrandMonitorController::class, 'opportunities'])
+    ->middleware('vertex.permission:seo.view')
+    ->name('seo.ai-monitor.opportunities');
 
 // Настройки SEO
 Route::get('seo/settings', [SeoDashboardController::class, 'settings'])

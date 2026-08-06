@@ -95,6 +95,7 @@
                     ['label' => 'AI Изображения', 'route' => 'admin.seo.ai-images', 'permission' => 'seo.edit'],
                     ['label' => 'Анализатор Изображений', 'route' => 'admin.seo.images.index', 'permission' => 'seo.edit'],
                     ['label' => 'Соцсети (OG)', 'route' => 'admin.seo.social-media', 'permission' => 'seo.edit'],
+                    ['label' => 'AI Мониторинг', 'route' => 'admin.seo.ai-monitor.index', 'permission' => 'seo.view'],
                     ['label' => 'Настройки SEO', 'route' => 'admin.seo.settings', 'permission' => 'seo.settings'],
                 ]
             ],
