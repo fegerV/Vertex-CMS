@@ -274,3 +274,8 @@ Route::prefix('keyword-maps')->name('keyword-maps.')->middleware('vertex.permiss
     Route::post('/preview', [KeywordMapsController::class, 'preview'])->name('preview');
     Route::post('/bulk-toggle', [KeywordMapsController::class, 'bulkToggle'])->name('bulk-toggle');
 });
+
+// Маршруты для справки SEO
+Route::get('/help', [App\Http\Controllers\Admin\Seo\HelpController::class, 'index'])->name('help.index');
+Route::get('/help/{section}/{topic?}', [App\Http\Controllers\Admin\Seo\HelpController::class, 'show'])->name('help.show');
+Route::get('/help/search', [App\Http\Controllers\Admin\Seo\HelpController::class, 'search'])->name('help.search');
