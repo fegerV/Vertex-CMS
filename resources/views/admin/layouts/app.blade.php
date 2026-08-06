@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}">
+<html lang="{{ app()->getLocale() }}" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,25 +28,50 @@
             50% { opacity: 0.7; }
         }
         .loading { animation: pulse-subtle 1.5s ease-in-out infinite; }
+        
+        /* Sidebar collapsed state */
+        .sidebar-collapsed .sidebar-logo-text,
+        .sidebar-collapsed .sidebar-link-text,
+        .sidebar-collapsed .sidebar-user-info {
+            display: none;
+        }
+        .sidebar-collapsed .sidebar-nav-item {
+            justify-content: center;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        .sidebar-collapsed .sidebar-nav-icon {
+            margin-right: 0;
+        }
+        .sidebar-collapsed {
+            width: 4.5rem !important;
+        }
+        .sidebar-collapsed .sidebar-header {
+            justify-content: center;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 antialiased" x-data="{ sidebarOpen: false, searchOpen: false, userMenuOpen: false }">
+<body class="bg-slate-100 text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100" x-data="{ sidebarOpen: false, sidebarCollapsed: false, searchOpen: false, userMenuOpen: false }" :class="{ 'sidebar-collapsed': sidebarCollapsed && !sidebarOpen }">
     @php
         $user = auth()->user();
         $navigation = [
-            ['label' => __('admin.dashboard'), 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access', 'icon' => 'home'],
-            ['label' => __('admin.pages'), 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view', 'icon' => 'document'],
-            ['label' => __('admin.media'), 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view', 'icon' => 'image'],
-            ['label' => __('admin.users'), 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'icon' => 'users'],
-            ['label' => __('admin.roles'), 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'icon' => 'shield'],
-            ['label' => __('admin.settings'), 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'icon' => 'cog'],
-            ['label' => __('admin.system'), 'route' => 'admin.system.info', 'active' => 'admin.system.*', 'permission' => 'system.view', 'icon' => 'server'],
+            ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'admin.access', 'icon' => 'home'],
+            ['label' => 'Страницы', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'permission' => 'pages.view', 'icon' => 'document'],
+            ['label' => 'Медиа', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'permission' => 'media.view', 'icon' => 'image'],
+            ['label' => 'Формы', 'route' => 'admin.forms.index', 'active' => 'admin.forms.*', 'permission' => 'forms.view', 'icon' => 'clipboard'],
+            ['label' => 'Пользователи', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'icon' => 'users'],
+            ['label' => 'Роли', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'icon' => 'shield'],
+            ['label' => 'Настройки', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'icon' => 'cog'],
+            ['label' => 'Система', 'route' => 'admin.system.info', 'active' => 'admin.system.*', 'permission' => 'system.view', 'icon' => 'server'],
         ];
         
         $icons = [
             'home' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>',
             'document' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>',
             'image' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>',
+            'clipboard' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>',
             'users' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>',
             'shield' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>',
             'cog' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>',
@@ -56,6 +81,10 @@
             'menu' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>',
             'close' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
             'chevron-down' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>',
+            'chevron-left' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>',
+            'chevron-right' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>',
+            'moon' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>',
+            'sun' => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>',
         ];
     @endphp
 
@@ -77,20 +106,41 @@
         <!-- Sidebar -->
         <aside 
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-            class="fixed inset-y-0 left-0 z-50 w-72 transform bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out lg:static lg:min-h-screen"
+            class="fixed inset-y-0 left-0 z-50 w-72 transform bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 ease-in-out lg:static lg:min-h-screen"
+            :class="{ 'lg:w-18': sidebarCollapsed && !sidebarOpen }"
         >
-            <!-- Logo -->
-            <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-                <div>
+            <!-- Logo & Collapse toggle -->
+            <div class="sidebar-header flex items-center justify-between px-4 py-4 border-b border-slate-100 dark:border-slate-700">
+                <div class="sidebar-logo-text overflow-hidden transition-all duration-300" x-show="!sidebarCollapsed || sidebarOpen">
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">VertexCMS</p>
-                    <p class="mt-1 text-lg font-bold text-slate-800">{{ config_value('site.name', config('app.name')) }}</p>
+                    <p class="mt-1 text-lg font-bold text-slate-800 dark:text-slate-100">{{ config_value('site.name', config('app.name')) }}</p>
                 </div>
-                <button 
-                    @click="sidebarOpen = false" 
-                    class="lg:hidden p-2 rounded-md text-slate-500 hover:bg-slate-100"
-                >
-                    {!! $icons['close'] !!}
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- Theme toggle -->
+                    <button 
+                        @click="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); localStorage.setItem('theme', document.documentElement.getAttribute('data-theme'))"
+                        class="p-2 rounded-md text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
+                        title="Переключить тему"
+                    >
+                        <svg x-show="document.documentElement.getAttribute('data-theme') !== 'dark'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                        <svg x-show="document.documentElement.getAttribute('data-theme') === 'dark'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </button>
+                    <!-- Collapse toggle (desktop only) -->
+                    <button 
+                        @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('sidebarCollapsed', sidebarCollapsed)"
+                        class="hidden lg:flex p-2 rounded-md text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
+                        title="Свернуть меню"
+                    >
+                        <svg x-show="!sidebarCollapsed" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        <svg x-show="sidebarCollapsed" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <button 
+                        @click="sidebarOpen = false" 
+                        class="lg:hidden p-2 rounded-md text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                    >
+                        {!! $icons['close'] !!}
+                    </button>
+                </div>
             </div>
 
             <!-- Navigation -->
@@ -99,25 +149,26 @@
                     @continue($item['permission'] && ! $user?->hasPermission($item['permission']))
                     <a
                         href="{{ route($item['route']) }}"
-                        class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all {{ request()->routeIs($item['active']) ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}"
+                        class="sidebar-nav-item group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all {{ request()->routeIs($item['active']) ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white' }}"
+                        :title="sidebarCollapsed && !sidebarOpen ? '{{ $item['label'] }}' : ''"
                     >
-                        <span class="{{ request()->routeIs($item['active']) ? 'text-white' : 'text-slate-400 group-hover:text-slate-600' }}">
+                        <span class="sidebar-nav-icon {{ request()->routeIs($item['active']) ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' }}">
                             {!! $icons[$item['icon']] !!}
                         </span>
-                        {{ $item['label'] }}
+                        <span class="sidebar-link-text whitespace-nowrap" x-show="!sidebarCollapsed || sidebarOpen">{{ $item['label'] }}</span>
                     </a>
                 @endforeach
             </nav>
 
             <!-- User info at bottom -->
-            <div class="border-t border-slate-100 p-4">
-                <div class="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
+            <div class="sidebar-user-info border-t border-slate-100 dark:border-slate-700 p-4" x-show="!sidebarCollapsed || sidebarOpen">
+                <div class="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-sm">
                         {{ strtoupper(substr($user->name ?? 'U', 0, 2)) }}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-slate-900 truncate">{{ $user->name ?? 'User' }}</p>
-                        <p class="text-xs text-slate-500 truncate">{{ $user->email ?? '' }}</p>
+                        <p class="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{{ $user->name ?? 'User' }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $user->email ?? '' }}</p>
                     </div>
                 </div>
             </div>
@@ -314,6 +365,28 @@
     </div>
 
     <script>
+        // Initialize theme from localStorage
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+        
+        // Initialize sidebar collapsed state from localStorage
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('sidebarState', () => ({
+                sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+                init() {
+                    this.$watch('sidebarCollapsed', value => {
+                        localStorage.setItem('sidebarCollapsed', value);
+                    });
+                }
+            }));
+        });
+        
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             // Ctrl+K or Cmd+K for search
