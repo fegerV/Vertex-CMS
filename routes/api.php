@@ -11,11 +11,25 @@ use App\Http\Controllers\Analytics\DashboardController;
 use App\Http\Controllers\Analytics\HeatmapController;
 use App\Http\Controllers\Api\AIController as ApiAiController;
 
-Route::get('/pages', [PageApiController::class, 'index']);
-Route::post('/pages', [PageApiController::class, 'store']);
-Route::get('/pages/{page}', [PageApiController::class, 'show']);
-Route::put('/pages/{page}', [PageApiController::class, 'update']);
-Route::delete('/pages/{page}', [PageApiController::class, 'destroy']);
+// Public API v1 endpoints would go here (read-only, versioned contract)
+// Example: Route::prefix('v1/public')->group(function () { ... });
+
+// Admin API - Pages CRUD (requires authentication and permissions)
+Route::middleware(['auth:sanctum'])->group(function (): void {
+    Route::get('/pages', [PageApiController::class, 'index'])->middleware('vertex.permission:pages.view');
+    Route::post('/pages', [PageApiController::class, 'store'])->middleware('vertex.permission:pages.create');
+    Route::get('/pages/{page}', [PageApiController::class, 'show'])->middleware('vertex.permission:pages.view');
+    Route::put('/pages/{page}', [PageApiController::class, 'update'])->middleware('vertex.permission:pages.edit');
+    Route::delete('/pages/{page}', [PageApiController::class, 'destroy'])->middleware('vertex.permission:pages.delete');
+
+    // Builder API (requires pages.edit permission)
+    Route::get('/builder/blocks', [BuilderApiController::class, 'blocks'])->middleware('vertex.permission:pages.edit');
+    Route::post('/builder/render-preview', [BuilderApiController::class, 'renderPreview'])->middleware('vertex.permission:pages.edit');
+
+    // System endpoints (requires system permissions)
+    Route::get('/system/info', [SystemApiController::class, 'info'])->middleware('vertex.permission:system.view');
+    Route::post('/cache/clear', [SystemApiController::class, 'clearCache'])->middleware('vertex.permission:cache.clear');
+});
 
  // Media & Folders (admin panel uses session auth)
  Route::middleware(['web', 'auth'])->group(function (): void {
@@ -32,8 +46,6 @@ Route::delete('/pages/{page}', [PageApiController::class, 'destroy']);
      Route::delete('/media/folders/{folder}', [MediaFolderApiController::class, 'destroy']);
  });
 
-Route::get('/builder/blocks', [BuilderApiController::class, 'blocks']);
-Route::post('/builder/render-preview', [BuilderApiController::class, 'renderPreview']);
 // AI Providers & Chat (existing)
 Route::get('/ai/providers', [DraftAiController::class, 'providers']);
 Route::post('/ai/chat', [DraftAiController::class, 'chat']);
