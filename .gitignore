@@ -1,38 +1,43 @@
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-
-# Dependencies
-vendor/
-node_modules/
-composer.lock
+```
+# Environment
+.env.local
+.env.*
 
 # Logs and temp files
 *.log
 *.tmp
-*.swp
 
-# Environment
-.env
-.env.local
-.env.*
+# Dependencies
+node_modules/
+vendor/
 
-# Editors
+# Build artifacts
+dist/
+build/
+public/build/
+
+# Cache directories
+.cache/
+bootstrap/cache/
+storage/framework/cache/
+storage/logs/
+
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Laravel specific
-storage/
-bootstrap/cache/
-public/storage
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# OS
+# OS files
 .DS_Store
 Thumbs.db
+
+# Compression files
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.gz
+*.rar
+*.7z
+```

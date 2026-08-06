@@ -35,5 +35,23 @@ return [
         'default_robots' => 'index, follow',
         'default_title_suffix' => ' | VertexCMS',
     ],
+    'backup' => [
+        'schedule' => [
+            'database' => env('BACKUP_DATABASE_SCHEDULE', 'daily'),
+            'files' => env('BACKUP_FILES_SCHEDULE', 'weekly'),
+            'retention' => env('BACKUP_RETENTION_DAYS', 30),
+            'storage' => env('BACKUP_STORAGE', 'local'),
+        ],
+        'path' => storage_path('app/backups'),
+    ],
+    'security' => [
+        'ip_filter' => [
+            'whitelist_mode' => env('IP_FILTER_WHITELIST_MODE', false),
+        ],
+        'gdpr' => [
+            'enabled' => env('GDPR_ENABLED', true),
+            'cookie_name' => 'gdpr_consent',
+        ],
+    ],
 ];
 

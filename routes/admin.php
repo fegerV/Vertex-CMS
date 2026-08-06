@@ -227,5 +227,51 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::delete('security/ip-filters/{ipFilter}', [SecurityController::class, 'destroyIpFilter'])
             ->middleware('vertex.permission:settings.edit')
             ->name('security.ip-filters.destroy');
+
+        // Backup routes
+        Route::get('system/backups', [\App\Http\Controllers\Admin\BackupController::class, 'index'])
+            ->middleware('vertex.permission:system.view')
+            ->name('system.backups');
+        Route::get('api/backups', [\App\Http\Controllers\Admin\BackupController::class, 'apiList'])
+            ->middleware('vertex.permission:system.view')
+            ->name('api.backups.list');
+        Route::post('api/backups/create', [\App\Http\Controllers\Admin\BackupController::class, 'apiCreate'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('api.backups.create');
+        Route::get('api/backups/download/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'apiDownload'])
+            ->middleware('vertex.permission:system.view')
+            ->name('api.backups.download');
+        Route::post('api/backups/restore', [\App\Http\Controllers\Admin\BackupController::class, 'apiRestore'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('api.backups.restore');
+        Route::delete('api/backups/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'apiDelete'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('api.backups.delete');
+        Route::get('api/backup-schedule', [\App\Http\Controllers\Admin\BackupController::class, 'getSchedule'])
+            ->middleware('vertex.permission:system.view')
+            ->name('api.backup.schedule.get');
+        Route::post('api/backup-schedule', [\App\Http\Controllers\Admin\BackupController::class, 'saveSchedule'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('api.backup.schedule.save');
+
+        // Queue monitoring API routes
+        Route::get('api/queues/stats', [\App\Http\Controllers\Admin\QueueController::class, 'apiStats'])
+            ->middleware('vertex.permission:system.view')
+            ->name('api.queues.stats');
+        Route::get('api/queues/workers', [\App\Http\Controllers\Admin\QueueController::class, 'apiWorkerStatus'])
+            ->middleware('vertex.permission:system.view')
+            ->name('api.queues.workers');
+        Route::post('api/queues/failed/{id}/retry', [\App\Http\Controllers\Admin\QueueController::class, 'apiRetryFailed'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('api.queues.retry-failed');
+        Route::post('api/queues/failed/retry-all', [\App\Http\Controllers\Admin\QueueController::class, 'apiRetryAllFailed'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('api.queues.retry-all');
+        Route::delete('api/queues/failed/{id}', [\App\Http\Controllers\Admin\QueueController::class, 'apiDeleteFailed'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('api.queues.delete-failed');
+        Route::post('api/queues/clear', [\App\Http\Controllers\Admin\QueueController::class, 'apiClearQueue'])
+            ->middleware('vertex.permission:system.edit')
+            ->name('api.queues.clear');
     });
 });
