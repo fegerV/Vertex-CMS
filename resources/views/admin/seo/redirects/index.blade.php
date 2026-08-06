@@ -48,13 +48,16 @@
                     <h5 class="card-title">Быстрые действия</h5>
                     <form action="{{ route('admin.seo.redirects.import-404') }}" method="POST" class="d-inline">
                         @csrf
-                        <button type="submit" class="btn btn-light btn-sm">
+                        <button type="submit" class="btn btn-light btn-sm mb-2">
                             <i class="fas fa-download"></i> Импорт 404 в редиректы
                         </button>
                     </form>
-                    <a href="{{ route('admin.seo.redirects.logs') }}" class="btn btn-light btn-sm">
+                    <a href="{{ route('admin.seo.redirects.logs') }}" class="btn btn-light btn-sm mb-2 d-block">
                         <i class="fas fa-list"></i> Все логи
                     </a>
+                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#bulkImportModal">
+                        <i class="fas fa-file-csv"></i> Импорт CSV
+                    </button>
                 </div>
             </div>
         </div>
@@ -189,6 +192,39 @@
                     <button type="submit" class="btn btn-primary">Создать</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно импорта CSV -->
+    <div class="modal fade" id="bulkImportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('admin.seo.redirects.bulk-import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Импорт редиректов из CSV</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">CSV файл *</label>
+                            <input type="file" name="csv_file" class="form-control" accept=".csv,.txt" required>
+                            <small class="text-muted d-block mt-2">Формат: from_url,to_url,type (301 или 302)</small>
+                            <small class="text-muted">Пример: /old-page,/new-page,301</small>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Первый ряд считается заголовком и пропускается.
+                            Дубликаты будут автоматически пропущены.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Импортировать
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
