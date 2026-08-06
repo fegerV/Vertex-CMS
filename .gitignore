@@ -1,21 +1,48 @@
-# Laravel-specific ignores
-bootstrap/cache/packages.php
-bootstrap/cache/services.php
-# General PHP ignores
-*.php~
-*.swp
-# Logs
+# Dependencies
+vendor/
+
+# Compiled and build artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
+
+# Logs and temp files
 *.log
+*.tmp
+*.swp
+
 # Environment
 .env
 .env.local
-.env.*
-# Dependencies
-vendor/
-composer.lock
-# Tests
-.phpunit.result.cache
-# IDE
+*.env.*
+
+# Editors
 .vscode/
 .idea/
-*.tmp
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# PHP specific
+*.php~
+*.bak
+*.orig
+
+# Laravel specific (if applicable)
+bootstrap/cache/
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
