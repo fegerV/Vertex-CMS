@@ -158,6 +158,37 @@ Route::name("admin.")->prefix("admin")->group(function (): void {
         Route::delete('media/{media}', [MediaController::class, 'destroy'])
             ->middleware('vertex.permission:media.delete')
             ->name('media.destroy');
+        
+        // Массовые операции
+        Route::post('media/bulk-delete', [MediaController::class, 'bulkDelete'])
+            ->middleware('vertex.permission:media.delete')
+            ->name('media.bulk-delete');
+        Route::post('media/bulk-move', [MediaController::class, 'bulkMove'])
+            ->middleware('vertex.permission:media.edit')
+            ->name('media.bulk-move');
+        
+        // Версии файлов
+        Route::get('media/{media}/versions', [MediaController::class, 'versions'])
+            ->middleware('vertex.permission:media.view')
+            ->name('media.versions');
+        Route::post('media/versions/{version}/revert', [MediaController::class, 'revertVersion'])
+            ->middleware('vertex.permission:media.edit')
+            ->name('media.revert-version');
+        
+        // Использование файла
+        Route::get('media/{media}/usage', [MediaController::class, 'usageStats'])
+            ->middleware('vertex.permission:media.view')
+            ->name('media.usage');
+        
+        // Оптимизация
+        Route::post('media/{media}/optimize', [MediaController::class, 'optimize'])
+            ->middleware('vertex.permission:media.edit')
+            ->name('media.optimize');
+        
+        // Теги
+        Route::get('media/tags', [MediaController::class, 'tags'])
+            ->middleware('vertex.permission:media.view')
+            ->name('media.tags');
 
         Route::get('seo/redirects', [RedirectController::class, 'index'])
             ->middleware('vertex.permission:seo.view')
