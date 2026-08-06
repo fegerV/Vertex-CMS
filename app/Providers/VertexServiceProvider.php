@@ -35,6 +35,11 @@ class VertexServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Register the 'files' binding required by Laravel core aliases
+        $this->app->singleton('files', function ($app) {
+            return new Filesystem();
+        });
+
         $this->app->singleton(SettingsService::class);
         $this->app->singleton(AiProviderRegistry::class);
         $this->app->singleton(AiDraftService::class);
