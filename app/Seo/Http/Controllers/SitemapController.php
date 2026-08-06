@@ -5,7 +5,9 @@ namespace App\Seo\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Models\Term;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 class SitemapController extends Controller
 {
@@ -55,5 +57,13 @@ class SitemapController extends Controller
         return response()
             ->view('frontend.sitemap', ['entries' => $entries])
             ->header('Content-Type', 'application/xml');
+    }
+
+    public function generate(): RedirectResponse
+    {
+        // Force regeneration of sitemap by clearing cache if any
+        cache()->forget('sitemap_data');
+        
+        return redirect()->back()->with('success', 'Карта сайта успешно обновлена');
     }
 }
