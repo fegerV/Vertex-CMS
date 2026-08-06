@@ -1,53 +1,53 @@
-```
-# Environment
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
+
+# Dependencies
+node_modules/
+vendor/
+composer.lock
+*.lock
+.env
 .env.local
 .env.*
 
-# Dependencies
-vendor/
-composer.lock
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.swp
-
-# IDE
-.vscode/
-.idea/
-
-# Build artifacts
+# Build directories
 dist/
 build/
 target/
+coverage/
+htmlcov/
+*.egg-info/
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-.ENV
-.python-version
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
+# Logs and temp files
 *.log
-.git/
-.mypy_cache/
-.pytest_cache/
-.hypothesis/
+*.tmp
+*.swp
+*.swo
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System files
 .DS_Store
 Thumbs.db
-```
+.git/
+
+# Cache directories
+.mypy_cache/
+.pytest_cache/
+.gradle/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
