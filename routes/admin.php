@@ -275,3 +275,11 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
             ->name('api.queues.clear');
     });
 });
+
+// System Updates
+Route::prefix('system')->name('system.')->group(function () {
+    Route::get('/updates', [App\Http\Controllers\Admin\UpdateController::class, 'index'])->name('updates.index');
+    Route::get('/updates/check', [App\Http\Controllers\Admin\UpdateController::class, 'check'])->name('updates.check');
+    Route::post('/updates/update', [App\Http\Controllers\Admin\UpdateController::class, 'update'])->name('updates.update');
+    Route::post('/optimize', [App\Http\Controllers\Admin\UpdateController::class, 'optimize'])->name('optimize');
+});
