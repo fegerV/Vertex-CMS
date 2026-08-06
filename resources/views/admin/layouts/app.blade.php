@@ -98,6 +98,9 @@
                     ['label' => 'Соцсети (OG)', 'route' => 'admin.seo.social-media', 'permission' => 'seo.edit'],
                     ['label' => 'AI Мониторинг', 'route' => 'admin.seo.ai-monitor.index', 'permission' => 'seo.view'],
                     ['label' => 'Карты ключевых слов', 'route' => 'admin.seo.keyword-maps.index', 'permission' => 'seo.edit'],
+                    ['label' => 'Мгновенная индексация', 'route' => 'admin.seo.indexnow', 'permission' => 'seo.edit'],
+                    ['label' => 'Инструменты', 'route' => 'admin.seo.tools', 'permission' => 'seo.settings'],
+                    ['label' => '📚 Справка', 'route' => 'admin.seo.help.index', 'permission' => 'seo.view', 'icon' => 'book'],
                     ['label' => 'Настройки SEO', 'route' => 'admin.seo.settings', 'permission' => 'seo.settings'],
                 ]
             ],
