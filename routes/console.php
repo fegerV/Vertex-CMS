@@ -29,5 +29,5 @@ Schedule::call(function () {
     if ($deleted > 0) {
         $this->info("Cleaned up {$deleted} old backups.");
     }
-})->daily()->at('03:00')->withoutOverlapping();
+})->name('vertex:daily-backup')->daily()->at('03:00')->withoutOverlapping();
 

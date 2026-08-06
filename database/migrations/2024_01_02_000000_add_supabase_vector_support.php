@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Миграция для настройки Supabase pgvector и RPC функции поиска
@@ -28,7 +29,7 @@ return new class extends Migration
             DB::statement('CREATE EXTENSION IF NOT EXISTS vector');
         } catch (\Exception $e) {
             // Если расширение уже существует или недоступно, продолжаем
-            \Log::info('Расширение vector уже существует или недоступно: ' . $e->getMessage());
+            Log::info('Расширение vector уже существует или недоступно: ' . $e->getMessage());
         }
 
         // Добавляем колонку embedding_vector с типом vector(1536) для ai_kb_chunks
@@ -38,7 +39,7 @@ return new class extends Migration
                 // Проверяем тип колонки и изменяем если нужно
                 DB::statement('ALTER TABLE ai_kb_chunks ALTER COLUMN embedding_vector TYPE vector(1536) USING embedding_vector::vector(1536)');
             } catch (\Exception $e) {
-                \Log::info('Колонка embedding_vector уже имеет правильный тип или таблица не существует: ' . $e->getMessage());
+                Log::info('Колонка embedding_vector уже имеет правильный тип или таблица не существует: ' . $e->getMessage());
             }
         }
 
@@ -52,7 +53,7 @@ return new class extends Migration
                 WITH (lists = 100)
             ');
         } catch (\Exception $e) {
-            \Log::info('Не удалось создать индекс векторного поиска: ' . $e->getMessage());
+            Log::info('Не удалось создать индекс векторного поиска: ' . $e->getMessage());
         }
 
         // Создаем RPC функцию для поиска похожих чанков
@@ -95,7 +96,7 @@ return new class extends Migration
                 \$\$
             ");
         } catch (\Exception $e) {
-            \Log::info('Не удалось создать RPC функцию search_kb_chunks: ' . $e->getMessage());
+            Log::info('Не удалось создать RPC функцию search_kb_chunks: ' . $e->getMessage());
         }
 
         // Создаем индекс для ускорения обычного поиска по document_id
@@ -105,7 +106,7 @@ return new class extends Migration
                     $table->index('document_id', 'ai_kb_chunks_document_id_idx');
                 });
             } catch (\Exception $e) {
-                \Log::info('Индекс document_id уже существует: ' . $e->getMessage());
+                Log::info('Индекс document_id уже существует: ' . $e->getMessage());
             }
         }
     }
@@ -119,7 +120,7 @@ return new class extends Migration
         try {
             DB::statement('DROP FUNCTION IF EXISTS search_kb_chunks(vector, INT)');
         } catch (\Exception $e) {
-            \Log::info('Функция search_kb_chunks не существует: ' . $e->getMessage());
+            Log::info('Функция search_kb_chunks не существует: ' . $e->getMessage());
         }
 
         // Удаляем индексы
@@ -127,14 +128,14 @@ return new class extends Migration
             DB::statement('DROP INDEX IF EXISTS ai_kb_chunks_embedding_idx');
             DB::statement('DROP INDEX IF EXISTS ai_kb_chunks_document_id_idx');
         } catch (\Exception $e) {
-            \Log::info('Индексы не существуют: ' . $e->getMessage());
+            Log::info('Индексы не существуют: ' . $e->getMessage());
         }
 
         // Возвращаем тип колонки к text (опционально)
         try {
             DB::statement('ALTER TABLE ai_kb_chunks ALTER COLUMN embedding_vector TYPE TEXT');
         } catch (\Exception $e) {
-            \Log::info('Не удалось изменить тип колонки embedding_vector: ' . $e->getMessage());
+            Log::info('Не удалось изменить тип колонки embedding_vector: ' . $e->getMessage());
         }
     }
 };
