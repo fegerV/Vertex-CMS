@@ -34,8 +34,20 @@ Route::delete('/pages/{page}', [PageApiController::class, 'destroy']);
 
 Route::get('/builder/blocks', [BuilderApiController::class, 'blocks']);
 Route::post('/builder/render-preview', [BuilderApiController::class, 'renderPreview']);
+// AI Providers & Chat (existing)
 Route::get('/ai/providers', [AiController::class, 'providers']);
 Route::post('/ai/chat', [AiController::class, 'chat']);
+
+// Site Wizard - AI-powered site creation
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/ai/wizard/generate-structure', [AiController::class, 'wizardGenerateStructure']);
+    Route::post('/ai/wizard/generate-semantic-core', [AiController::class, 'wizardGenerateSemanticCore']);
+    Route::post('/ai/wizard/generate-article-plan', [AiController::class, 'wizardGenerateArticlePlan']);
+    Route::post('/ai/wizard/generate-article-content', [AiController::class, 'wizardGenerateArticleContent']);
+    Route::post('/ai/wizard/generate-image-prompt', [AiController::class, 'wizardGenerateImagePrompt']);
+    Route::post('/ai/wizard/generate-image', [AiController::class, 'wizardGenerateImage']);
+    Route::post('/ai/wizard/save-structure', [AiController::class, 'wizardSaveStructure']);
+});
 
 Route::get('/system/info', [SystemApiController::class, 'info']);
 Route::post('/cache/clear', [SystemApiController::class, 'clearCache']);
