@@ -46,6 +46,7 @@
 - **Вебхуки** — интеграция с внешними сервисами
 - **Уведомления** — Telegram, Slack, Email
 - **AI-инструменты** — генерация контента, чат-бот, умный поиск
+- **AI Site Wizard** — мастер создания сайта за 8 шагов (структура, контент, SEO, изображения)
 
 ### 💰 SaaS и биллинг
 - **Планы подписок** — управление тарифами
@@ -95,7 +96,7 @@ VertexCMS is no longer just an MVP skeleton. The repo is now at an `advanced fou
 | PWA | ✅ | Service Worker, manifest |
 | GraphQL | ✅ | API для фронтенда |
 | Webhooks | ✅ | Интеграции с внешними сервисами |
-| AI Services | ✅ | Генерация контента, анализ |
+| AI Services | ✅ | Генерация контента, анализ, Site Wizard |
 | SaaS Billing | ✅ | Подписки, лимиты |
 
 ## 🎯 Идеально подходит для
@@ -160,6 +161,7 @@ Vertex CMS распространяется под лицензией **MIT**.
 ## 📚 Документация
 
 - [Documentation index](docs/README.md)
+- [AI Site Wizard Guide](docs/AI_SITE_WIZARD.md) - Полное руководство по мастеру создания сайта
 - [Unimplemented Functions Plan](docs/unimplemented-functions-plan.md)
 - [VertexCMS vs WordPress](docs/vertexcms-vs-wordpress.md)
 - [Roadmap](docs/roadmap.md)

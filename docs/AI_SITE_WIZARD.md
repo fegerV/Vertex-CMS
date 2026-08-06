@@ -53,9 +53,20 @@ The wizard works with multiple providers through `AiProviderRegistry`:
    - Claude Sonnet for text generation
    - Requires: `anthropic_api_key`
 
-3. **Custom** (OpenAI-compatible API)
-   - Any compatible endpoint
+3. **Grok/xAI**
+   - Grok-2 for text generation
+   - Grok Image Generation for images
+   - Requires: `xai_api_key`
+
+4. **Custom** (OpenAI-compatible API)
+   - Any compatible endpoint (including local LLMs, Stable Diffusion)
    - Requires: `custom_api_base`, `custom_api_key`
+
+**Image Generation Providers:**
+- DALL-E 3 (OpenAI) - High quality, detailed images
+- Grok Image (xAI) - Fast generation, creative style
+- ChatGPT Image - Via OpenAI API
+- Stable Diffusion - Via Custom API endpoint
 
 ## Wizard Flow
 
@@ -424,9 +435,16 @@ OPENAI_API_KEY=sk-...
 # Anthropic (optional)
 ANTHROPIC_API_KEY=sk-ant-...
 
+# Grok/xAI (optional)
+XAI_API_KEY=xai-...
+
 # Custom Provider (optional)
 AI_CUSTOM_API_BASE=https://your-api.com/v1
 AI_CUSTOM_API_KEY=your-key
+
+# Image Generation
+IMAGE_GENERATION_PROVIDER=openai
+IMAGE_GENERATION_MODEL=dall-e-3
 ```
 
 ### Database Tables Required
