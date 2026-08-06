@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('title', 'Ошибка сервера')
+@section('code', '500')
+@section('message', 'Внутренняя ошибка сервера')
+@section('description', 'Произошла непредвиденная ошибка. Мы уже уведомлены и работаем над исправлением.')
