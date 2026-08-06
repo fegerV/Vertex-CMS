@@ -88,6 +88,11 @@
                     ['label' => 'Семантическое ядро', 'route' => 'admin.seo.semantics', 'permission' => 'seo.view'],
                     ['label' => 'Внутренние ссылки', 'route' => 'admin.seo.internal-links', 'permission' => 'seo.view'],
                     ['label' => 'AI-Ассистент', 'route' => 'admin.seo.ai-assistant', 'permission' => 'seo.edit'],
+                    ['label' => '404 Monitor', 'route' => 'admin.seo.redirects', 'permission' => 'seo.edit'],
+                    ['label' => 'Schema.org', 'route' => 'admin.seo.schema-builder', 'permission' => 'seo.edit'],
+                    ['label' => 'Search Console', 'route' => 'admin.seo.search-console', 'permission' => 'seo.view'],
+                    ['label' => 'Дубликаты', 'route' => 'admin.seo.duplicates', 'permission' => 'seo.view'],
+                    ['label' => 'AI Изображения', 'route' => 'admin.seo.ai-images', 'permission' => 'seo.edit'],
                     ['label' => 'Настройки SEO', 'route' => 'admin.seo.settings', 'permission' => 'seo.settings'],
                 ]
             ],
