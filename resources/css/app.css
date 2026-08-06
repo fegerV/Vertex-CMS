@@ -1,3 +1,4 @@
+@import "./theme.css";
 @import "./builder-components.css";
 @import "./builder-editor.css";
 @tailwind base;
