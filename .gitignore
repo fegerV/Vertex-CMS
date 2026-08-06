@@ -1,48 +1,52 @@
+```
+# Backup files
+*.backup
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
+
 # Dependencies
-vendor/
 node_modules/
+vendor/
+*.lock
 
 # Build artifacts
 dist/
 build/
 target/
-*.phar
-
-# Cache and temporary files
-.cache/
-*.cache
-*.tmp
-*.log
-**/logs/
-!logs/.gitkeep
-
-# Environment specific
-.env
-.env.local
-.env.*
-!.env.example
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
+coverage/
+htmlcov/
+*.pyc
+__pycache__/
+*.class
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
+*.jar
+*.war
+*.zip
+*.tar.gz
+*.tgz
+*.gz
+*.rar
+*.7z
 
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# PHP specific
-*.php~
-**/vendor/composer.lock
-!composer.lock
-
-# Coverage and testing
-coverage/
-htmlcov/
-.coverage
-*.gcda
-*.gcno
-
-# Docker
-.dockerenv
+```
