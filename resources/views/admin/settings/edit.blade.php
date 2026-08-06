@@ -4,50 +4,158 @@
 @section('page_title', 'Настройки')
 @section('page_subtitle', 'Конфигурация сайта, SEO, API, AI, PWA и кеша')
 
+@push('styles')
+<style>
+    .settings-tabs {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        scrollbar-width: none;
+    }
+    .settings-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    .settings-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.65rem 1.1rem;
+        border-radius: 0.75rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--vc-text-muted);
+        background: rgba(148, 163, 184, 0.08);
+        transition: all 200ms ease;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .settings-tab:hover {
+        background: rgba(148, 163, 184, 0.14);
+        color: var(--vc-text);
+    }
+    .settings-tab.active {
+        background: linear-gradient(135deg, var(--vc-primary) 0%, #0f766e 100%);
+        color: var(--vc-primary-contrast);
+        box-shadow: 0 8px 20px rgba(15, 118, 110, 0.15);
+    }
+    .settings-section {
+        scroll-margin-top: 140px;
+    }
+    .setting-field-card {
+        border: 1px solid var(--vc-border);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.5);
+        padding: 1.1rem;
+        transition: all 200ms ease;
+    }
+    .setting-field-card:hover {
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+    html[data-theme='dark'] .setting-field-card {
+        background: rgba(15, 23, 42, 0.4);
+    }
+    html[data-theme='dark'] .setting-field-card:hover {
+        background: rgba(15, 23, 42, 0.6);
+    }
+    .field-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: 0.65rem;
+        background: rgba(45, 212, 191, 0.1);
+        color: var(--vc-primary);
+    }
+    @media (max-width: 768px) {
+        .vc-form-grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
     @php
         $canEditSettings = auth()->user()?->hasPermission('settings.edit');
         $canManageAiKeys = $canManageAiKeys ?? false;
+        
+        $tabIcons = [
+            'general' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>',
+            'seo' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>',
+            'api' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>',
+            'ai' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>',
+            'pwa' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>',
+            'cache' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>',
+        ];
     @endphp
 
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="mx-auto max-w-7xl space-y-6">
         @unless ($canEditSettings)
-            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                У вас доступ только на просмотр. Изменение настроек доступно пользователям с правом `settings.edit`.
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 flex items-center gap-3">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span>У вас доступ только на просмотр. Изменение настроек доступно пользователям с правом <code class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-xs">settings.edit</code>.</span>
             </div>
         @endunless
 
-        <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-6">
+        <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-6" x-data="{ activeTab: 'general' }">
             @csrf
             @method('PUT')
 
+            <!-- Sticky Toolbar -->
             <div class="vc-toolbar vc-toolbar-sticky">
-                <div class="vc-toolbar-meta">
-                    <span class="vc-toolbar-title">Параметры проекта</span>
-                    <span class="vc-toolbar-text">Сохраняйте базовые настройки сайта, API, AI и PWA в одном месте.</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="field-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                        <div>
+                            <span class="vc-toolbar-title">Параметры проекта</span>
+                            <p class="text-xs text-[var(--vc-text-soft)] mt-0.5">Сохраняйте базовые настройки сайта, API, AI и PWA в одном месте.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabs Navigation -->
+                    <div class="settings-tabs mt-3">
+                        @foreach ($groups as $groupKey => $group)
+                            <button type="button" 
+                                    class="settings-tab {{ $loop->first ? 'active' : '' }}"
+                                    @click="activeTab = '{{ $groupKey }}'; document.getElementById('section-{{ $groupKey }}').scrollIntoView({ behavior: 'smooth', block: 'start' })">
+                                {!! $tabIcons[$groupKey] ?? $tabIcons['general'] !!}
+                                {{ $group['label'] }}
+                            </button>
+                        @endforeach
+                    </div>
                 </div>
 
                 @if ($canEditSettings)
                     <button class="vc-button vc-button-primary vc-button-large" type="submit">
-                        Сохранить настройки
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                        Сохранить все
                     </button>
                 @else
-                    <span class="vc-badge">Только просмотр</span>
+                    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        Только просмотр
+                    </span>
                 @endif
             </div>
 
-            <fieldset @disabled(! $canEditSettings) class="space-y-6">
-                @foreach ($groups as $group)
-                    <section class="vc-panel p-6">
-                        <div class="mb-5 flex items-start justify-between gap-4">
-                            <div>
-                                <h2 class="text-lg font-semibold text-[var(--vc-text)]">{{ $group['label'] }}</h2>
-                                <p class="mt-1 text-sm text-[var(--vc-text-muted)]">{{ $group['description'] }}</p>
+            <fieldset @disabled(! $canEditSettings) class="space-y-8">
+                @foreach ($groups as $groupKey => $group)
+                    <section id="section-{{ $groupKey }}" class="settings-section scroll-smooth">
+                        <div class="mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="field-icon" style="background: rgba(45, 212, 191, 0.12);">
+                                    {!! $tabIcons[$groupKey] ?? $tabIcons['general'] !!}
+                                </div>
+                                <div>
+                                    <h2 class="text-lg font-bold text-[var(--vc-text)]">{{ $group['label'] }}</h2>
+                                    <p class="text-sm text-[var(--vc-text-muted)]">{{ $group['description'] }}</p>
+                                </div>
                             </div>
-
-                            @unless ($canEditSettings)
-                                <span class="vc-badge">Только просмотр</span>
-                            @endunless
                         </div>
 
                         <div class="vc-form-grid vc-form-grid-2">
@@ -65,12 +173,41 @@
                                     $fieldPlaceholder = '';
 
                                     if ($isSecretField) {
-                                        $fieldPlaceholder = ! empty($values[$key]) ? 'Сохранённый ключ скрыт' : 'Введите ключ';
+                                        $fieldPlaceholder = ! empty($values[$key]) ? '••••••••••••' : 'Введите ключ';
+                                    }
+                                    
+                                    $fieldIcons = [
+                                        'name' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>',
+                                        'url' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>',
+                                        'email' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>',
+                                        'key' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>',
+                                    ];
+                                    $fieldIcon = null;
+                                    foreach (array_keys($fieldIcons) as $iconKey) {
+                                        if (str_contains(strtolower($key), $iconKey)) {
+                                            $fieldIcon = $fieldIcons[$iconKey];
+                                            break;
+                                        }
                                     }
                                 @endphp
 
-                                <label class="vc-field {{ $fieldInput === 'textarea' ? 'md:col-span-2' : '' }}">
-                                    <span class="vc-field-label">{{ $field['label'] }}</span>
+                                <label class="setting-field-card {{ $fieldInput === 'textarea' ? 'md:col-span-2' : '' }}">
+                                    <div class="flex items-start gap-3 mb-3">
+                                        @if ($fieldIcon)
+                                            <div class="field-icon flex-shrink-0" style="width: 1.8rem; height: 1.8rem;">
+                                                {!! $fieldIcon !!}
+                                            </div>
+                                        @endif
+                                        <div class="flex-1">
+                                            <span class="text-sm font-semibold text-[var(--vc-text)]">{{ $field['label'] }}</span>
+                                        </div>
+                                        @if ($isSecretField || $fieldType === 'encrypted')
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                                Защищено
+                                            </span>
+                                        @endif
+                                    </div>
 
                                 @if ($fieldInput === 'textarea')
                                     @php
@@ -81,23 +218,24 @@
                                     <textarea
                                         name="{{ $inputName }}"
                                         rows="4"
-                                        class="vc-textarea"
+                                        class="vc-textarea text-sm"
+                                        placeholder="{{ $fieldPlaceholder }}"
                                         @disabled($fieldDisabled)
                                     >{{ $displayValue }}</textarea>
                                     @elseif ($fieldInput === 'checkbox')
-                                        <span class="vc-checkbox-row">
+                                        <label class="flex items-center gap-3 p-3 rounded-lg border border-var(--vc-border) hover:bg-white/50 transition-colors cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 name="{{ $inputName }}"
                                                 value="1"
                                                 @checked((bool) $fieldValue)
-                                                class="rounded border-slate-300"
+                                                class="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500/20"
                                                 @disabled($fieldDisabled)
                                             >
                                             <span class="text-sm text-[var(--vc-text-muted)]">Включено</span>
-                                        </span>
+                                        </label>
                                     @elseif ($fieldInput === 'select')
-                                        <select name="{{ $inputName }}" class="vc-select" @disabled($fieldDisabled)>
+                                        <select name="{{ $inputName }}" class="vc-select text-sm" @disabled($fieldDisabled)>
                                             @foreach ($field['options'] as $optionValue => $optionLabel)
                                                 <option value="{{ $optionValue }}" @selected((string) $fieldValue === (string) $optionValue)>{{ $optionLabel }}</option>
                                             @endforeach
@@ -108,29 +246,32 @@
                                             name="{{ $inputName }}"
                                             value="{{ $isSecretField ? '' : $fieldValue }}"
                                             placeholder="{{ $fieldPlaceholder }}"
-                                            class="vc-input"
+                                            class="vc-input text-sm"
                                             @disabled($fieldDisabled)
                                         >
                                     @endif
 
                                     @if ($fieldType === 'encrypted')
-                                        <span class="vc-field-help">
-                                            Значение хранится в зашифрованном виде и не показывается в интерфейсе после сохранения.
-                                        </span>
+                                        <p class="mt-2 text-xs text-[var(--vc-text-soft)] flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            Значение хранится в зашифрованном виде
+                                        </p>
                                     @elseif ($fieldInput === 'checkbox')
-                                        <span class="vc-field-help">
-                                            Отключите опцию, если она не должна использоваться на сайте по умолчанию.
-                                        </span>
+                                        <p class="mt-2 text-xs text-[var(--vc-text-soft)]">Отключите опцию, если она не должна использоваться по умолчанию.</p>
                                     @endif
 
                                     @if ($isAiSecretField && ! $canManageAiKeys)
-                                        <span class="vc-field-help">
-                                            Редактирование AI-ключей доступно только пользователям с правом `ai.manage_keys`.
-                                        </span>
+                                        <p class="mt-2 text-xs text-amber-600 flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                            Редактирование AI-ключей доступно только пользователям с правом <code>ai.manage_keys</code>
+                                        </p>
                                     @endif
 
                                     @error($key)
-                                        <span class="vc-field-error">{{ $message }}</span>
+                                        <p class="mt-2 text-xs text-red-600 flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            {{ $message }}
+                                        </p>
                                     @enderror
                                 </label>
                             @endforeach
@@ -140,8 +281,13 @@
             </fieldset>
 
             @if ($canEditSettings)
-                <div class="flex justify-end">
+                <div class="vc-toolbar">
+                    <div class="vc-toolbar-meta">
+                        <span class="vc-toolbar-title">Готово?</span>
+                        <span class="vc-toolbar-text">Проверьте все изменения перед сохранением.</span>
+                    </div>
                     <button class="vc-button vc-button-primary" type="submit">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         Сохранить настройки
                     </button>
                 </div>
