@@ -1,26 +1,20 @@
 ```
 # Environment
 .env.local
-.env.*
-
-# Logs and temp files
-*.log
-*.tmp
 
 # Dependencies
-node_modules/
 vendor/
 
-# Build artifacts
-dist/
-build/
-public/build/
+# Logs
+*.log
 
-# Cache directories
-.cache/
-bootstrap/cache/
-storage/framework/cache/
-storage/logs/
+# Backup files
+*.bak
+*.backup
+
+# OS generated files
+.DS_Store
+Thumbs.db
 
 # IDE files
 .vscode/
@@ -28,16 +22,36 @@ storage/logs/
 *.swp
 *.swo
 
-# OS files
-.DS_Store
-Thumbs.db
+# Tests
+.phpunit.result.cache
 
-# Compression files
-*.zip
+# Cache
+bootstrap/cache/
+storage/framework/cache/
+storage/logs/
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.pyc
+__pycache__/
+
+# Distribution / packaging
+dist/
+build/
 *.tar.gz
-*.tar.bz2
-*.tar.xz
-*.gz
-*.rar
-*.7z
+*.zip
+
+# Sensitive files
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp
+*.temp
 ```

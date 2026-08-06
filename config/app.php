@@ -10,5 +10,26 @@ return [
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'ru'),
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
+    
+    /*
+     * Package Service Providers
+     */
+    'providers' => [
+        // Laravel Framework Providers...
+        
+        // Application Providers...
+        App\Providers\AppServiceProvider::class,
+        App\Providers\SentryServiceProvider::class,
+        
+        // Third-party Providers
+        L5Swagger\L5SwaggerServiceProvider::class,
+    ],
+    
+    /*
+     * Class Aliases
+     */
+    'aliases' => [
+        'L5Swagger' => L5Swagger\Facades\L5Swagger::class,
+    ],
 ];
 
