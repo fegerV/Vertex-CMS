@@ -1,50 +1,31 @@
 ```
-# Dependencies
+# Laravel-specific ignores
 vendor/
-node_modules/
-
-# Build artifacts
-dist/
-build/
-target/
-*.phar
-
-# Cache and temporary files
-.cache/
-*.cache
-*.tmp
-*.log
-**/logs/
-!logs/.gitkeep
-
-# Environment specific
+composer.lock
 .env
-.env.local
 .env.*
 !.env.example
 
-# IDE and editor files
+# Build and cache directories
+bootstrap/cache/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS generated files
+# OS files
 .DS_Store
 Thumbs.db
 
-# PHP specific
-*.php~
-**/vendor/composer.lock
-!composer.lock
+# Logs
+*.log
+storage/logs/
 
-# Coverage and testing
-coverage/
-htmlcov/
-.coverage
-*.gcda
-*.gcno
-
-# Docker
-.dockerenv
+# Temporary files
+*.tmp
 ```
