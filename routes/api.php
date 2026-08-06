@@ -1,6 +1,6 @@
 <?php
 
-use App\AI\Http\Controllers\AiController;
+use App\AI\Http\Controllers\AiController as DraftAiController;
 use App\Builder\Http\Controllers\BuilderApiController;
 use App\Content\Http\Controllers\PageApiController;
 use App\Media\Http\Controllers\MediaApiController;
@@ -9,7 +9,7 @@ use App\System\Http\Controllers\SystemApiController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Analytics\DashboardController;
 use App\Http\Controllers\Analytics\HeatmapController;
-use App\Http\Controllers\Api\AIController;
+use App\Http\Controllers\Api\AIController as ApiAiController;
 
 Route::get('/pages', [PageApiController::class, 'index']);
 Route::post('/pages', [PageApiController::class, 'store']);
@@ -35,18 +35,18 @@ Route::delete('/pages/{page}', [PageApiController::class, 'destroy']);
 Route::get('/builder/blocks', [BuilderApiController::class, 'blocks']);
 Route::post('/builder/render-preview', [BuilderApiController::class, 'renderPreview']);
 // AI Providers & Chat (existing)
-Route::get('/ai/providers', [AiController::class, 'providers']);
-Route::post('/ai/chat', [AiController::class, 'chat']);
+Route::get('/ai/providers', [DraftAiController::class, 'providers']);
+Route::post('/ai/chat', [DraftAiController::class, 'chat']);
 
 // Site Wizard - AI-powered site creation
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/ai/wizard/generate-structure', [AiController::class, 'wizardGenerateStructure']);
-    Route::post('/ai/wizard/generate-semantic-core', [AiController::class, 'wizardGenerateSemanticCore']);
-    Route::post('/ai/wizard/generate-article-plan', [AiController::class, 'wizardGenerateArticlePlan']);
-    Route::post('/ai/wizard/generate-article-content', [AiController::class, 'wizardGenerateArticleContent']);
-    Route::post('/ai/wizard/generate-image-prompt', [AiController::class, 'wizardGenerateImagePrompt']);
-    Route::post('/ai/wizard/generate-image', [AiController::class, 'wizardGenerateImage']);
-    Route::post('/ai/wizard/save-structure', [AiController::class, 'wizardSaveStructure']);
+    Route::post('/ai/wizard/generate-structure', [DraftAiController::class, 'wizardGenerateStructure']);
+    Route::post('/ai/wizard/generate-semantic-core', [DraftAiController::class, 'wizardGenerateSemanticCore']);
+    Route::post('/ai/wizard/generate-article-plan', [DraftAiController::class, 'wizardGenerateArticlePlan']);
+    Route::post('/ai/wizard/generate-article-content', [DraftAiController::class, 'wizardGenerateArticleContent']);
+    Route::post('/ai/wizard/generate-image-prompt', [DraftAiController::class, 'wizardGenerateImagePrompt']);
+    Route::post('/ai/wizard/generate-image', [DraftAiController::class, 'wizardGenerateImage']);
+    Route::post('/ai/wizard/save-structure', [DraftAiController::class, 'wizardSaveStructure']);
 });
 
 Route::get('/system/info', [SystemApiController::class, 'info']);
@@ -75,14 +75,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('heatmaps/record', [HeatmapController::class, 'record']);
 
     // AI Services
-    Route::post('ai/chat', [AIController::class, 'chat']);
-    Route::post('ai/faq', [AIController::class, 'faq']);
-    Route::post('ai/generate', [AIController::class, 'generateContent']);
-    Route::post('ai/analyze-image', [AIController::class, 'analyzeImage']);
-    Route::post('ai/moderate', [AIController::class, 'moderateContent']);
-    Route::get('ai/search', [AIController::class, 'search']);
-    Route::get('ai/suggest', [AIController::class, 'suggestQueries']);
-    Route::post('ai/keywords', [AIController::class, 'extractKeywords']);
-    Route::post('ai/language', [AIController::class, 'detectLanguage']);
-    Route::post('ai/recommend', [AIController::class, 'recommendProducts']);
+    Route::post('ai/chat', [ApiAiController::class, 'chat']);
+    Route::post('ai/faq', [ApiAiController::class, 'faq']);
+    Route::post('ai/generate', [ApiAiController::class, 'generateContent']);
+    Route::post('ai/analyze-image', [ApiAiController::class, 'analyzeImage']);
+    Route::post('ai/moderate', [ApiAiController::class, 'moderateContent']);
+    Route::get('ai/search', [ApiAiController::class, 'search']);
+    Route::get('ai/suggest', [ApiAiController::class, 'suggestQueries']);
+    Route::post('ai/keywords', [ApiAiController::class, 'extractKeywords']);
+    Route::post('ai/language', [ApiAiController::class, 'detectLanguage']);
+    Route::post('ai/recommend', [ApiAiController::class, 'recommendProducts']);
 });

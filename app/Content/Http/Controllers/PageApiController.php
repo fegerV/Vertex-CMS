@@ -57,7 +57,7 @@ class PageApiController extends Controller
         }
     }
 
-    public function destroy(Page $page): JsonResponse
+    public function destroy(Request $request, Page $page): JsonResponse
     {
         $this->pages->delete($page, $request->user());
         return response()->json(['ok' => true, 'id' => $page->id]);
