@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\Seo\AiBrandMonitorController;
 use App\Http\Controllers\Admin\Seo\AiUsageController;
+use App\Http\Controllers\Admin\Seo\AiKnowledgeBaseController;
 use App\Http\Controllers\Admin\Seo\SchemaController;
 use App\Http\Controllers\Admin\Seo\SearchConsoleController;
 use App\Http\Controllers\Admin\Seo\DuplicatesController;
@@ -279,3 +280,26 @@ Route::prefix('keyword-maps')->name('keyword-maps.')->middleware('vertex.permiss
 Route::get('/help', [App\Http\Controllers\Admin\Seo\HelpController::class, 'index'])->name('help.index');
 Route::get('/help/{section}/{topic?}', [App\Http\Controllers\Admin\Seo\HelpController::class, 'show'])->name('help.show');
 Route::get('/help/search', [App\Http\Controllers\Admin\Seo\HelpController::class, 'search'])->name('help.search');
+
+// ==========================================
+// AI RAG Knowledge Base Routes
+// ==========================================
+Route::prefix('ai-kb')->name('ai-kb.')->middleware('vertex.permission:seo.edit')->group(function () {
+    Route::get('/', [AiKnowledgeBaseController::class, 'index'])->name('index');
+    Route::get('/categories', [AiKnowledgeBaseController::class, 'categories'])->name('categories');
+    Route::post('/categories', [AiKnowledgeBaseController::class, 'storeCategory'])->name('categories.store');
+    
+    // Документы
+    Route::get('/document/edit/{id?}', [AiKnowledgeBaseController::class, 'editDocument'])->name('document.edit');
+    Route::post('/document/save', [AiKnowledgeBaseController::class, 'saveDocument'])->name('document.save');
+    Route::delete('/document/delete/{id}', [AiKnowledgeBaseController::class, 'deleteDocument'])->name('document.delete');
+    Route::post('/document/reprocess/{id}', [AiKnowledgeBaseController::class, 'reprocessDocument'])->name('document.reprocess');
+    
+    // Чаты
+    Route::get('/chat-history', [AiKnowledgeBaseController::class, 'chatHistory'])->name('chat-history');
+    Route::get('/chat-view/{id}', [AiKnowledgeBaseController::class, 'viewChat'])->name('chat-view');
+    
+    // Настройки
+    Route::get('/settings', [AiKnowledgeBaseController::class, 'settings'])->name('settings');
+    Route::post('/settings', [AiKnowledgeBaseController::class, 'saveSettings'])->name('settings.save');
+});
