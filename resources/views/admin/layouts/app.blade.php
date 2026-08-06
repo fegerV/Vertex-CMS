@@ -93,6 +93,7 @@
                     ['label' => 'Search Console', 'route' => 'admin.seo.search-console', 'permission' => 'seo.view'],
                     ['label' => 'Дубликаты', 'route' => 'admin.seo.duplicates', 'permission' => 'seo.view'],
                     ['label' => 'AI Изображения', 'route' => 'admin.seo.ai-images', 'permission' => 'seo.edit'],
+                    ['label' => 'Соцсети (OG)', 'route' => 'admin.seo.social-media', 'permission' => 'seo.edit'],
                     ['label' => 'Настройки SEO', 'route' => 'admin.seo.settings', 'permission' => 'seo.settings'],
                 ]
             ],
