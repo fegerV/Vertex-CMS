@@ -74,6 +74,23 @@
                     ['label' => 'Уведомления', 'route' => 'admin.ecommerce.notifications', 'permission' => 'ecommerce.notifications.view'],
                 ]
             ],
+            [
+                'label' => 'SEO',
+                'route' => 'admin.seo.dashboard',
+                'active' => 'admin.seo.*',
+                'permission' => 'seo.view',
+                'icon' => 'search',
+                'children' => [
+                    ['label' => 'Обзор', 'route' => 'admin.seo.dashboard', 'permission' => 'seo.view'],
+                    ['label' => 'Анализ контента', 'route' => 'admin.seo.analysis', 'permission' => 'seo.view'],
+                    ['label' => 'Массовое редактирование', 'route' => 'admin.seo.bulk-editor', 'permission' => 'seo.edit'],
+                    ['label' => 'Роботы и Файлы', 'route' => 'admin.seo.files', 'permission' => 'seo.edit'],
+                    ['label' => 'Семантическое ядро', 'route' => 'admin.seo.semantics', 'permission' => 'seo.view'],
+                    ['label' => 'Внутренние ссылки', 'route' => 'admin.seo.internal-links', 'permission' => 'seo.view'],
+                    ['label' => 'AI-Ассистент', 'route' => 'admin.seo.ai-assistant', 'permission' => 'seo.edit'],
+                    ['label' => 'Настройки SEO', 'route' => 'admin.seo.settings', 'permission' => 'seo.settings'],
+                ]
+            ],
             ['label' => 'Пользователи', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'icon' => 'users'],
             ['label' => 'Роли', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'icon' => 'shield'],
             ['label' => 'Настройки', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'icon' => 'cog'],
