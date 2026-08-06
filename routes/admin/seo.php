@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Seo\AiBrandMonitorController;
+use App\Http\Controllers\Admin\Seo\AiUsageController;
 use App\Http\Controllers\Admin\Seo\SchemaController;
 use App\Http\Controllers\Admin\Seo\SearchConsoleController;
 use App\Http\Controllers\Admin\Seo\DuplicatesController;
@@ -91,6 +92,23 @@ Route::post('seo/ai/generate-meta', [SeoDashboardController::class, 'generateMet
 Route::post('seo/ai/generate-content', [SeoDashboardController::class, 'generateContent'])
     ->middleware('vertex.permission:seo.edit')
     ->name('seo.ai.generate-content');
+
+// Использование ИИ
+Route::get('seo/ai-usage', [AiUsageController::class, 'index'])
+    ->middleware('vertex.permission:seo.view')
+    ->name('seo.ai-usage');
+
+Route::post('seo/ai/sync', [AiUsageController::class, 'sync'])
+    ->middleware('vertex.permission:seo.edit')
+    ->name('seo.ai.sync');
+
+Route::get('seo/ai/usage/details/{feature}', [AiUsageController::class, 'details'])
+    ->middleware('vertex.permission:seo.view')
+    ->name('seo.ai.details');
+
+Route::get('seo/ai/export', [AiUsageController::class, 'export'])
+    ->middleware('vertex.permission:seo.view')
+    ->name('seo.ai.export');
 
 // 404 Monitor и Редиректы (Manager)
 Route::get('seo/redirects', [RedirectController::class, 'index'])
