@@ -963,6 +963,46 @@ html[data-theme='dark'] .vc-file-input {
     box-shadow: var(--vc-shadow-soft);
 }
 
+/* Compact admin density: keep descriptions, reduce decorative whitespace. */
+.vc-admin-density-compact .vc-button {
+    gap: 0.4rem;
+    border-radius: 0.65rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.84rem;
+}
+
+.vc-admin-density-compact .vc-input,
+.vc-admin-density-compact .vc-select,
+.vc-admin-density-compact .vc-textarea {
+    border-radius: 0.65rem;
+    padding: 0.62rem 0.75rem;
+}
+
+.vc-admin-density-compact .vc-checkbox-row {
+    gap: 0.5rem;
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.75rem;
+}
+
+.vc-admin-density-compact .vc-form-surface {
+    border-radius: var(--vc-radius-lg);
+    padding: 1rem;
+}
+
+.vc-admin-density-compact:not(.vc-admin-body-builder) .vc-panel[class*="p-6"] {
+    padding: 1rem;
+}
+
+.vc-admin-density-compact:not(.vc-admin-body-builder) table th {
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+}
+
+.vc-admin-density-compact:not(.vc-admin-body-builder) table td {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+
 .vc-section-divider {
     border-top: 1px solid var(--vc-border);
     padding-top: 1.5rem;
@@ -2180,6 +2220,56 @@ html[data-theme='dark'] .vc-builder-empty {
 
 .vc-builder-appbar-save:hover {
     background: #0798c6;
+}
+
+.vc-builder-appbar-retry {
+    border-color: rgba(251, 113, 133, 0.65);
+    color: #fecdd3;
+}
+
+.vc-builder-notice {
+    position: fixed;
+    top: 76px;
+    left: 50%;
+    z-index: 70;
+    display: flex;
+    max-width: min(560px, calc(100vw - 32px));
+    transform: translateX(-50%);
+    align-items: center;
+    gap: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 12px;
+    background: #172033;
+    padding: 12px 14px 12px 16px;
+    color: #f8fafc;
+    box-shadow: 0 18px 45px rgba(2, 6, 23, 0.42);
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.vc-builder-notice-success {
+    border-color: rgba(52, 211, 153, 0.55);
+}
+
+.vc-builder-notice-error {
+    border-color: rgba(251, 113, 133, 0.65);
+}
+
+.vc-builder-notice button {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.vc-builder-notice button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
 }
 
 .vc-builder-shell-pane {

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Vertex\Forms\FieldTypeRegistry;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormField;
@@ -60,7 +61,7 @@ class FormApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', 'unique:forms,slug'],
             'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll'],
@@ -71,8 +72,8 @@ class FormApiController extends Controller
             'daily_limit' => ['nullable', 'integer', 'min:0'],
             'available_from' => ['nullable', 'date'],
             'available_to' => ['nullable', 'date', 'after_or_equal:available_from'],
-            'fields' => ['nullable', 'array'],
-        ]);
+            'fields' => ['nullable', 'array', 'max:200'],
+        ], $this->fieldValidationRules()));
 
         $form = Form::query()->create([
             'name' => $validated['name'],
@@ -131,7 +132,7 @@ class FormApiController extends Controller
 
     public function update(Request $request, Form $form): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', 'unique:forms,slug,' . $form->id],
             'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll'],
@@ -144,8 +145,8 @@ class FormApiController extends Controller
             'available_to' => ['nullable', 'date', 'after_or_equal:available_from'],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer'],
-            'fields' => ['nullable', 'array'],
-        ]);
+            'fields' => ['nullable', 'array', 'max:200'],
+        ], $this->fieldValidationRules()));
 
         DB::transaction(function () use ($form, $validated): void {
             $form->update([
@@ -303,6 +304,26 @@ class FormApiController extends Controller
             'placeholder' => $fieldData['placeholder'] ?? null,
             'help_text' => $fieldData['help_text'] ?? null,
             'css_class' => $fieldData['css_class'] ?? null,
+        ];
+    }
+
+    private function fieldValidationRules(): array
+    {
+        $fieldTypes = array_column(FieldTypeRegistry::getAll(), 'type');
+
+        return [
+            'fields.*.id' => ['nullable'],
+            'fields.*.type' => ['required', 'string', Rule::in($fieldTypes)],
+            'fields.*.name' => ['required', 'string', 'max:100', 'regex:/^[a-z_][a-z0-9_]*$/i', 'distinct'],
+            'fields.*.label' => ['required', 'string', 'max:255'],
+            'fields.*.sort_order' => ['nullable', 'integer', 'min:0'],
+            'fields.*.required' => ['nullable', 'boolean'],
+            'fields.*.visible' => ['nullable', 'boolean'],
+            'fields.*.options' => ['nullable', 'array'],
+            'fields.*.default_value' => ['nullable'],
+            'fields.*.placeholder' => ['nullable', 'string', 'max:500'],
+            'fields.*.help_text' => ['nullable', 'string', 'max:2000'],
+            'fields.*.css_class' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

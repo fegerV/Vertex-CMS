@@ -20,6 +20,8 @@
     $pageOfText = __('forms.page_of', ['page' => ':page', 'total' => ':total']);
     $prevText = __('forms.prev');
     $nextText = __('forms.next');
+    $honeypotEnabled = $form->settings['honeypot_enabled'] ?? config('forms.honeypot_enabled', true);
+    $honeypotName = 'form_'.md5($form->slug.'_hp');
 @endphp
 
 <div
@@ -66,6 +68,19 @@
             enctype="multipart/form-data"
         >
             <input type="hidden" name="_token" value="{{ $nonce }}">
+            @if($honeypotEnabled)
+                <div class="absolute -left-[10000px] h-px w-px overflow-hidden" aria-hidden="true">
+                    <label for="{{ $uniqueId }}_website">Website</label>
+                    <input
+                        id="{{ $uniqueId }}_website"
+                        type="text"
+                        name="{{ $honeypotName }}"
+                        value=""
+                        tabindex="-1"
+                        autocomplete="off"
+                    >
+                </div>
+            @endif
 
             @foreach($fields as $field)
                 <div

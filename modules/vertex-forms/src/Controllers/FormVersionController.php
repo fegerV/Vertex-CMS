@@ -48,6 +48,8 @@ class FormVersionController extends Controller
 
     public function restore(Request $request, Form $form, FormVersion $version): JsonResponse
     {
+        abort_unless((int) $version->form_id === (int) $form->id, 404);
+
         $this->formService->restoreVersion($form, $version, $request->user()?->id);
 
         return response()->json(["success" => true, "message" => "Version restored"]);

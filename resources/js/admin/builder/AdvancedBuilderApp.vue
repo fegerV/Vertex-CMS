@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="vc-builder-shell vc-builder-shell-modern">
         <header class="vc-builder-appbar">
             <div class="vc-builder-appbar-brand">
@@ -32,6 +32,15 @@
                     <span class="vc-builder-status-dot" :class="`vc-builder-status-dot-${autoSaveStatus}`"></span>
                     {{ autoSaveStatusText }}
                 </span>
+                <button
+                    v-if="autoSaveStatus === 'error'"
+                    type="button"
+                    class="vc-builder-appbar-button vc-builder-appbar-retry"
+                    :disabled="saving"
+                    @click="saveContent"
+                >
+                    Повторить
+                </button>
                 <button type="button" class="vc-builder-appbar-button" :disabled="!canUndo" @click="undo">Undo</button>
                 <button type="button" class="vc-builder-appbar-button" :disabled="!canRedo" @click="redo">Redo</button>
                 <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'live' }" @click="canvasMode = 'live'">Live</button>
@@ -43,6 +52,17 @@
                 </button>
             </div>
         </header>
+
+        <div
+            v-if="notification"
+            class="vc-builder-notice"
+            :class="`vc-builder-notice-${notification.tone}`"
+            role="status"
+            aria-live="polite"
+        >
+            <span>{{ notification.message }}</span>
+            <button type="button" aria-label="Закрыть уведомление" @click="dismissNotification">×</button>
+        </div>
 
         <aside class="vc-builder-sidebar vc-builder-shell-pane vc-builder-shell-pane-left vc-builder-scroll" :class="`vc-builder-sidebar-mode-${sidebarMode}`">
             <div class="vc-builder-sidebar-stack">
@@ -2291,6 +2311,7 @@ onBeforeUnmount(() => {
     document.removeEventListener('click', commandsState.handleGlobalPointer);
     window.removeEventListener('message', handleLivePreviewMessage);
     window.removeEventListener('beforeunload', handleBeforeUnload);
+    persistenceState.destroyPersistence();
     mediaState.closeMediaPicker();
 });
 
@@ -2309,6 +2330,8 @@ const {
     autoSaveStatus,
     autoSaveStatusText,
     hasPendingChanges,
+    notification,
+    dismissNotification,
     revisions,
     saveContent,
     previewContent,

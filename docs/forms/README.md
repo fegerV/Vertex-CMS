@@ -5,6 +5,18 @@ Advanced form builder for VertexCMS with calculator, conditional logic, multi-pa
 ## Architecture
 
 - **Schema-based**: All forms stored as validated JSON
+## Security guarantees
+
+- Inactive forms are not exposed by public show/config/submit endpoints.
+- Per-form and global login requirements are enforced before rendering or submission.
+- Honeypot fields are rendered by the public form and rejected server-side when filled.
+- Submission and revision nested resources are checked against their parent form.
+- Destructive submission actions require `forms.delete`; version mutations require
+  `forms.edit`.
+- Field payloads are limited to registered types, unique safe names and bounded text.
+- File uploads are restricted to the global MIME allowlist even when a form requests
+  a broader list.
+
 - **Module structure**: ertex-forms following modular monolith pattern
 - **Backend**: Laravel 11+ with service container, events, queues
 - **Frontend**: Alpine.js (public) + Vue 3 + Inertia (admin builder - coming soon)

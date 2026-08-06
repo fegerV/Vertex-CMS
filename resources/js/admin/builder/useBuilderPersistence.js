@@ -21,6 +21,29 @@ export function useBuilderPersistence({
     const previewBreakpoint = ref('100%');
     const autoSaveStatus = ref('saved');
     const revisions = ref([]);
+    const notification = ref(null);
+    let notificationTimer = null;
+
+    const dismissNotification = () => {
+        notification.value = null;
+        if (notificationTimer) {
+            clearTimeout(notificationTimer);
+            notificationTimer = null;
+        }
+    };
+
+    const notify = (message, tone = 'info', timeout = 5000) => {
+        dismissNotification();
+        notification.value = { message, tone };
+        if (timeout > 0) {
+            notificationTimer = setTimeout(dismissNotification, timeout);
+        }
+    };
+
+    const destroyPersistence = () => {
+        dismissNotification();
+        livePreviewController?.abort();
+    };
 
     const parseJsonResponse = async (response) => {
         const payload = await response.text();
@@ -51,11 +74,11 @@ export function useBuilderPersistence({
     const autoSaveStatusText = computed(() => {
         switch (autoSaveStatus.value) {
             case 'saved':
-                return 'Р’СЃРµ РёР·РјРµРЅРµРЅРёСЏ СЃРѕС…СЂР°РЅРµРЅС‹';
+                return 'Все изменения сохранены';
             case 'saving':
-                return 'РЎРѕС…СЂР°РЅРµРЅРёРµ...';
+                return 'Сохранение…';
             case 'error':
-                return 'РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ';
+                return 'Ошибка сохранения';
             default:
                 return '';
         }
@@ -95,15 +118,16 @@ export function useBuilderPersistence({
             if (response.ok && data.ok) {
                 autoSaveStatus.value = 'saved';
                 syncPersistedPayload();
+                notify('Страница сохранена', 'success', 3000);
             } else {
                 autoSaveStatus.value = 'error';
-                const message = data.error || data.message || data.errors?.[0] || 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ СЃС‚СЂР°РЅРёС†Сѓ';
-                alert(`РћС€РёР±РєР°: ${message}`);
+                const message = data.error || data.message || data.errors?.[0] || 'Не удалось сохранить страницу';
+                notify(message, 'error', 0);
             }
         } catch (error) {
             console.error('Save error:', error);
             autoSaveStatus.value = 'error';
-            alert('РЎРµС‚РµРІР°СЏ РѕС€РёР±РєР° РїСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё');
+            notify('Сетевая ошибка при сохранении. Проверьте подключение и повторите попытку.', 'error', 0);
         } finally {
             saving.value = false;
         }
@@ -122,18 +146,18 @@ export function useBuilderPersistence({
             });
             const data = await parseJsonResponse(response);
             if (!data.ok) {
-                alert(data.error || 'РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РїРѕР»РЅРёС‚СЊ СЌРєСЃРїРѕСЂС‚');
+                notify(data.error || 'Не удалось выполнить экспорт', 'error', 0);
                 return;
             }
             await navigator.clipboard.writeText(data.export);
-            alert(`Р¤Р°Р№Р» ${data.filename} СЃРєРѕРїРёСЂРѕРІР°РЅ РІ Р±СѓС„РµСЂ РѕР±РјРµРЅР°`);
+            notify(`Экспорт ${data.filename} скопирован в буфер обмена`, 'success');
         } catch (error) {
-            alert('РћС€РёР±РєР° СЌРєСЃРїРѕСЂС‚Р°');
+            notify('Ошибка экспорта', 'error', 0);
         }
     };
 
     const importSectionsPrompt = async () => {
-        const importData = window.prompt('Р’СЃС‚Р°РІСЊС‚Рµ JSON СЃ СЌРєСЃРїРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹РјРё СЃРµРєС†РёСЏРјРё');
+        const importData = window.prompt('Вставьте JSON с экспортированными секциями');
         if (!importData) return;
 
         try {
@@ -148,13 +172,14 @@ export function useBuilderPersistence({
             });
             const data = await parseJsonResponse(response);
             if (!response.ok || !data.ok) {
-                alert(data.error || 'РќРµ СѓРґР°Р»РѕСЃСЊ РёРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ СЃРµРєС†РёРё');
+                notify(data.error || 'Не удалось импортировать секции', 'error', 0);
                 return;
             }
             sections.value = data.sections || [];
-            saveToHistory('РРјРїРѕСЂС‚ СЃРµРєС†РёР№');
+            saveToHistory('Импорт секций');
+            notify('Секции импортированы', 'success');
         } catch (error) {
-            alert('РћС€РёР±РєР° РёРјРїРѕСЂС‚Р°');
+            notify('Ошибка импорта', 'error', 0);
         }
     };
 
@@ -214,7 +239,7 @@ export function useBuilderPersistence({
             showPreview.value = true;
         } catch (error) {
             console.error('Preview error:', error);
-            alert(`РћС€РёР±РєР° РїСЂРµРґРїСЂРѕСЃРјРѕС‚СЂР°: ${error.message || 'РЅРµРёР·РІРµСЃС‚РЅР°СЏ РѕС€РёР±РєР°'}`);
+            notify(`Ошибка предпросмотра: ${error.message || 'неизвестная ошибка'}`, 'error', 0);
         }
     };
 
@@ -271,7 +296,7 @@ export function useBuilderPersistence({
     };
 
     const restoreRevision = async (rev) => {
-        if (!confirm('Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ СЌС‚Сѓ СЂРµРІРёР·РёСЋ?')) return;
+        if (!confirm('Восстановить эту ревизию?')) return;
 
         try {
             const response = await fetch(`/admin/pages/${page.id}/revisions/${rev.id}/restore`, {
@@ -286,15 +311,16 @@ export function useBuilderPersistence({
                 sections.value = data.page.content_json.sections;
                 syncPersistedPayload();
                 showRevisions.value = false;
-                saveToHistory('Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ СЂРµРІРёР·РёРё');
+                saveToHistory('Восстановление ревизии');
+                notify('Ревизия восстановлена', 'success');
             }
         } catch (error) {
-            alert('РћС€РёР±РєР° РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ');
+            notify('Ошибка восстановления', 'error', 0);
         }
     };
 
     const applyTemplate = (tpl) => {
-        if (!confirm(`РџСЂРёРјРµРЅРёС‚СЊ С€Р°Р±Р»РѕРЅ "${tpl.name}"?`)) return;
+        if (!confirm(`Применить шаблон «${tpl.name}»?`)) return;
 
         fetch(`/admin/pages/${page.id}/builder/template`, {
             method: 'POST',
@@ -308,17 +334,18 @@ export function useBuilderPersistence({
             .then(async (response) => {
                 const data = await parseJsonResponse(response);
                 if (!response.ok || !data.ok) {
-                    throw new Error(data.error || 'РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРёРјРµРЅРёС‚СЊ С€Р°Р±Р»РѕРЅ');
+                    throw new Error(data.error || 'Не удалось применить шаблон');
                 }
                 return data;
             })
             .then((data) => {
                 sections.value = data.page.content_json.sections;
                 syncPersistedPayload();
-                saveToHistory('РџСЂРёРјРµРЅРµРЅРёРµ С€Р°Р±Р»РѕРЅР°');
+                saveToHistory('Применение шаблона');
+                notify(`Шаблон «${tpl.name}» применён`, 'success');
             })
-            .catch(() => {
-                alert('РћС€РёР±РєР° РїСЂРёРјРµРЅРµРЅРёСЏ С€Р°Р±Р»РѕРЅР°');
+            .catch((error) => {
+                notify(error.message || 'Ошибка применения шаблона', 'error', 0);
             });
     };
 
@@ -351,6 +378,9 @@ export function useBuilderPersistence({
         autoSaveStatus,
         autoSaveStatusText,
         hasPendingChanges,
+        notification,
+        dismissNotification,
+        destroyPersistence,
         revisions,
         saveContent,
         exportCurrentSections,
