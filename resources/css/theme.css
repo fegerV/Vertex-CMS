@@ -1,0 +1,315 @@
+/**
+ * Глобальные настройки темы
+ * Цвета, шрифты, типографика и системные переменные
+ */
+
+@layer base {
+    /* ============================================
+       CSS ПЕРЕМЕННЫЕ (CUSTOM PROPERTIES)
+       ============================================ */
+    :root {
+        /* --- ЦВЕТОВАЯ СХЕМА LIGHT --- */
+        --vc-bg: #f4f7fb;
+        --vc-bg-accent: radial-gradient(circle at top left, rgba(14, 165, 233, 0.14), transparent 32%), 
+                        radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 28%), 
+                        linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+        
+        /* Поверхности */
+        --vc-surface: rgba(255, 255, 255, 0.88);
+        --vc-surface-strong: rgba(255, 255, 255, 0.96);
+        --vc-surface-muted: rgba(241, 245, 249, 0.92);
+        
+        /* Границы */
+        --vc-border: rgba(148, 163, 184, 0.22);
+        --vc-border-strong: rgba(100, 116, 139, 0.28);
+        
+        /* Текст */
+        --vc-text: #0f172a;
+        --vc-text-muted: #526074;
+        --vc-text-soft: #6b7a90;
+        
+        /* Основные цвета */
+        --vc-primary: #0f766e;
+        --vc-primary-strong: #115e59;
+        --vc-primary-contrast: #f4fffd;
+        --vc-danger: #be123c;
+        --vc-success: #16a34a;
+        --vc-warning: #ca8a04;
+        --vc-info: #0284c7;
+        
+        /* Тени */
+        --vc-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+        --vc-shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.08);
+        
+        /* Радиусы */
+        --vc-radius-sm: 8px;
+        --vc-radius-md: 14px;
+        --vc-radius-lg: 18px;
+        --vc-radius-xl: 24px;
+        --vc-radius-full: 9999px;
+        
+        /* Переходы */
+        --vc-transition-fast: 150ms ease;
+        --vc-transition-base: 180ms ease;
+        --vc-transition-slow: 300ms ease;
+    }
+
+    /* --- ТЕМНАЯ ТЕМА --- */
+    html[data-theme='dark'] {
+        --vc-bg: #07111f;
+        --vc-bg-accent: radial-gradient(circle at top left, rgba(45, 212, 191, 0.12), transparent 28%), 
+                        radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 26%), 
+                        linear-gradient(180deg, #08111e 0%, #0d1728 100%);
+        
+        --vc-surface: rgba(12, 21, 37, 0.86);
+        --vc-surface-strong: rgba(15, 23, 42, 0.96);
+        --vc-surface-muted: rgba(15, 23, 42, 0.84);
+        
+        --vc-border: rgba(148, 163, 184, 0.14);
+        --vc-border-strong: rgba(148, 163, 184, 0.2);
+        
+        --vc-text: #e5eefc;
+        --vc-text-muted: #a4b4cb;
+        --vc-text-soft: #8b9ab0;
+        
+        --vc-primary: #2dd4bf;
+        --vc-primary-strong: #14b8a6;
+        --vc-primary-contrast: #05211e;
+        --vc-danger: #fb7185;
+        --vc-success: #4ade80;
+        --vc-warning: #facc15;
+        --vc-info: #38bdf8;
+        
+        --vc-shadow: 0 30px 80px rgba(2, 6, 23, 0.4);
+        --vc-shadow-soft: 0 12px 32px rgba(2, 6, 23, 0.28);
+    }
+
+    /* ============================================
+       ШРИФТЫ
+       ============================================ */
+    :root {
+        --vc-font-sans: "Manrope", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+        --vc-font-serif: "Georgia", "Times New Roman", serif;
+        --vc-font-mono: "Fira Code", "Consolas", monospace;
+        --vc-font-heading: var(--vc-font-sans);
+        --vc-font-body: var(--vc-font-sans);
+    }
+
+    /* ============================================
+       ТИПОГРАФИКА
+       ============================================ */
+    :root {
+        --vc-font-size-base: 16px;
+        --vc-line-height-base: 1.7;
+        --vc-line-height-heading: 1.3;
+    }
+
+    html {
+        font-size: var(--vc-font-size-base);
+    }
+
+    body {
+        font-family: var(--vc-font-body);
+        color: var(--vc-text);
+        line-height: var(--vc-line-height-base);
+        background: var(--vc-bg-accent);
+        min-height: 100vh;
+        transition: background-color var(--vc-transition-base), color var(--vc-transition-base);
+    }
+
+    /* Заголовки */
+    h1, .h1 {
+        font-family: var(--vc-font-heading);
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: var(--vc-line-height-heading);
+        margin-bottom: 1.5rem;
+        color: var(--vc-text);
+    }
+
+    h2, .h2 {
+        font-family: var(--vc-font-heading);
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: var(--vc-line-height-heading);
+        margin-bottom: 1.25rem;
+        color: var(--vc-text);
+    }
+
+    h3, .h3 {
+        font-family: var(--vc-font-heading);
+        font-size: 1.75rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: var(--vc-line-height-heading);
+        margin-bottom: 1rem;
+        color: var(--vc-text);
+    }
+
+    h4, .h4 {
+        font-family: var(--vc-font-heading);
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: 0;
+        line-height: var(--vc-line-height-heading);
+        margin-bottom: 0.875rem;
+        color: var(--vc-text);
+    }
+
+    h5, .h5 {
+        font-family: var(--vc-font-heading);
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0;
+        line-height: var(--vc-line-height-heading);
+        margin-bottom: 0.75rem;
+        color: var(--vc-text);
+    }
+
+    h6, .h6 {
+        font-family: var(--vc-font-heading);
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0;
+        line-height: var(--vc-line-height-heading);
+        margin-bottom: 0.5rem;
+        color: var(--vc-text);
+    }
+
+    /* Параграфы */
+    p {
+        margin-bottom: 1rem;
+        line-height: var(--vc-line-height-base);
+    }
+
+    /* Малый текст */
+    small, .text-small {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    /* Большой текст */
+    .text-large {
+        font-size: 1.125rem;
+        line-height: 1.75;
+    }
+
+    /* ============================================
+       ОТСТУПЫ И РАЗМЕРЫ
+       ============================================ */
+    :root {
+        --vc-section-padding: 64px;
+        --vc-container-max-width: 1200px;
+        --vc-gutter: 20px;
+    }
+
+    .vc-section {
+        padding: var(--vc-section-padding) var(--vc-gutter);
+    }
+
+    .vc-container {
+        margin: 0 auto;
+        max-width: var(--vc-container-max-width);
+        padding-left: var(--vc-gutter);
+        padding-right: var(--vc-gutter);
+    }
+
+    /* ============================================
+       BREAKPOINTS (для использования в JS или media queries)
+       ============================================ */
+    /* xs: 480px, sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1536px */
+
+    @media (max-width: 480px) {
+        :root {
+            --vc-screen-size: xs;
+        }
+    }
+
+    @media (min-width: 481px) and (max-width: 640px) {
+        :root {
+            --vc-screen-size: sm;
+        }
+    }
+
+    @media (min-width: 641px) and (max-width: 768px) {
+        :root {
+            --vc-screen-size: md;
+        }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+        :root {
+            --vc-screen-size: lg;
+        }
+    }
+
+    @media (min-width: 1025px) and (max-width: 1280px) {
+        :root {
+            --vc-screen-size: xl;
+        }
+    }
+
+    @media (min-width: 1281px) {
+        :root {
+            --vc-screen-size: 2xl;
+        }
+    }
+
+    /* ============================================
+       Z-INDEX СИСТЕМА
+       ============================================ */
+    :root {
+        --vc-z-base: 1;
+        --vc-z-dropdown: 1000;
+        --vc-z-sticky: 1020;
+        --vc-z-fixed: 1030;
+        --vc-z-modal-backdrop: 1040;
+        --vc-z-modal: 1050;
+        --vc-z-popover: 1060;
+        --vc-z-tooltip: 1070;
+    }
+
+    /* ============================================
+       УТИЛИТЫ ДЛЯ ЦВЕТОВ
+       ============================================ */
+    .text-primary { color: var(--vc-primary); }
+    .text-primary-strong { color: var(--vc-primary-strong); }
+    .text-danger { color: var(--vc-danger); }
+    .text-success { color: var(--vc-success); }
+    .text-warning { color: var(--vc-warning); }
+    .text-info { color: var(--vc-info); }
+    .text-muted { color: var(--vc-text-muted); }
+    .text-soft { color: var(--vc-text-soft); }
+
+    .bg-surface { background-color: var(--vc-surface); }
+    .bg-surface-strong { background-color: var(--vc-surface-strong); }
+    .bg-surface-muted { background-color: var(--vc-surface-muted); }
+
+    .border-default { border-color: var(--vc-border); }
+    .border-strong { border-color: var(--vc-border-strong); }
+
+    /* ============================================
+       ТЕНИ
+       ============================================ */
+    .shadow-vc { box-shadow: var(--vc-shadow); }
+    .shadow-vc-soft { box-shadow: var(--vc-shadow-soft); }
+
+    /* ============================================
+       РАДИУСЫ
+       ============================================ */
+    .rounded-vc-sm { border-radius: var(--vc-radius-sm); }
+    .rounded-vc-md { border-radius: var(--vc-radius-md); }
+    .rounded-vc-lg { border-radius: var(--vc-radius-lg); }
+    .rounded-vc-xl { border-radius: var(--vc-radius-xl); }
+    .rounded-vc-full { border-radius: var(--vc-radius-full); }
+
+    /* ============================================
+       ПЕРЕХОДЫ
+       ============================================ */
+    .transition-vc-fast { transition: var(--vc-transition-fast); }
+    .transition-vc-base { transition: var(--vc-transition-base); }
+    .transition-vc-slow { transition: var(--vc-transition-slow); }
+    .transition-colors-vc { transition: background-color var(--vc-transition-base), color var(--vc-transition-base), border-color var(--vc-transition-base); }
+}
