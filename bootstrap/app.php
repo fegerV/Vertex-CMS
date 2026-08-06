@@ -2,6 +2,8 @@
 
 use App\Core\Http\Middleware\EnsureInstalled;
 use App\Core\Http\Middleware\EnsureNotInstalled;
+use App\Core\Http\Middleware\GdprCookieMiddleware;
+use App\Core\Http\Middleware\IpFilterMiddleware;
 use App\Core\Http\Middleware\RequirePermission;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(EnsureInstalled::class);
         $middleware->append(\App\Core\Http\Middleware\SetLocale::class);
+        $middleware->append(GdprCookieMiddleware::class);
+        $middleware->append(IpFilterMiddleware::class);
 
         $middleware->alias([
             'vertex.not_installed' => EnsureNotInstalled::class,

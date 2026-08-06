@@ -6,6 +6,7 @@ use App\Admin\Http\Controllers\SettingsController;
 use App\Admin\Http\Controllers\UserController;
 use App\Auth\Http\Controllers\AdminAuthController;
 use App\Builder\Http\Controllers\AdvancedBuilderController;
+use App\Builder\Http\Controllers\BuilderApiController;
 use App\Builder\Http\Controllers\PageBuilderController;
 use App\Content\Http\Controllers\CustomFieldGroupController;
 use App\Content\Http\Controllers\PageController;
@@ -130,6 +131,15 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::get('pages/{page}/search', [AdvancedBuilderController::class, 'searchContent'])
             ->middleware('vertex.permission:pages.edit')
             ->name('pages.search');
+        
+        // Builder API routes
+        Route::get('api/builder/blocks', [BuilderApiController::class, 'blocks'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('api.builder.blocks');
+        Route::post('api/builder/render-preview', [BuilderApiController::class, 'renderPreview'])
+            ->middleware('vertex.permission:pages.edit')
+            ->name('api.builder.render-preview');
+        
         Route::get('custom-field-groups', [CustomFieldGroupController::class, 'index'])
             ->middleware('vertex.permission:pages.edit')
             ->name('custom-field-groups.index');
