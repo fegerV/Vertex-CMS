@@ -211,16 +211,11 @@
                 </div>
 
                 <!-- Blocks List with Drag & Drop -->
-                <div class="space-y-3">
+                <div class="space-y-3 blocks-container">
                     <div 
                         v-for="(block, index) in content" 
                         :key="block._id"
                         :data-index="index"
-                        draggable
-                        @dragstart="handleDragStart($event, index)"
-                        @dragover="handleDragOver($event, index)"
-                        @drop="handleDrop($event, index)"
-                        @dragend="handleDragEnd"
                         class="group relative bg-white rounded-xl border-2 transition-all duration-200 hover:shadow-lg"
                         :class="{
                             'border-blue-500 shadow-lg shadow-blue-500/20 ring-2 ring-blue-500/20': selectedIndex === index,
@@ -235,8 +230,7 @@
                             :class="{'opacity-100': selectedIndex === index}"
                         >
                             <button 
-                                @click.stop="startDrag(index)"
-                                class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded cursor-grab active:cursor-grabbing"
+                                class="drag-handle p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded cursor-grab active:cursor-grabbing"
                                 title="Перетащить"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -882,16 +876,34 @@
         line-height: 1.7;
     }
     
-    [draggable] {
-        user-select: none;
+    /* SortableJS styles */
+    .sortable-ghost {
+        opacity: 0.4;
+        background: #f1f5f9;
+        border: 2px dashed #94a3b8;
+    }
+    
+    .sortable-chosen {
+        border-color: #3b82f6;
+        box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+    }
+    
+    .sortable-drag {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+    
+    .blocks-container {
+        min-height: 100px;
     }
 </style>
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="{{ mix('js/app.js') }}"></script>
 <script>
-    const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+    const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
     
     function pageBuilder() {
         const page = @json($page);
@@ -907,6 +919,7 @@
         const hoveredBlockType = ref(null);
         const draggingIndex = ref(null);
         const dragOverIndex = ref(null);
+        let sortableInstance = null;
         
         // Undo/Redo history
         const history = ref([]);
@@ -988,6 +1001,35 @@
         onMounted(() => {
             fetchAvailableBlocks();
             saveToHistory(); // Initial state
+            
+            // Initialize SortableJS for drag-and-drop
+            nextTick(() => {
+                const container = document.querySelector('.blocks-container');
+                if (container) {
+                    sortableInstance = new Sortable(container, {
+                        animation: 150,
+                        handle: '.drag-handle',
+                        ghostClass: 'sortable-ghost',
+                        chosenClass: 'sortable-chosen',
+                        dragClass: 'sortable-drag',
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                        onEnd: (evt) => {
+                            const oldIndex = evt.oldIndex;
+                            const newIndex = evt.newIndex;
+                            
+                            if (oldIndex !== newIndex && oldIndex !== null && newIndex !== null) {
+                                saveToHistory();
+                                const draggedItem = content[oldIndex];
+                                content.splice(oldIndex, 1);
+                                content.splice(newIndex, 0, draggedItem);
+                                selectedIndex.value = newIndex;
+                                hasChanges.value = true;
+                                showToast('Блок перемещён', 'success');
+                            }
+                        }
+                    });
+                }
+            });
             
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboard);
@@ -1126,7 +1168,7 @@
             }
         }
 
-        // Drag and Drop handlers
+        // Drag and Drop handlers (kept for backward compatibility, but SortableJS is now primary)
         function startDrag(index) {
             draggingIndex.value = index;
         }
