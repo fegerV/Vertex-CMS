@@ -4,110 +4,43 @@
 __pycache__/
 *.o
 *.obj
+dist/
+build/
 *.class
-*.exe
-*.dll
-*.so
-*.a
-*.out
 
 # Dependencies
-node_modules/
 vendor/
-composer.lock
+node_modules/
 .env
 .env.local
-.env.*
+*.env.*
 
 # Logs and temp files
 *.log
 *.tmp
 *.swp
-*.swo
 
 # Editors
 .vscode/
 .idea/
 
+# OS
+.DS_Store
+Thumbs.db
+
 # Coverage
+.coverage
 coverage/
 htmlcov/
-.coverage
 
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Build directories
-dist/
-build/
-target/
-.gradle/
-
-# Python specific
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/
-.mypy_cache/
-.pytest_cache/
-.hypothesis/
-
-# PHP/Laravel specific
-*.phar
-vendor/
-composer.lock
-Homestead.json
-Homestead.yaml
-.env
-.env.backup
-.env.local
-.env.*
-!.env.example
-.php_cs
-.php_cs.dist
-.phpunit.result.cache
-.svn
-Thumbs.db
-ehthumbs.db
-.trash
-.DS_Store
-Web.config
-web.config
-!web.config
-!.htaccess
-.htaccess
-*.swp
-*~
-.project
-*.tmproj
-nbproject/
-.settings/
-*.sublime-project
-*.sublime-workspace
-.sass-cache/
-.css.map
-.js.map
+# Laravel specific
+storage/
+bootstrap/cache/
+public/hot
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.DS_Store
-Thumbs.db
-.php_cs
-.php_cs.dist
-.phpunit.result.cache
+
+# PHP
+.php_cs.cache
 ```
