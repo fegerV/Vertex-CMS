@@ -63,6 +63,7 @@ class FormSubmissionController extends Controller
      */
     public function show(Form $form, FormSubmission $submission): JsonResponse
     {
+        $this->ensureSubmissionBelongsToForm($form, $submission);
         $submission->load(["values.field", "user"]);
 
         return response()->json([
@@ -88,6 +89,7 @@ class FormSubmissionController extends Controller
      */
     public function destroy(Form $form, FormSubmission $submission): JsonResponse
     {
+        $this->ensureSubmissionBelongsToForm($form, $submission);
         $submission->delete();
 
         return response()->json(["ok" => true]);
@@ -144,5 +146,10 @@ class FormSubmissionController extends Controller
             "Content-Type" => "text/csv; charset=UTF-8",
             "Content-Disposition" => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    private function ensureSubmissionBelongsToForm(Form $form, FormSubmission $submission): void
+    {
+        abort_unless((int) $submission->form_id === (int) $form->id, 404);
     }
 }

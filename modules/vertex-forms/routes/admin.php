@@ -15,8 +15,6 @@ Route::middleware(["vertex.permission:forms.view"])->prefix("forms")->name("form
     Route::get("/", [FormController::class, "index"])->name("index");
     Route::get("{form}/submissions", [FormSubmissionController::class, "index"])->name("submissions.index");
     Route::get("{form}/submissions/{submission}", [FormSubmissionController::class, "show"])->name("submissions.show");
-    Route::delete("{form}/submissions/{submission}", [FormSubmissionController::class, "destroy"])->name("submissions.destroy");
-    Route::delete("{form}/clear-submissions", [FormSubmissionController::class, "clear"])->name("submissions.clear");
     Route::post("{form}/export-submissions", [FormSubmissionController::class, "export"])->name("submissions.export");
 
     // Analytics
@@ -25,8 +23,6 @@ Route::middleware(["vertex.permission:forms.view"])->prefix("forms")->name("form
 
     // Versions
     Route::get("{form}/versions", [FormVersionController::class, "index"])->name("versions.index");
-    Route::post("{form}/versions", [FormVersionController::class, "store"])->name("versions.store");
-    Route::post("{form}/restore/{version}", [FormVersionController::class, "restore"])->name("versions.restore");
 
     // JSON Import/Export
     Route::get("{form}/export-json", [FormController::class, "exportJson"])->name("export.json");
@@ -44,8 +40,12 @@ Route::middleware(["vertex.permission:forms.edit"])->prefix("forms")->name("form
     Route::post("{form}/duplicate", [FormController::class, "duplicate"])->name("duplicate");
     Route::get("{form}/preview", [FormController::class, "preview"])->name("preview");
     Route::get("{form}/builder", [FormBuilderController::class, "show"])->name("builder"); // Vue SPA
+    Route::post("{form}/versions", [FormVersionController::class, "store"])->name("versions.store");
+    Route::post("{form}/restore/{version}", [FormVersionController::class, "restore"])->name("versions.restore");
 });
 
 Route::middleware(["vertex.permission:forms.delete"])->prefix("forms")->name("forms.")->group(function () {
     Route::delete("{form}", [FormController::class, "destroy"])->name("destroy");
+    Route::delete("{form}/submissions/{submission}", [FormSubmissionController::class, "destroy"])->name("submissions.destroy");
+    Route::delete("{form}/clear-submissions", [FormSubmissionController::class, "clear"])->name("submissions.clear");
 });

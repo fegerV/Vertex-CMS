@@ -22,6 +22,8 @@ class FormPublicController extends Controller
      */
     public function show(Form $form): View
     {
+        $this->ensureFormIsAvailable($form);
+
         return view('forms::public.show', [
             'form' => $form->load('fields'),
             'formConfig' => $this->formService->renderForm($form),
@@ -35,6 +37,8 @@ class FormPublicController extends Controller
      */
     public function submit(Request $request, Form $form): JsonResponse
     {
+        $this->ensureFormIsAvailable($form, true);
+
         try {
             $submission = $this->formService->submit($form, $request);
 
@@ -62,6 +66,8 @@ class FormPublicController extends Controller
      */
     public function config(Form $form): JsonResponse
     {
+        $this->ensureFormIsAvailable($form);
+
         $config = $this->formService->renderForm($form);
 
         return response()->json([
@@ -73,5 +79,16 @@ class FormPublicController extends Controller
                 'config' => $config,
             ],
         ]);
+    }
+
+    private function ensureFormIsAvailable(Form $form, bool $forSubmission = false): void
+    {
+        abort_unless($form->is_active, 404);
+
+        $requiresLogin = $form->require_login
+            || config('forms.require_login_for_view', false)
+            || ($forSubmission && config('forms.require_login_for_submit', false));
+
+        abort_if($requiresLogin && auth()->guest(), 403, __('forms.error_login_required'));
     }
 }

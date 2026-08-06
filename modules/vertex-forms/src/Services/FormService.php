@@ -214,8 +214,8 @@ class FormService
         $settings = $form->settings ?? [];
         if ($settings["honeypot_enabled"] ?? config("forms.honeypot_enabled", true)) {
             $honeypotName = "form_" . md5($form->slug . "_hp");
-            $rules[$honeypotName] = "nullable";
-            $messages[$honeypotName . ".filled"] = __('forms.validation_honeypot_spam');
+            $rules[$honeypotName] = "prohibited";
+            $messages[$honeypotName . ".prohibited"] = __('forms.validation_honeypot_spam');
         }
 
         if ($settings["recaptcha_enabled"] ?? config("forms.recaptcha_enabled", false)) {
@@ -241,9 +241,7 @@ class FormService
     public function submit(Form $form, Request $request): FormSubmission
     {
         $validator = $this->validate($form, $request);
-        if ($validator->fails()) {
-            throw new \Exception(__('forms.error_validation_failed') . ': ' . json_encode($validator->errors()->all()));
-        }
+        $validator->validate();
 
         $this->checkLimits($form, $request);
         $total = $this->calculateTotal($form, $request->all());
@@ -365,9 +363,13 @@ class FormService
             case "file":
                 $rules[] = "file";
                 if (isset($field->options["max_size"])) $rules[] = "max:" . $field->options["max_size"];
-                if (isset($field->options["mime_types"])) {
-                    $mimes = str_replace([".", ","], "-", implode(",", $field->options["mime_types"]));
-                    $rules[] = "mimes:" . $mimes;
+                $allowedMimeTypes = (array) config('forms.allowed_mime_types', []);
+                $requestedMimeTypes = (array) ($field->options["mime_types"] ?? []);
+                $mimeTypes = $requestedMimeTypes === []
+                    ? $allowedMimeTypes
+                    : array_values(array_intersect($requestedMimeTypes, $allowedMimeTypes));
+                if ($mimeTypes !== []) {
+                    $rules[] = "mimetypes:" . implode(",", $mimeTypes);
                 }
                 break;
             case "textarea":
@@ -417,7 +419,9 @@ class FormService
     {
         $settings = $form->settings ?? [];
 
-        $dailyLimit = $settings["daily_limit_per_ip"] ?? config("forms.daily_limit_per_ip_global", null);
+        $dailyLimit = $form->daily_limit
+            ?? $settings["daily_limit_per_ip"]
+            ?? config("forms.daily_limit_per_ip_global", null);
         if ($dailyLimit) {
             $count = FormSubmission::where("form_id", $form->id)
                 ->where("ip_address", $request->ip())
@@ -429,7 +433,9 @@ class FormService
             }
         }
 
-        $maxEntries = $settings["max_entries"] ?? config("forms.max_entries_global", null);
+        $maxEntries = $form->entry_limit
+            ?? $settings["max_entries"]
+            ?? config("forms.max_entries_global", null);
         if ($maxEntries) {
             $total = FormSubmission::where("form_id", $form->id)->count();
             if ($total >= $maxEntries) {
@@ -462,6 +468,11 @@ class FormService
         ];
         $settings = array_merge($globalSettings, $settings);
 
+        if (!empty($settings["notify_admin_emails"])) {
+            $settings["admin_emails"] = $settings["notify_admin_emails"];
+            $settings["notify_admin"] = true;
+        }
+
         if ($settings["notify_admin"] ?? false) {
             $emails = is_array($settings["admin_emails"] ?? null)
                 ? $settings["admin_emails"]
@@ -482,7 +493,7 @@ class FormService
             }
         }
 
-        if ($settings["notify_user"] ?? false) {
+        if (($settings["notify_user"] ?? false) || ($settings["autoresponder_enabled"] ?? false)) {
             $userEmail = $submission->values->firstWhere("field.name", "email")?->value;
             if ($userEmail && filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
                 $this->emailService->send(
