@@ -277,3 +277,36 @@ Route::prefix('system')->name('system.')->group(function () {
     Route::post('/updates/update', [App\Http\Controllers\Admin\UpdateController::class, 'update'])->name('updates.update');
     Route::post('/optimize', [App\Http\Controllers\Admin\UpdateController::class, 'optimize'])->name('optimize');
 });
+
+// E-commerce routes
+Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function (): void {
+    // Products
+    Route::get('ecommerce/products', [App\Ecommerce\Http\Controllers\ProductController::class, 'index'])
+        ->name('ecommerce.products.index');
+    Route::get('ecommerce/products/create', [App\Ecommerce\Http\Controllers\ProductController::class, 'create'])
+        ->name('ecommerce.products.create');
+    Route::post('ecommerce/products', [App\Ecommerce\Http\Controllers\ProductController::class, 'store'])
+        ->name('ecommerce.products.store');
+    Route::get('ecommerce/products/{product}', [App\Ecommerce\Http\Controllers\ProductController::class, 'show'])
+        ->name('ecommerce.products.show');
+    Route::get('ecommerce/products/{product}/edit', [App\Ecommerce\Http\Controllers\ProductController::class, 'edit'])
+        ->name('ecommerce.products.edit');
+    Route::put('ecommerce/products/{product}', [App\Ecommerce\Http\Controllers\ProductController::class, 'update'])
+        ->name('ecommerce.products.update');
+    Route::delete('ecommerce/products/{product}', [App\Ecommerce\Http\Controllers\ProductController::class, 'destroy'])
+        ->name('ecommerce.products.destroy');
+
+    // Orders
+    Route::get('ecommerce/orders', [App\Ecommerce\Http\Controllers\OrderController::class, 'index'])
+        ->name('ecommerce.orders.index');
+    Route::get('ecommerce/orders/{order}', [App\Ecommerce\Http\Controllers\OrderController::class, 'show'])
+        ->name('ecommerce.orders.show');
+    Route::post('ecommerce/orders/{order}/status', [App\Ecommerce\Http\Controllers\OrderApiController::class, 'updateStatus'])
+        ->name('ecommerce.orders.update-status');
+    Route::post('ecommerce/orders/{order}/cancel', [App\Ecommerce\Http\Controllers\OrderApiController::class, 'cancel'])
+        ->name('ecommerce.orders.cancel');
+
+    // Cart (admin view)
+    Route::get('ecommerce/cart', [App\Ecommerce\Http\Controllers\CartController::class, 'index'])
+        ->name('ecommerce.cart.index');
+});
