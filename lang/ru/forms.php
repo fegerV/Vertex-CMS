@@ -67,6 +67,8 @@ return [
     'validation_file' => 'Должно быть файлом',
     'validation_mimes' => 'Недопустимый тип файла',
     'validation_honeypot_spam' => 'Обнаружен спам',
+    'validation_captcha_failed' => 'Не удалось пройти проверку CAPTCHA.',
+    'validation_captcha_unavailable' => 'Проверка CAPTCHA временно недоступна.',
 
     // ── Server errors ─────────────────────────────────────
     'error_validation_failed' => 'Ошибка валидации',
@@ -75,6 +77,7 @@ return [
     'error_form_not_open' => 'Форма ещё не открыта.',
     'error_form_closed_date' => 'Форма закрыта.',
     'error_submission_failed' => 'Ошибка отправки формы',
+    'error_rate_limit' => 'Слишком много отправок. Повторите попытку позже.',
 
     // ── Generic ───────────────────────────────────────────
     'field_type_text' => 'Текстовое поле',

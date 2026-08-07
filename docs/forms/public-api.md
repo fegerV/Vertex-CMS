@@ -75,6 +75,10 @@ Content-Type: multipart/form-data (for file uploads) or pplication/x-www-form-u
 
 All form fields as regular POST parameters. For file fields, use multipart/form-data and attach files.
 
+Clients should send a stable `Idempotency-Key` header (or
+`idempotency_key` body field) for each logical submission. Retrying with the
+same key returns the original submission instead of creating a duplicate.
+
 Example:
 `ash
 curl -X POST https://example.com/forms/contact \
@@ -130,6 +134,24 @@ curl -X POST https://example.com/forms/contact \
 Per IP: config('forms.max_submissions_per_minute', 10)
 
 Returns 429 Too Many Requests if exceeded.
+The response includes `Retry-After`. Limits are isolated by form and a hashed
+client IP, and can be overridden with the form setting
+`max_submissions_per_minute`.
+
+### CAPTCHA verification
+
+When enabled, reCAPTCHA v2/v3 and Cloudflare Turnstile tokens are verified by
+the server against the provider `siteverify` endpoint. reCAPTCHA v3 additionally
+enforces the configured minimum score and the `form_submit` action. Verification
+fails closed by default; `forms.captcha_fail_closed` can be disabled only when
+an explicit availability-over-security tradeoff is required.
+
+### Private uploaded files
+
+Uploads use `forms.upload_disk` (`local` by default) and are not publicly
+addressable. Administrators with `forms.view_submissions` download files through
+the protected submission file route; form, submission, value and disk ownership
+are verified before streaming.
 
 ## Headers
 

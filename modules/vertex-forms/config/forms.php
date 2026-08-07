@@ -41,6 +41,7 @@ return [
     'recaptcha_site_key' => env('RECAPTCHA_SITE_KEY'),
     'recaptcha_secret_key' => env('RECAPTCHA_SECRET_KEY'),
     'recaptcha_min_score' => env('FORMS_RECAPTCHA_MIN_SCORE', 0.5),
+    'recaptcha_verify_url' => env('FORMS_RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify'),
 
     /*
      * Turnstile (Cloudflare) alternative.
@@ -48,6 +49,10 @@ return [
     'turnstile_enabled' => env('FORMS_TURNSTILE_ENABLED', false),
     'turnstile_site_key' => env('TURNSTILE_SITE_KEY'),
     'turnstile_secret_key' => env('TURNSTILE_SECRET_KEY'),
+    'turnstile_verify_url' => env('FORMS_TURNSTILE_VERIFY_URL', 'https://challenges.cloudflare.com/turnstile/v0/siteverify'),
+    'captcha_hostname' => env('FORMS_CAPTCHA_HOSTNAME'),
+    'captcha_timeout' => env('FORMS_CAPTCHA_TIMEOUT', 5),
+    'captcha_fail_closed' => env('FORMS_CAPTCHA_FAIL_CLOSED', true),
 
     /*
      * File upload settings.

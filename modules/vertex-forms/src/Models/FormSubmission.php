@@ -12,6 +12,7 @@ class FormSubmission extends Model
     protected $fillable = [
         'form_id',
         'submission_id',
+        'idempotency_key',
         'ip_address',
         'user_agent',
         'user_id',
@@ -38,7 +39,7 @@ class FormSubmission extends Model
         return $this->hasMany(FormSubmissionValue::class, 'submission_id');
     }
 
-    public function getValue(string $fieldName): ?string
+    public function getValue(string $fieldName): mixed
     {
         $value = $this->values()
             ->whereHas('field', fn ($q) => $q->where('name', $fieldName))

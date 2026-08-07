@@ -58,6 +58,11 @@ Conditional fields hidden by server-side rules are no longer persisted even
 when a client submits forged values, and multi-file fields now validate and
 store every upload using the same private-storage policy.
 
+Production P0 protections now include server-side reCAPTCHA v2/v3 and
+Cloudflare Turnstile verification, per-form/IP rate limiting, idempotent
+submission retries, and permission-gated downloads for private submission
+files.
+
 ## Product Direction
 
 The target experience for `vertex-forms` is now defined as:

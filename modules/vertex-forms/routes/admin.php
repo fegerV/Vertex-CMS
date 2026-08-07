@@ -6,6 +6,7 @@ use Vertex\Forms\Controllers\FormBuilderController;
 use Vertex\Forms\Controllers\FormSubmissionController;
 use Vertex\Forms\Controllers\FormAnalyticsController;
 use Vertex\Forms\Controllers\FormVersionController;
+use Vertex\Forms\Controllers\FormSubmissionFileController;
 use Illuminate\Support\Facades\Route;
 
 // These routes are loaded within the main admin group (prefix: admin, middleware: auth, vertex.permission:admin.access)
@@ -15,6 +16,10 @@ Route::middleware(["vertex.permission:forms.view"])->prefix("forms")->name("form
     Route::get("/", [FormController::class, "index"])->name("index");
     Route::get("{form}/submissions", [FormSubmissionController::class, "index"])->name("submissions.index");
     Route::get("{form}/submissions/{submission}", [FormSubmissionController::class, "show"])->name("submissions.show");
+    Route::get("{form}/submissions/{submission}/files/{value}/{fileIndex?}", [FormSubmissionFileController::class, "download"])
+        ->middleware("vertex.permission:forms.view_submissions")
+        ->whereNumber('fileIndex')
+        ->name("submissions.files.download");
     Route::delete("{form}/submissions/{submission}", [FormSubmissionController::class, "destroy"])->name("submissions.destroy");
     Route::delete("{form}/clear-submissions", [FormSubmissionController::class, "clear"])->name("submissions.clear");
     Route::post("{form}/export-submissions", [FormSubmissionController::class, "export"])->name("submissions.export");

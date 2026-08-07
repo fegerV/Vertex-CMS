@@ -22,6 +22,11 @@
     $nextText = __('forms.next');
     $honeypotEnabled = $form->settings['honeypot_enabled'] ?? config('forms.honeypot_enabled', true);
     $honeypotName = 'form_'.md5($form->slug.'_hp');
+    $recaptchaEnabled = $form->settings['recaptcha_enabled'] ?? config('forms.recaptcha_enabled', false);
+    $recaptchaVersion = $form->settings['recaptcha_version'] ?? config('forms.recaptcha_version', 'v2');
+    $recaptchaSiteKey = config('forms.recaptcha_site_key');
+    $turnstileEnabled = $form->settings['turnstile_enabled'] ?? config('forms.turnstile_enabled', false);
+    $turnstileSiteKey = config('forms.turnstile_site_key');
 @endphp
 
 <div
@@ -63,6 +68,8 @@
 
         <form
             x-ref="formElement"
+            action="{{ $actionUrl }}"
+            method="POST"
             @submit.prevent="submitForm()"
             class="vc-form space-y-4"
             enctype="multipart/form-data"
@@ -73,6 +80,17 @@
                     <label for="{{ $uniqueId }}_hp">Leave this field empty</label>
                     <input id="{{ $uniqueId }}_hp" type="text" name="{{ $honeypotName }}" value="" tabindex="-1" autocomplete="off">
                 </div>
+            @endif
+            <input type="hidden" name="idempotency_key" :value="idempotencyKey">
+
+            @if($recaptchaEnabled && $recaptchaVersion === 'v2' && $recaptchaSiteKey)
+                <div class="g-recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
+            @elseif($recaptchaEnabled && $recaptchaVersion === 'v3' && $recaptchaSiteKey)
+                <input x-ref="recaptchaToken" type="hidden" name="recaptcha_token" value="">
+            @endif
+
+            @if($turnstileEnabled && $turnstileSiteKey)
+                <div class="cf-turnstile" data-sitekey="{{ $turnstileSiteKey }}"></div>
             @endif
 
             @foreach($fields as $field)
@@ -139,6 +157,13 @@
     </div>
 </div>
 
+@if($recaptchaEnabled && $recaptchaSiteKey)
+    <script src="https://www.google.com/recaptcha/api.js{{ $recaptchaVersion === 'v3' ? '?render='.urlencode($recaptchaSiteKey) : '' }}" async defer></script>
+@endif
+@if($turnstileEnabled && $turnstileSiteKey)
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+@endif
+
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('formBuilder', (formConfig, uniqueId) => ({
@@ -146,12 +171,13 @@ document.addEventListener('alpine:init', () => {
         totalPages: formConfig.total_pages || 1,
         fields: formConfig.fields || [],
         showProgress: formConfig.show_progress !== false,
-        buttonText: {{ Js::from($buttonText) }},
-        successMessage: {{ Js::from($successMessage) }},
+        buttonText: {{ Illuminate\Support\Js::from($buttonText) }},
+        successMessage: {{ Illuminate\Support\Js::from($successMessage) }},
         loading: false,
         submitted: false,
         formData: {},
         errors: {},
+        idempotencyKey: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
 
         init() {
             this.fields.forEach(field => {
@@ -329,6 +355,20 @@ document.addEventListener('alpine:init', () => {
         async submitForm() {
             if (!this.validatePage()) return;
 
+            @if($recaptchaEnabled && $recaptchaVersion === 'v3' && $recaptchaSiteKey)
+                if (!window.grecaptcha) {
+                    this.errors.general = {{ Illuminate\Support\Js::from(__('forms.validation_captcha_unavailable')) }};
+                    return;
+                }
+                const recaptchaToken = await new Promise(resolve => {
+                    window.grecaptcha.ready(async () => resolve(await window.grecaptcha.execute(
+                        {{ Illuminate\Support\Js::from($recaptchaSiteKey) }},
+                        { action: 'form_submit' }
+                    )));
+                });
+                this.$refs.recaptchaToken.value = recaptchaToken;
+            @endif
+
             this.loading = true;
             this.errors = {};
 
@@ -346,6 +386,11 @@ document.addEventListener('alpine:init', () => {
                 } else {
                     formData.append(key, val);
                 }
+            });
+            formData.set('idempotency_key', this.idempotencyKey);
+            ['g-recaptcha-response', 'recaptcha_token', 'cf-turnstile-response'].forEach(key => {
+                const input = this.$refs.formElement.querySelector(`[name="${key}"]`);
+                if (input?.value) formData.set(key, input.value);
             });
 
             try {

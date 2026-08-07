@@ -67,6 +67,8 @@ return [
     'validation_file' => 'Must be a file',
     'validation_mimes' => 'Invalid file type',
     'validation_honeypot_spam' => 'Spam detected',
+    'validation_captcha_failed' => 'CAPTCHA verification failed.',
+    'validation_captcha_unavailable' => 'CAPTCHA verification is temporarily unavailable.',
 
     // ── Server errors ─────────────────────────────────────
     'error_validation_failed' => 'Validation failed',
@@ -75,6 +77,7 @@ return [
     'error_form_not_open' => 'Form is not yet open.',
     'error_form_closed_date' => 'Form is closed.',
     'error_submission_failed' => 'Form submission error',
+    'error_rate_limit' => 'Too many submissions. Please try again later.',
 
     // ── Generic ───────────────────────────────────────────
     'field_type_text' => 'Text Input',

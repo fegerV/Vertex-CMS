@@ -6,15 +6,22 @@ use App\System\Services\EmailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Mockery;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 use Vertex\Forms\Contracts\FormRepositoryInterface;
+use Vertex\Forms\Controllers\FormSubmissionFileController;
 use Vertex\Forms\Models\Form;
+use Vertex\Forms\Models\FormSubmissionValue;
 use Vertex\Forms\Repositories\EloquentFormRepository;
 use Vertex\Forms\Services\FormCalculatorEngine;
 use Vertex\Forms\Services\FormConditionEngine;
 use Vertex\Forms\Services\FormService;
+use Vertex\Forms\Services\FormSpamProtectionService;
 
 class FormProductionHardeningTest extends TestCase
 {
@@ -74,6 +81,21 @@ class FormProductionHardeningTest extends TestCase
 
         $this->get('/forms/'.$form->slug)->assertNotFound();
         $this->postJson('/forms/'.$form->slug.'/submit')->assertNotFound();
+    }
+
+    public function test_public_form_posts_to_submit_endpoint_and_contains_idempotency_field(): void
+    {
+        $form = Form::query()->create([
+            'name' => 'Public form',
+            'slug' => 'public-form',
+            'is_active' => true,
+            'settings' => ['honeypot_enabled' => false],
+        ]);
+
+        $this->get('/forms/'.$form->slug)
+            ->assertOk()
+            ->assertSee('action="'.url('/forms/public-form/submit').'"', false)
+            ->assertSee('name="idempotency_key"', false);
     }
 
     public function test_hidden_conditional_values_are_not_persisted(): void
@@ -142,6 +164,130 @@ class FormProductionHardeningTest extends TestCase
         }
     }
 
+    public function test_recaptcha_v3_is_verified_with_score_and_action(): void
+    {
+        Http::fake([
+            'www.google.com/recaptcha/api/siteverify' => Http::response([
+                'success' => true,
+                'score' => 0.9,
+                'action' => 'form_submit',
+            ]),
+        ]);
+        config()->set('forms.recaptcha_secret_key', 'secret');
+
+        $form = Form::query()->create([
+            'name' => 'Captcha form',
+            'slug' => 'captcha-form',
+            'is_active' => true,
+            'settings' => [
+                'honeypot_enabled' => false,
+                'recaptcha_enabled' => true,
+                'recaptcha_version' => 'v3',
+                'recaptcha_min_score' => 0.7,
+            ],
+        ]);
+        $request = Request::create('/forms/captcha-form/submit', 'POST', ['recaptcha_token' => 'valid-token']);
+
+        $this->formService()->submit($form, $request);
+
+        Http::assertSent(fn ($request) => $request['secret'] === 'secret'
+            && $request['response'] === 'valid-token');
+        $this->assertDatabaseCount('form_submissions', 1);
+    }
+
+    public function test_idempotency_key_returns_the_original_submission(): void
+    {
+        $form = Form::query()->create([
+            'name' => 'Idempotent form',
+            'slug' => 'idempotent-form',
+            'is_active' => true,
+            'settings' => ['honeypot_enabled' => false],
+        ]);
+        $request = Request::create('/forms/idempotent-form/submit', 'POST');
+        $request->headers->set('Idempotency-Key', 'checkout-123');
+        $service = $this->formService();
+
+        $first = $service->submit($form, $request);
+        $second = $service->submit($form, $request);
+
+        $this->assertTrue($first->is($second));
+        $this->assertDatabaseCount('form_submissions', 1);
+    }
+
+    public function test_turnstile_rejects_an_unsuccessful_verification(): void
+    {
+        Http::fake([
+            'challenges.cloudflare.com/turnstile/v0/siteverify' => Http::response(['success' => false]),
+        ]);
+        config()->set('forms.turnstile_secret_key', 'secret');
+
+        $form = Form::query()->create([
+            'name' => 'Turnstile form',
+            'slug' => 'turnstile-form',
+            'is_active' => true,
+            'settings' => ['honeypot_enabled' => false, 'turnstile_enabled' => true],
+        ]);
+        $request = Request::create('/forms/turnstile-form/submit', 'POST', [
+            'cf-turnstile-response' => 'invalid-token',
+        ]);
+
+        $this->expectException(ValidationException::class);
+        $this->formService()->submit($form, $request);
+    }
+
+    public function test_per_form_rate_limit_returns_http_429(): void
+    {
+        $form = Form::query()->create([
+            'name' => 'Limited form',
+            'slug' => 'limited-form',
+            'is_active' => true,
+            'settings' => ['honeypot_enabled' => false, 'max_submissions_per_minute' => 1],
+        ]);
+        $request = Request::create('/forms/limited-form/submit', 'POST', server: ['REMOTE_ADDR' => '192.0.2.10']);
+        $key = 'forms:submit:'.$form->id.':'.hash('sha256', '192.0.2.10');
+        RateLimiter::clear($key);
+        $service = $this->formService();
+        $service->submit($form, $request);
+
+        try {
+            $service->submit($form, $request);
+            $this->fail('Expected the second submission to be rate limited.');
+        } catch (HttpException $exception) {
+            $this->assertSame(429, $exception->getStatusCode());
+            $this->assertArrayHasKey('Retry-After', $exception->getHeaders());
+        }
+    }
+
+    public function test_submission_file_download_requires_matching_models_and_private_disk(): void
+    {
+        Storage::fake('local');
+        config()->set('forms.upload_disk', 'local');
+        Storage::disk('local')->put('form-uploads/download/file.txt', 'private-content');
+
+        $form = Form::query()->create([
+            'name' => 'Download form',
+            'slug' => 'download-form',
+            'is_active' => true,
+        ]);
+        $field = $form->fields()->create(['name' => 'file', 'label' => 'File', 'type' => 'file']);
+        $submission = $form->submissions()->create(['submission_id' => fake()->uuid()]);
+        $value = FormSubmissionValue::query()->create([
+            'submission_id' => $submission->id,
+            'field_id' => $field->id,
+            'value' => [
+                'disk' => 'local',
+                'path' => 'form-uploads/download/file.txt',
+                'name' => 'file.txt',
+                'mime' => 'text/plain',
+            ],
+        ]);
+
+        $response = app(FormSubmissionFileController::class)->download($form, $submission, $value);
+
+        $this->assertSame('attachment; filename=file.txt', $response->headers->get('content-disposition'));
+        $this->assertSame('text/plain', $response->headers->get('content-type'));
+    }
+
     private function formService(): FormService
     {
         return new FormService(
@@ -149,6 +295,7 @@ class FormProductionHardeningTest extends TestCase
             app('validator'),
             new FormCalculatorEngine,
             new FormConditionEngine,
+            new FormSpamProtectionService,
         );
     }
 }

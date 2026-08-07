@@ -3,10 +3,12 @@
 namespace Vertex\Forms\Services;
 
 use App\System\Services\EmailService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Factory as ValidatorFactory;
@@ -26,6 +28,7 @@ class FormService
         private readonly ValidatorFactory $validator,
         private readonly FormCalculatorEngine $calculatorEngine,
         private readonly FormConditionEngine $conditionEngine,
+        private readonly FormSpamProtectionService $spamProtection,
     ) {}
 
     /**
@@ -248,10 +251,14 @@ class FormService
         if ($settings['recaptcha_enabled'] ?? config('forms.recaptcha_enabled', false)) {
             $version = $settings['recaptcha_version'] ?? config('forms.recaptcha_version', 'v2');
             if ($version === 'v2') {
-                $rules['g-recaptcha-response'] = 'required|captcha';
+                $rules['g-recaptcha-response'] = 'required|string';
             } else {
-                $rules['recaptcha_token'] = 'required';
+                $rules['recaptcha_token'] = 'required|string';
             }
+        }
+
+        if ($settings['turnstile_enabled'] ?? config('forms.turnstile_enabled', false)) {
+            $rules['cf-turnstile-response'] = 'required|string';
         }
 
         return $this->validator->make(
@@ -272,6 +279,19 @@ class FormService
             throw new ValidationException($validator);
         }
 
+        $this->spamProtection->verify($form, $request);
+        $idempotencyKey = $this->idempotencyKey($request);
+        if ($idempotencyKey !== null) {
+            $existingSubmission = $form->submissions()
+                ->where('idempotency_key', $idempotencyKey)
+                ->with('values.field')
+                ->first();
+
+            if ($existingSubmission !== null) {
+                return $existingSubmission;
+            }
+        }
+
         $this->checkLimits($form, $request);
         $total = $this->calculateTotal($form, $request->all());
         $visibleFieldNames = $this->conditionEngine->evaluateFields($form->fields->all(), $request->all());
@@ -279,10 +299,11 @@ class FormService
         $storedFiles = [];
 
         try {
-            $submission = DB::transaction(function () use ($form, $request, $total, $visibleFieldNames, &$storedFiles): FormSubmission {
+            $submission = DB::transaction(function () use ($form, $request, $total, $visibleFieldNames, $idempotencyKey, &$storedFiles): FormSubmission {
                 $submission = FormSubmission::create([
                     'form_id' => $form->id,
                     'submission_id' => Str::uuid()->toString(),
+                    'idempotency_key' => $idempotencyKey,
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                     'user_id' => $request->user()?->id,
@@ -336,6 +357,18 @@ class FormService
             foreach ($storedFiles as [$disk, $path]) {
                 Storage::disk($disk)->delete($path);
             }
+
+            if ($exception instanceof UniqueConstraintViolationException && $idempotencyKey !== null) {
+                $existingSubmission = $form->submissions()
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->with('values.field')
+                    ->first();
+
+                if ($existingSubmission !== null) {
+                    return $existingSubmission;
+                }
+            }
+
             throw $exception;
         }
 
@@ -350,6 +383,13 @@ class FormService
         }
 
         return $submission;
+    }
+
+    private function idempotencyKey(Request $request): ?string
+    {
+        $providedKey = trim((string) ($request->header('Idempotency-Key') ?: $request->input('idempotency_key', '')));
+
+        return $providedKey === '' ? null : hash('sha256', $providedKey);
     }
 
     /**
@@ -502,6 +542,17 @@ class FormService
     private function checkLimits(Form $form, Request $request): void
     {
         $settings = $form->settings ?? [];
+
+        $rateLimit = max(1, (int) ($settings['max_submissions_per_minute'] ?? config('forms.max_submissions_per_minute', 10)));
+        $rateKey = 'forms:submit:'.$form->id.':'.hash('sha256', (string) $request->ip());
+
+        if (RateLimiter::tooManyAttempts($rateKey, $rateLimit)) {
+            abort(429, __('forms.error_rate_limit'), [
+                'Retry-After' => RateLimiter::availableIn($rateKey),
+            ]);
+        }
+
+        RateLimiter::hit($rateKey, 60);
 
         $dailyLimit = $settings['daily_limit_per_ip'] ?? config('forms.daily_limit_per_ip_global', null);
         if ($dailyLimit) {

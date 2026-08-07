@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Services\FormService;
 
@@ -53,10 +54,12 @@ class FormPublicController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 400;
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-            ], 400);
+            ], $status, $e instanceof HttpExceptionInterface ? $e->getHeaders() : []);
         }
     }
 

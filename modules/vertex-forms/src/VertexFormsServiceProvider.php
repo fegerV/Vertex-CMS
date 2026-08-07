@@ -12,6 +12,7 @@ use Vertex\Forms\Services\FormCalculatorEngine;
 use Vertex\Forms\Services\FormConditionEngine;
 use Vertex\Forms\Services\FormImportExportService;
 use Vertex\Forms\Services\FormService;
+use Vertex\Forms\Services\FormSpamProtectionService;
 
 class VertexFormsServiceProvider extends ServiceProvider
 {
@@ -25,13 +26,15 @@ class VertexFormsServiceProvider extends ServiceProvider
         $this->app->singleton(FormConditionEngine::class, fn () => new FormConditionEngine);
         $this->app->singleton(FormImportExportService::class, fn () => new FormImportExportService);
         $this->app->singleton(FormAnalyticsService::class, fn () => new FormAnalyticsService);
+        $this->app->singleton(FormSpamProtectionService::class, fn () => new FormSpamProtectionService);
 
         $this->app->singleton(FormService::class, function ($app) {
             return new FormService(
                 $app->make(EmailService::class),
                 $app['validator'],
                 $app->make(FormCalculatorEngine::class),
-                $app->make(FormConditionEngine::class)
+                $app->make(FormConditionEngine::class),
+                $app->make(FormSpamProtectionService::class),
             );
         });
 
@@ -66,6 +69,7 @@ class VertexFormsServiceProvider extends ServiceProvider
             FormConditionEngine::class,
             FormImportExportService::class,
             FormAnalyticsService::class,
+            FormSpamProtectionService::class,
             FormRepositoryInterface::class,
             CalculatorEngineInterface::class,
         ];
