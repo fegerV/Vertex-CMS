@@ -1,6 +1,7 @@
 <?php
 
 use App\Admin\Http\Controllers\DashboardController;
+use App\Admin\Http\Controllers\SettingsController;
 use App\Auth\Http\Controllers\AdminAuthController;
 use App\Builder\Http\Controllers\AdvancedBuilderController;
 use App\Builder\Http\Controllers\BuilderApiController;
@@ -351,4 +352,10 @@ Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function ()
     Route::get('ecommerce/notifications', function() {
         return view('admin.ecommerce.notifications.index');
     })->name('ecommerce.notifications');
+});
+
+// Settings routes
+Route::middleware(['auth', 'vertex.permission:settings.view'])->group(function (): void {
+    Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
 });
