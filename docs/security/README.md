@@ -5,6 +5,7 @@ This directory tracks the design and rollout of the unified `vertex-security` mo
 ## Documents
 
 - `implementation-plan.md` - phased delivery plan and acceptance targets
+- `reference.md` - Laravel-specific security baseline, adoption decisions, and prioritized review plan
 
 ## Related Files
 
