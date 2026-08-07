@@ -21,7 +21,7 @@ class FormImportExportService
                 "slug" => $form->slug,
                 "type" => $form->type,
                 "description" => $form->description,
-                "settings" => $form->settings,
+                "settings" => $form->settingsWithoutSecrets(),
                 "fields" => $form->fields->map(fn ($f) => [
                     "id" => $f->id,
                     "name" => $f->name,

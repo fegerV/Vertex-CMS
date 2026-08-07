@@ -97,7 +97,7 @@ class FormApiController extends Controller
         ], 201);
     }
 
-    public function show(Form $form): JsonResponse
+    public function show(Request $request, Form $form): JsonResponse
     {
         $form->load('fields');
 
@@ -108,7 +108,9 @@ class FormApiController extends Controller
                 'slug' => $form->slug,
                 'type' => $form->type,
                 'description' => $form->description,
-                'settings' => $form->settings,
+                'settings' => $request->user()?->hasPermission('forms.edit')
+                    ? $form->settings
+                    : $form->settingsWithoutSecrets(mask: true),
                 'is_active' => $form->is_active,
                 'fields' => $form->fields->map(fn ($field) => [
                     'id' => $field->id,

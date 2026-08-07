@@ -46,8 +46,7 @@ What already works conceptually:
 
 What is still missing for the target UX:
 
-- integrations workspace
-- email notification flow editor
+- multi-notification email routing and test-send workflow
 - production-grade preview/publish flow
 
 The canvas now supports native drag-and-drop field reordering while retaining
@@ -62,6 +61,12 @@ Production P0 protections now include server-side reCAPTCHA v2/v3 and
 Cloudflare Turnstile verification, per-form/IP rate limiting, idempotent
 submission retries, and permission-gated downloads for private submission
 files.
+
+P1 work has started with a working webhook integrations workspace, encrypted
+signing secrets, queued signed delivery with retry/backoff and delivery logs.
+The email workspace now maps its admin-recipient and autoresponder settings to
+the backend notification flow. Builder edits also have a 50-step undo/redo
+history with toolbar controls and Ctrl/Cmd+Z shortcuts.
 
 ## Product Direction
 

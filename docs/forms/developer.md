@@ -20,6 +20,8 @@ modules/
     │   │   ├── FormCalculatorEngine.php
     │   │   ├── FormConditionEngine.php
     │   │   ├── FormImportExportService.php
+    │   │   ├── FormIntegrationService.php
+    │   │   ├── FormSpamProtectionService.php
     │   │   └── FormAnalyticsService.php
     │   ├── Repositories/
     │   │   └── EloquentFormRepository.php (implements FormRepositoryInterface)
@@ -66,6 +68,8 @@ All services registered in VertexFormsServiceProvider:
 ->app->singleton(FormConditionEngine::class);
 ->app->singleton(FormImportExportService::class);
 ->app->singleton(FormAnalyticsService::class);
+->app->singleton(FormIntegrationService::class);
+->app->singleton(FormSpamProtectionService::class);
 `
 
 Inject via constructor in your classes:

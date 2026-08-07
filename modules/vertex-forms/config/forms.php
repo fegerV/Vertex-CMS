@@ -88,6 +88,7 @@ return [
      */
     'notify_admin_emails' => env('FORMS_NOTIFY_ADMIN_EMAILS', []),
     'auto_response_enabled' => env('FORMS_AUTO_RESPONSE_ENABLED', true),
+    'webhook_timeout' => env('FORMS_WEBHOOK_TIMEOUT', 10),
 
     /*
      * Calculator defaults.

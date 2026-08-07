@@ -5,6 +5,7 @@ namespace Vertex\Forms\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -28,7 +29,7 @@ class FormPublicController extends Controller
             'form' => $form->load('fields'),
             'formConfig' => $this->formService->renderForm($form),
             'actionUrl' => route('public.forms.submit', $form),
-            'settings' => $form->settings ?? [],
+            'settings' => $this->publicSettings($form),
         ]);
     }
 
@@ -77,7 +78,7 @@ class FormPublicController extends Controller
                 'id' => $form->id,
                 'name' => $form->name,
                 'description' => $form->description,
-                'settings' => $form->settings,
+                'settings' => $this->publicSettings($form),
                 'config' => $config,
             ],
         ]);
@@ -91,5 +92,14 @@ class FormPublicController extends Controller
             || config($submitting ? 'forms.require_login_for_submit' : 'forms.require_login_for_view', false);
 
         abort_if($requiresLogin && auth()->guest(), 403, __('forms.error_login_required'));
+    }
+
+    private function publicSettings(Form $form): array
+    {
+        return Arr::only($form->settings ?? [], [
+            'title', 'description', 'submit_label', 'success_message', 'error_message',
+            'theme', 'layout_density', 'button_style', 'show_progress', 'show_page_titles',
+            'redirect_url', 'custom_css',
+        ]);
     }
 }

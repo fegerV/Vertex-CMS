@@ -206,6 +206,7 @@ const form = reactive({
         autoresponder_enabled: false,
         autoresponder_subject: 'Мы получили вашу заявку',
         autoresponder_body: 'Здравствуйте! Спасибо за обращение, мы скоро ответим.',
+        webhooks: [],
         require_login: false,
         ...(props.initialForm.settings ?? {}),
     },
@@ -369,6 +370,73 @@ const isDirty = ref(false);
 const autosaveTimer = ref(null);
 const suppressDirty = ref(false);
 const hasLoadedInitialState = ref(false);
+const undoStack = ref([]);
+const redoStack = ref([]);
+const lastHistoryState = ref('');
+const historyTimer = ref(null);
+const restoringHistory = ref(false);
+
+function historyState() {
+    return JSON.stringify({
+        name: form.name,
+        slug: form.slug,
+        type: form.type,
+        description: form.description,
+        is_active: form.is_active,
+        settings: form.settings,
+        fields: form.fields,
+    });
+}
+
+function restoreHistoryState(serialized) {
+    const state = JSON.parse(serialized);
+    restoringHistory.value = true;
+    Object.assign(form, deepClone(state));
+    ui.selectedFieldId = form.fields.find((field) => String(field.id) === String(ui.selectedFieldId))?.id
+        ?? form.fields[0]?.id
+        ?? null;
+    window.setTimeout(() => { restoringHistory.value = false; }, 0);
+}
+
+function recordHistory() {
+    if (!hasLoadedInitialState.value || restoringHistory.value) return;
+    const nextState = historyState();
+    if (nextState === lastHistoryState.value) return;
+
+    undoStack.value.push(lastHistoryState.value);
+    if (undoStack.value.length > 50) undoStack.value.shift();
+    redoStack.value = [];
+    lastHistoryState.value = nextState;
+}
+
+function scheduleHistory() {
+    if (historyTimer.value) window.clearTimeout(historyTimer.value);
+    historyTimer.value = window.setTimeout(recordHistory, 450);
+}
+
+function undo() {
+    if (undoStack.value.length === 0) return;
+    const previous = undoStack.value.pop();
+    redoStack.value.push(historyState());
+    restoreHistoryState(previous);
+    lastHistoryState.value = previous;
+}
+
+function redo() {
+    if (redoStack.value.length === 0) return;
+    const next = redoStack.value.pop();
+    undoStack.value.push(historyState());
+    restoreHistoryState(next);
+    lastHistoryState.value = next;
+}
+
+function handleHistoryShortcut(event) {
+    if (!(event.ctrlKey || event.metaKey)) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName) || event.target?.isContentEditable) return;
+    if (event.key.toLowerCase() !== 'z') return;
+    event.preventDefault();
+    event.shiftKey ? redo() : undo();
+}
 
 watch(() => [form.name, form.description, form.type, form.is_active, form.settings, form.fields], () => {
     if (suppressDirty.value || !hasLoadedInitialState.value) {
@@ -382,6 +450,7 @@ watch(() => [form.name, form.description, form.type, form.is_active, form.settin
     }
 
     scheduleAutosave();
+    scheduleHistory();
 }, { deep: true });
 
 watch(() => form.name, (value, oldValue) => {
@@ -757,6 +826,7 @@ async function loadRegistry() {
         ui.selectedFieldId = form.fields[0]?.id ?? null;
         registryLoaded.value = true;
         hasLoadedInitialState.value = true;
+        lastHistoryState.value = historyState();
         suppressDirty.value = false;
         isDirty.value = false;
         saveState.value = 'idle';
@@ -945,12 +1015,33 @@ function openPreview() {
     errorMessage.value = 'Save the form first to open a public preview.';
 }
 
-onMounted(loadRegistry);
+function addWebhook() {
+    form.settings.webhooks = Array.isArray(form.settings.webhooks) ? form.settings.webhooks : [];
+    form.settings.webhooks.push({
+        id: `webhook_${Date.now()}`,
+        name: 'Webhook',
+        url: '',
+        secret: window.crypto?.randomUUID?.().replaceAll('-', '') || Math.random().toString(36).slice(2),
+        enabled: true,
+        headers: {},
+    });
+}
+
+function removeWebhook(index) {
+    form.settings.webhooks.splice(index, 1);
+}
+
+onMounted(() => {
+    loadRegistry();
+    window.addEventListener('keydown', handleHistoryShortcut);
+});
 
 onBeforeUnmount(() => {
     if (autosaveTimer.value) {
         window.clearTimeout(autosaveTimer.value);
     }
+    if (historyTimer.value) window.clearTimeout(historyTimer.value);
+    window.removeEventListener('keydown', handleHistoryShortcut);
 });
 </script>
 
@@ -978,6 +1069,8 @@ onBeforeUnmount(() => {
                 <button type="button" class="vc-button vc-button-secondary" @click="ui.showTemplates = !ui.showTemplates">
                     Шаблоны
                 </button>
+                <button type="button" class="vc-button vc-button-secondary" :disabled="undoStack.length === 0" @click="undo">Отменить</button>
+                <button type="button" class="vc-button vc-button-secondary" :disabled="redoStack.length === 0" @click="redo">Повторить</button>
                 <button type="button" class="vc-button vc-button-secondary" @click="openPreview">
                     Предпросмотр
                 </button>
@@ -1384,6 +1477,17 @@ onBeforeUnmount(() => {
                         <span>Включить автоответ пользователю</span>
                     </label>
 
+                    <label v-if="ui.workspace === 'emails' && form.settings.autoresponder_enabled" class="block rounded-2xl border border-[var(--vc-border)] bg-white p-4">
+                        <span class="mb-1 block text-sm font-medium text-[var(--vc-text)]">Тема автоответа</span>
+                        <input v-model="form.settings.autoresponder_subject" type="text" class="w-full rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm">
+                    </label>
+
+                    <label v-if="ui.workspace === 'emails' && form.settings.autoresponder_enabled" class="block rounded-2xl border border-[var(--vc-border)] bg-white p-4">
+                        <span class="mb-1 block text-sm font-medium text-[var(--vc-text)]">Текст автоответа</span>
+                        <textarea v-model="form.settings.autoresponder_body" rows="6" class="w-full rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm"></textarea>
+                        <span class="mt-2 block text-xs text-[var(--vc-text-soft)]">Получатель определяется по первому email-полю формы.</span>
+                    </label>
+
                     <label v-if="ui.workspace === 'visibility'" class="block rounded-2xl border border-[var(--vc-border)] bg-white p-4">
                         <span class="mb-1 block text-sm font-medium text-[var(--vc-text)]">Доступна с</span>
                         <input v-model="form.settings.available_from" type="datetime-local" class="w-full rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm">
@@ -1475,9 +1579,31 @@ onBeforeUnmount(() => {
                         <div v-if="loadingAnalytics" class="rounded-2xl border border-[var(--vc-border)] bg-white p-5 text-sm text-[var(--vc-text-soft)]">Loading analytics...</div>
                     </div>
 
-                    <div v-if="ui.workspace === 'integrations'" class="rounded-2xl border border-dashed border-[var(--vc-border)] bg-white p-5">
-                        <h4 class="font-semibold text-[var(--vc-text)]">Рабочая зона подключена</h4>
-                        <p class="mt-2 text-sm text-[var(--vc-text-soft)]">Следующий слой: подключение провайдеров, таблицы заявок, метрики конверсии и экспорт.</p>
+                    <div v-if="ui.workspace === 'integrations'" class="grid gap-4">
+                        <div class="flex items-center justify-between rounded-2xl border border-[var(--vc-border)] bg-white p-4">
+                            <div>
+                                <h4 class="font-semibold text-[var(--vc-text)]">Webhook integrations</h4>
+                                <p class="mt-1 text-xs text-[var(--vc-text-soft)]">Подписанные события form.submitted отправляются через очередь с повторными попытками.</p>
+                            </div>
+                            <button type="button" class="vc-button vc-button-primary" @click="addWebhook">Добавить webhook</button>
+                        </div>
+
+                        <article v-for="(webhook, index) in form.settings.webhooks" :key="webhook.id || index" class="grid gap-3 rounded-2xl border border-[var(--vc-border)] bg-white p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <input v-model="webhook.name" type="text" placeholder="Название" class="flex-1 rounded-xl border border-[var(--vc-border)] px-3 py-2 text-sm">
+                                <label class="inline-flex items-center gap-2 text-sm"><input v-model="webhook.enabled" type="checkbox"> Активен</label>
+                                <button type="button" class="text-sm font-semibold text-rose-600" @click="removeWebhook(index)">Удалить</button>
+                            </div>
+                            <input v-model="webhook.url" type="url" placeholder="https://crm.example/webhooks/forms" class="rounded-xl border border-[var(--vc-border)] px-3 py-2 text-sm">
+                            <label class="block">
+                                <span class="mb-1 block text-xs font-medium text-[var(--vc-text-soft)]">Signing secret</span>
+                                <input v-model="webhook.secret" type="password" autocomplete="new-password" class="w-full rounded-xl border border-[var(--vc-border)] px-3 py-2 font-mono text-sm">
+                            </label>
+                        </article>
+
+                        <div v-if="!form.settings.webhooks?.length" class="rounded-2xl border border-dashed border-[var(--vc-border)] bg-white p-5 text-sm text-[var(--vc-text-soft)]">
+                            Интеграции ещё не настроены.
+                        </div>
                     </div>
                 </div>
             </section>

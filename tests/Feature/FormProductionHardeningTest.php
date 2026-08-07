@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\EmailLog;
 use App\System\Services\EmailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -15,11 +17,15 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 use Vertex\Forms\Contracts\FormRepositoryInterface;
 use Vertex\Forms\Controllers\FormSubmissionFileController;
+use Vertex\Forms\Jobs\DeliverFormWebhook;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormSubmissionValue;
+use Vertex\Forms\Models\FormWebhookDelivery;
 use Vertex\Forms\Repositories\EloquentFormRepository;
 use Vertex\Forms\Services\FormCalculatorEngine;
 use Vertex\Forms\Services\FormConditionEngine;
+use Vertex\Forms\Services\FormImportExportService;
+use Vertex\Forms\Services\FormIntegrationService;
 use Vertex\Forms\Services\FormService;
 use Vertex\Forms\Services\FormSpamProtectionService;
 
@@ -288,14 +294,100 @@ class FormProductionHardeningTest extends TestCase
         $this->assertSame('text/plain', $response->headers->get('content-type'));
     }
 
-    private function formService(): FormService
+    public function test_webhook_delivery_is_signed_queued_and_logged(): void
+    {
+        Http::fake(['hooks.example.test/forms' => Http::response(['accepted' => true], 202)]);
+        Queue::fake();
+
+        $form = Form::query()->create([
+            'name' => 'Integrated form',
+            'slug' => 'integrated-form',
+            'is_active' => true,
+            'settings' => [
+                'honeypot_enabled' => false,
+                'webhooks' => [[
+                    'name' => 'CRM',
+                    'url' => 'https://hooks.example.test/forms',
+                    'secret' => 'integration-secret',
+                    'enabled' => true,
+                ]],
+            ],
+        ]);
+
+        $this->formService()->submit($form, Request::create('/forms/integrated-form/submit', 'POST'));
+
+        $this->assertStringNotContainsString('integration-secret', (string) $form->getRawOriginal('settings'));
+        $this->assertSame('', (new FormImportExportService)->export($form)['form']['settings']['webhooks'][0]['secret']);
+        Queue::assertPushed(DeliverFormWebhook::class);
+        $delivery = FormWebhookDelivery::query()->firstOrFail();
+        (new DeliverFormWebhook($delivery))->handle();
+
+        Http::assertSent(function ($request): bool {
+            $timestamp = $request->header('X-Vertex-Timestamp')[0] ?? '';
+            $signature = $request->header('X-Vertex-Signature')[0] ?? '';
+
+            return $request->url() === 'https://hooks.example.test/forms'
+                && hash_equals(hash_hmac('sha256', $request->body(), 'integration-secret'), $signature)
+                && $timestamp !== '';
+        });
+        $this->assertDatabaseHas('form_webhook_deliveries', ['status' => 'delivered', 'attempts' => 1]);
+    }
+
+    public function test_public_config_does_not_expose_integration_or_notification_secrets(): void
+    {
+        $form = Form::query()->create([
+            'name' => 'Secret form',
+            'slug' => 'secret-form',
+            'is_active' => true,
+            'settings' => [
+                'submit_label' => 'Send safely',
+                'notify_admin_emails' => 'private@example.test',
+                'webhooks' => [['url' => 'https://example.test', 'secret' => 'do-not-expose']],
+            ],
+        ]);
+
+        $this->getJson('/forms/'.$form->slug.'/config')
+            ->assertOk()
+            ->assertJsonPath('form.settings.submit_label', 'Send safely')
+            ->assertJsonMissingPath('form.settings.notify_admin_emails')
+            ->assertJsonMissingPath('form.settings.webhooks');
+    }
+
+    public function test_builder_email_settings_drive_admin_and_autoresponder_notifications(): void
+    {
+        $form = Form::query()->create([
+            'name' => 'Email form',
+            'slug' => 'email-form',
+            'is_active' => true,
+            'settings' => [
+                'honeypot_enabled' => false,
+                'notify_admin_emails' => 'first@example.test; second@example.test',
+                'autoresponder_enabled' => true,
+                'autoresponder_body' => 'Thanks for contacting us.',
+            ],
+        ]);
+        $form->fields()->create(['name' => 'contact', 'label' => 'Contact', 'type' => 'email']);
+        $form->load('fields');
+        $emailService = Mockery::mock(EmailService::class);
+        $emailService->shouldReceive('send')->times(3)->andReturn(new EmailLog);
+
+        $this->formService($emailService)->submit(
+            $form,
+            Request::create('/forms/email-form/submit', 'POST', ['contact' => 'visitor@example.test'])
+        );
+
+        $this->assertDatabaseCount('form_submissions', 1);
+    }
+
+    private function formService(?EmailService $emailService = null): FormService
     {
         return new FormService(
-            Mockery::mock(EmailService::class),
+            $emailService ?? Mockery::mock(EmailService::class),
             app('validator'),
             new FormCalculatorEngine,
             new FormConditionEngine,
             new FormSpamProtectionService,
+            new FormIntegrationService,
         );
     }
 }

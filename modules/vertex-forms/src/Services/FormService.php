@@ -29,6 +29,7 @@ class FormService
         private readonly FormCalculatorEngine $calculatorEngine,
         private readonly FormConditionEngine $conditionEngine,
         private readonly FormSpamProtectionService $spamProtection,
+        private readonly FormIntegrationService $integrationService,
     ) {}
 
     /**
@@ -129,7 +130,7 @@ class FormService
             'name' => $form->name,
             'type' => $form->type,
             'description' => $form->description,
-            'settings' => $form->settings,
+            'settings' => json_decode($form->getRawOriginal('settings') ?: '[]', true) ?: [],
             'fields' => $form->fields()
                 ->orderBy('sort_order')
                 ->get()
@@ -382,6 +383,16 @@ class FormService
             ]);
         }
 
+        try {
+            $this->integrationService->dispatchWebhooks($form, $submission);
+        } catch (Throwable $exception) {
+            Log::error('Form integrations dispatch failed', [
+                'form_id' => $form->id,
+                'submission_id' => $submission->submission_id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
+
         return $submission;
     }
 
@@ -599,14 +610,17 @@ class FormService
         ];
         $settings = array_merge($globalSettings, $settings);
 
-        if ($settings['notify_admin'] ?? false) {
-            $emails = is_array($settings['admin_emails'] ?? null)
-                ? $settings['admin_emails']
-                : explode("\n", trim((string) ($settings['admin_emails'] ?? '')));
+        $configuredAdminEmails = $settings['notify_admin_emails'] ?? $settings['admin_emails'] ?? [];
+        $notifyAdmin = (bool) ($settings['notify_admin'] ?? false) || ! empty($configuredAdminEmails);
 
-            foreach (array_filter($emails) as $email) {
+        if ($notifyAdmin) {
+            $emails = is_array($configuredAdminEmails)
+                ? $configuredAdminEmails
+                : preg_split('/[,;\s]+/', trim((string) $configuredAdminEmails));
+
+            foreach (array_unique(array_filter(array_map('trim', $emails ?: []), fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))) as $email) {
                 $this->emailService->send(
-                    'form_submission',
+                    $settings['notify_admin_template'] ?? 'form_submission',
                     trim($email),
                     'Admin',
                     [
@@ -619,11 +633,12 @@ class FormService
             }
         }
 
-        if ($settings['notify_user'] ?? false) {
-            $userEmail = $submission->values->firstWhere('field.name', 'email')?->value;
+        $notifyUser = $settings['autoresponder_enabled'] ?? $settings['notify_user'] ?? false;
+        if ($notifyUser) {
+            $userEmail = $submission->values->first(fn ($value) => $value->field?->type === 'email')?->value;
             if ($userEmail && filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
                 $this->emailService->send(
-                    $settings['user_email_template'] ?? 'form_confirmation',
+                    $settings['autoresponder_template'] ?? $settings['user_email_template'] ?? 'form_confirmation',
                     $userEmail,
                     'User',
                     [
