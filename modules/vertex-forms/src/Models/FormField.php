@@ -5,7 +5,6 @@ namespace Vertex\Forms\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Vertex\Forms\Models\Form;
 
 class FormField extends Model
 {
@@ -37,6 +36,6 @@ class FormField extends Model
 
     public function submissionsValues(): HasMany
     {
-        return $this->hasMany(FormSubmissionValue::class);
+        return $this->hasMany(FormSubmissionValue::class, 'field_id');
     }
 }

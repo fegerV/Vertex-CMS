@@ -19,11 +19,11 @@ class FormSubmissionValue extends Model
 
     public function submission(): BelongsTo
     {
-        return $this->belongsTo(FormSubmission::class);
+        return $this->belongsTo(FormSubmission::class, 'submission_id');
     }
 
     public function field(): BelongsTo
     {
-        return $this->belongsTo(FormField::class);
+        return $this->belongsTo(FormField::class, 'field_id');
     }
 }
