@@ -64,6 +64,7 @@ return [
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ],
     'upload_dir' => env('FORMS_UPLOAD_DIR', 'form-uploads'),
+    'upload_disk' => env('FORMS_UPLOAD_DISK', 'local'),
 
     /*
      * Analytics & logging.

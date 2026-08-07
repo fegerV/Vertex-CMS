@@ -171,6 +171,8 @@ const analyticsError = ref('');
 const submissions = ref([]);
 const submissionsPagination = ref(null);
 const analytics = ref(null);
+const draggedFieldIndex = ref(null);
+const dragOverFieldIndex = ref(null);
 
 const ui = reactive({
     workspace: 'build',
@@ -675,6 +677,35 @@ function moveField(index, direction) {
     reindexFields();
 }
 
+function startFieldDrag(index, event) {
+    draggedFieldIndex.value = index;
+    dragOverFieldIndex.value = index;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(index));
+}
+
+function dropField(targetIndex) {
+    const sourceIndex = draggedFieldIndex.value;
+    if (sourceIndex === null || sourceIndex === targetIndex) {
+        endFieldDrag();
+        return;
+    }
+
+    const [field] = form.fields.splice(sourceIndex, 1);
+    // targetIndex refers to the card currently under the pointer. After the
+    // source is removed, inserting at the same index places the field after a
+    // lower target and before a higher target, which matches the visual cue.
+    form.fields.splice(targetIndex, 0, field);
+    reindexFields();
+    ui.selectedFieldId = field.id;
+    endFieldDrag();
+}
+
+function endFieldDrag() {
+    draggedFieldIndex.value = null;
+    dragOverFieldIndex.value = null;
+}
+
 function reindexFields() {
     form.fields = form.fields.map((field, index) => ({
         ...field,
@@ -1075,7 +1106,13 @@ onBeforeUnmount(() => {
                         v-for="(field, index) in form.fields"
                         :key="field.id"
                         class="rounded-3xl border bg-white p-5 shadow-sm transition"
-                        :class="String(ui.selectedFieldId) === String(field.id) ? 'border-[var(--vc-primary)] ring-2 ring-sky-100' : 'border-[var(--vc-border)]'"
+                        :class="[
+                            String(ui.selectedFieldId) === String(field.id) ? 'border-[var(--vc-primary)] ring-2 ring-sky-100' : 'border-[var(--vc-border)]',
+                            dragOverFieldIndex === index ? 'translate-y-1 border-dashed border-[var(--vc-primary)]' : '',
+                            draggedFieldIndex === index ? 'opacity-50' : '',
+                        ]"
+                        @dragover.prevent="dragOverFieldIndex = index"
+                        @drop.prevent="dropField(index)"
                         @click="selectField(field.id)"
                     >
                         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -1091,6 +1128,15 @@ onBeforeUnmount(() => {
                             </div>
 
                             <div class="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    draggable="true"
+                                    class="vc-button vc-button-secondary cursor-grab px-3 py-2 text-sm active:cursor-grabbing"
+                                    title="Перетащить поле"
+                                    aria-label="Перетащить поле"
+                                    @dragstart.stop="startFieldDrag(index, $event)"
+                                    @dragend="endFieldDrag"
+                                >⋮⋮</button>
                                 <button type="button" class="vc-button vc-button-secondary px-3 py-2 text-sm" @click.stop="moveField(index, -1)">↑</button>
                                 <button type="button" class="vc-button vc-button-secondary px-3 py-2 text-sm" @click.stop="moveField(index, 1)">↓</button>
                                 <button type="button" class="vc-button vc-button-secondary px-3 py-2 text-sm" @click.stop="duplicateField(index)">Копия</button>

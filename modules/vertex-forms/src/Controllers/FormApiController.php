@@ -12,13 +12,13 @@ use Vertex\Forms\FieldTypeRegistry;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormField;
 use Vertex\Forms\Services\FormImportExportService;
+use Vertex\Forms\Services\FormService;
 
 class FormApiController extends Controller
 {
     public function __construct(
-        private readonly FormImportExportService $importExport
-    ) {
-    }
+        private readonly FormImportExportService $importExport,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -88,7 +88,7 @@ class FormApiController extends Controller
             'created_by' => $request->user()?->id,
         ]);
 
-        if (!empty($validated['fields'])) {
+        if (! empty($validated['fields'])) {
             $this->syncFields($form, $validated['fields']);
         }
 
@@ -133,7 +133,7 @@ class FormApiController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', 'unique:forms,slug,' . $form->id],
+            'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', 'unique:forms,slug,'.$form->id],
             'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll'],
             'description' => ['nullable', 'string', 'max:2000'],
             'settings' => ['nullable', 'array'],
@@ -148,6 +148,13 @@ class FormApiController extends Controller
         ]);
 
         DB::transaction(function () use ($form, $validated): void {
+            if (config('forms.auto_snapshot_on_save', true)) {
+                app(FormService::class)->createSnapshot(
+                    $form,
+                    'Automatic snapshot before update',
+                    request()->user()?->id
+                );
+            }
             $form->update([
                 'name' => $validated['name'],
                 'slug' => $this->resolveSlug($validated['slug'] ?? null, $validated['name'], $form->id),
@@ -183,8 +190,8 @@ class FormApiController extends Controller
     public function duplicate(Request $request, Form $form): JsonResponse
     {
         $newForm = $form->replicate();
-        $newForm->name = $form->name . ' (copy)';
-        $newForm->slug = $this->resolveSlug($form->slug . '-copy', $form->name . ' copy');
+        $newForm->name = $form->name.' (copy)';
+        $newForm->slug = $this->resolveSlug($form->slug.'-copy', $form->name.' copy');
         $newForm->save();
 
         foreach ($form->fields as $field) {
@@ -204,7 +211,7 @@ class FormApiController extends Controller
 
         return response()->json($data, 200, [
             'Content-Type' => 'application/json',
-            'Content-Disposition' => 'attachment; filename="' . $form->slug . '.json"',
+            'Content-Disposition' => 'attachment; filename="'.$form->slug.'.json"',
         ]);
     }
 
@@ -212,7 +219,7 @@ class FormApiController extends Controller
     {
         $json = $request->file('json')?->get() ?: $request->input('json');
 
-        if (!$json) {
+        if (! $json) {
             return response()->json(['error' => 'No JSON provided'], 400);
         }
 
@@ -225,11 +232,11 @@ class FormApiController extends Controller
                 'form' => $newForm->load('fields'),
             ], 201);
         } catch (\JsonException $exception) {
-            return response()->json(['error' => 'Invalid JSON: ' . $exception->getMessage()], 400);
+            return response()->json(['error' => 'Invalid JSON: '.$exception->getMessage()], 400);
         } catch (\Throwable $exception) {
-            Log::error('Form import failed: ' . $exception->getMessage());
+            Log::error('Form import failed: '.$exception->getMessage());
 
-            return response()->json(['error' => 'Import failed: ' . $exception->getMessage()], 500);
+            return response()->json(['error' => 'Import failed: '.$exception->getMessage()], 500);
         }
     }
 
@@ -246,8 +253,8 @@ class FormApiController extends Controller
                 ->where('slug', $candidate)
                 ->exists()
         ) {
-            $postfix = '-' . $suffix;
-            $candidate = Str::limit($base, 100 - strlen($postfix), '') . $postfix;
+            $postfix = '-'.$suffix;
+            $candidate = Str::limit($base, 100 - strlen($postfix), '').$postfix;
             $suffix++;
         }
 
@@ -261,7 +268,7 @@ class FormApiController extends Controller
         foreach (array_values($fields) as $index => $fieldData) {
             $payload = $this->normalizeFieldPayload((array) $fieldData, $index);
 
-            if (!empty($fieldData['id'])) {
+            if (! empty($fieldData['id'])) {
                 $field = FormField::query()
                     ->where('form_id', $form->id)
                     ->find($fieldData['id']);
@@ -269,6 +276,7 @@ class FormApiController extends Controller
                 if ($field !== null) {
                     $field->update($payload);
                     $existingIds[] = $field->id;
+
                     continue;
                 }
             }

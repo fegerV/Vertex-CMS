@@ -2,12 +2,12 @@
 
 namespace Vertex\Forms\Repositories;
 
-use Vertex\Forms\Contracts\FormRepository;
+use Illuminate\Support\Facades\DB;
+use Vertex\Forms\Contracts\FormRepositoryInterface;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormSubmission;
-use Illuminate\Support\Facades\DB;
 
-class EloquentFormRepository implements FormRepository
+class EloquentFormRepository implements FormRepositoryInterface
 {
     public function find(int $id): ?Form
     {
@@ -45,11 +45,11 @@ class EloquentFormRepository implements FormRepository
         return Form::where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('available_from')
-                  ->orWhere('available_from', '<=', now());
+                    ->orWhere('available_from', '<=', now());
             })
             ->where(function ($q) {
                 $q->whereNull('available_to')
-                  ->orWhere('available_to', '>=', now());
+                    ->orWhere('available_to', '>=', now());
             })
             ->orderBy('sort_order')
             ->orderBy('created_at', 'desc')
@@ -73,15 +73,15 @@ class EloquentFormRepository implements FormRepository
             DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(*) as count')
         )
-        ->where('form_id', $formId)
-        ->when($from, fn($q) => $q->whereDate('created_at', '>=', $from))
-        ->when($to, fn($q) => $q->whereDate('created_at', '<=', $to))
-        ->groupBy(DB::raw('DATE(created_at)'))
-        ->orderBy('date')
-        ->get()
-        ->keyBy('date')
-        ->map(fn($row) => $row->count)
-        ->toArray();
+            ->where('form_id', $formId)
+            ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date')
+            ->map(fn ($row) => $row->count)
+            ->toArray();
 
         return [
             'total' => $total,

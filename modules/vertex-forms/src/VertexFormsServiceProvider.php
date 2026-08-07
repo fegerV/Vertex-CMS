@@ -2,6 +2,7 @@
 
 namespace Vertex\Forms;
 
+use App\System\Services\EmailService;
 use Illuminate\Support\ServiceProvider;
 use Vertex\Forms\Contracts\CalculatorEngineInterface;
 use Vertex\Forms\Contracts\FormRepositoryInterface;
@@ -19,41 +20,41 @@ class VertexFormsServiceProvider extends ServiceProvider
         $this->app->bind(FormRepositoryInterface::class, EloquentFormRepository::class);
         $this->app->bind(CalculatorEngineInterface::class, FormCalculatorEngine::class);
 
-        $this->app->singleton(FieldTypeRegistry::class, fn () => new FieldTypeRegistry());
-        $this->app->singleton(FormCalculatorEngine::class, fn () => new FormCalculatorEngine());
-        $this->app->singleton(FormConditionEngine::class, fn () => new FormConditionEngine());
-        $this->app->singleton(FormImportExportService::class, fn () => new FormImportExportService());
-        $this->app->singleton(FormAnalyticsService::class, fn () => new FormAnalyticsService());
+        $this->app->singleton(FieldTypeRegistry::class, fn () => new FieldTypeRegistry);
+        $this->app->singleton(FormCalculatorEngine::class, fn () => new FormCalculatorEngine);
+        $this->app->singleton(FormConditionEngine::class, fn () => new FormConditionEngine);
+        $this->app->singleton(FormImportExportService::class, fn () => new FormImportExportService);
+        $this->app->singleton(FormAnalyticsService::class, fn () => new FormAnalyticsService);
 
         $this->app->singleton(FormService::class, function ($app) {
             return new FormService(
-                $app->make(\App\System\Services\EmailService::class),
+                $app->make(EmailService::class),
                 $app['validator'],
                 $app->make(FormCalculatorEngine::class),
                 $app->make(FormConditionEngine::class)
             );
         });
 
-        $this->mergeConfigFrom(__DIR__ . '/../config/forms.php', 'forms');
+        $this->mergeConfigFrom(__DIR__.'/../config/forms.php', 'forms');
     }
 
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'forms');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/admin.php');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'forms');
+        // The host application includes module routes inside its public/admin
+        // groups so prefixes, names and middleware remain consistent.
 
         $this->publishes([
-            __DIR__ . '/../config/forms.php' => config_path('forms.php'),
+            __DIR__.'/../config/forms.php' => config_path('forms.php'),
         ], 'config');
 
         $this->publishes([
-            __DIR__ . '/../database/migrations' => database_path('migrations'),
+            __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'migrations');
 
         $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/forms'),
+            __DIR__.'/../resources/views' => resource_path('views/vendor/forms'),
         ], 'views');
     }
 
