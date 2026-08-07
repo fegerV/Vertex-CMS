@@ -2,10 +2,10 @@
 
 namespace Vertex\Forms\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\User;
 
 class FormSubmission extends Model
 {
@@ -35,13 +35,13 @@ class FormSubmission extends Model
 
     public function values(): HasMany
     {
-        return $this->hasMany(FormSubmissionValue::class);
+        return $this->hasMany(FormSubmissionValue::class, 'submission_id');
     }
 
     public function getValue(string $fieldName): ?string
     {
         $value = $this->values()
-            ->whereHas('field', fn($q) => $q->where('name', $fieldName))
+            ->whereHas('field', fn ($q) => $q->where('name', $fieldName))
             ->first();
 
         return $value?->value;

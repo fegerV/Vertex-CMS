@@ -4,20 +4,25 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Sentry\Laravel\Integration;
+use Sentry\SentrySdk;
 use Sentry\State\HubInterface;
 
 class SentryServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        if (! class_exists(SentrySdk::class)) {
+            return;
+        }
+
         $this->app->bind(HubInterface::class, function ($app) {
-            return \Sentry\SentrySdk::getCurrentHub();
+            return SentrySdk::getCurrentHub();
         });
     }
 
     public function boot(): void
     {
-        if (empty(config('sentry.dsn'))) {
+        if (empty(config('sentry.dsn')) || ! function_exists('Sentry\\init')) {
             return;
         }
 
@@ -30,7 +35,7 @@ class SentryServiceProvider extends ServiceProvider
             'environment' => config('sentry.environment', env('APP_ENV')),
             'release' => config('sentry.release', '0.1.0'),
             'integrations' => [
-                new Integration(),
+                new Integration,
             ],
         ]);
 

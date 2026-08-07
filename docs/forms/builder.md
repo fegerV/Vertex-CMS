@@ -2,7 +2,7 @@
 
 ## Status
 
-Last updated: `2026-05-19`
+Last updated: `2026-08-07`
 
 The `vertex-forms` module already has:
 
@@ -46,10 +46,14 @@ What already works conceptually:
 
 What is still missing for the target UX:
 
-- drag-and-drop reorder ergonomics
 - integrations workspace
 - email notification flow editor
 - production-grade preview/publish flow
+
+The canvas now supports native drag-and-drop field reordering while retaining
+the accessible up/down controls for keyboard users. Production hardening also
+adds atomic submission persistence, private file storage by default, automatic
+version snapshots with retention, and enforced public availability rules.
 
 ## Product Direction
 
