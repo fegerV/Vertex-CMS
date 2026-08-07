@@ -9,6 +9,7 @@ use App\Builder\Http\Controllers\PageBuilderController;
 use App\Content\Http\Controllers\CustomFieldGroupController;
 use App\Core\Http\Middleware\SetAdminLocale;
 use App\Media\Http\Controllers\MediaController;
+use App\Security\Login\Http\Controllers\TwoFactorController;
 use App\Seo\Http\Controllers\RedirectController;
 use App\System\Http\Controllers\QueueController;
 use App\System\Http\Controllers\SecurityController;
