@@ -10,12 +10,14 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Vertex\Forms\Models\Form;
+use Vertex\Forms\Services\FormAnalyticsService;
 use Vertex\Forms\Services\FormService;
 
 class FormPublicController extends Controller
 {
     public function __construct(
         private readonly FormService $formService,
+        private readonly FormAnalyticsService $analyticsService,
     ) {}
 
     /**
@@ -24,6 +26,9 @@ class FormPublicController extends Controller
     public function show(Form $form): View
     {
         $this->assertFormAvailable($form, false);
+        if (config('forms.log_form_views', true)) {
+            $this->analyticsService->recordView($form, (string) request()->ip(), request()->userAgent());
+        }
 
         return view('forms::public.show', [
             'form' => $form->load('fields'),

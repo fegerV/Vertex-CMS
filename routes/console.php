@@ -31,3 +31,7 @@ Schedule::call(function () {
     }
 })->name('vertex:daily-backup')->daily()->at('03:00')->withoutOverlapping();
 
+Schedule::command('forms:cleanup-submissions')
+    ->daily()
+    ->at('02:30')
+    ->withoutOverlapping();

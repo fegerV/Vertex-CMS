@@ -16,18 +16,21 @@ use Mockery;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 use Vertex\Forms\Contracts\FormRepositoryInterface;
+use Vertex\Forms\Controllers\FormSubmissionController;
 use Vertex\Forms\Controllers\FormSubmissionFileController;
 use Vertex\Forms\Jobs\DeliverFormWebhook;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormSubmissionValue;
 use Vertex\Forms\Models\FormWebhookDelivery;
 use Vertex\Forms\Repositories\EloquentFormRepository;
+use Vertex\Forms\Services\FormAnalyticsService;
 use Vertex\Forms\Services\FormCalculatorEngine;
 use Vertex\Forms\Services\FormConditionEngine;
 use Vertex\Forms\Services\FormImportExportService;
 use Vertex\Forms\Services\FormIntegrationService;
 use Vertex\Forms\Services\FormService;
 use Vertex\Forms\Services\FormSpamProtectionService;
+use Vertex\Forms\Services\FormSubmissionRetentionService;
 
 class FormProductionHardeningTest extends TestCase
 {
@@ -377,6 +380,83 @@ class FormProductionHardeningTest extends TestCase
         );
 
         $this->assertDatabaseCount('form_submissions', 1);
+    }
+
+    public function test_submission_filters_bulk_status_and_streaming_csv_export(): void
+    {
+        $form = Form::query()->create(['name' => 'Entries', 'slug' => 'entries', 'is_active' => true]);
+        $field = $form->fields()->create(['name' => 'message', 'label' => 'Message', 'type' => 'text']);
+        $submission = $form->submissions()->create(['submission_id' => fake()->uuid(), 'status' => 'unread']);
+        $submission->values()->create(['field_id' => $field->id, 'value' => '=SUM(1,1) searchable']);
+        $controller = new FormSubmissionController(new FormSubmissionRetentionService);
+
+        $index = $controller->index($form, Request::create('/admin/forms/1/submissions', 'GET', ['search' => 'searchable']));
+        $this->assertCount(1, $index->getData(true)['submissions']['data']);
+
+        $controller->bulk($form, Request::create('/bulk', 'POST', ['ids' => [$submission->id], 'action' => 'mark_spam']));
+        $this->assertSame('spam', $submission->fresh()->status);
+
+        $response = $controller->export($form, Request::create('/export', 'POST'));
+        ob_start();
+        $response->sendContent();
+        $csv = ob_get_clean();
+        $this->assertStringContainsString("'=SUM(1,1) searchable", $csv);
+    }
+
+    public function test_retention_cleanup_deletes_expired_submission_files(): void
+    {
+        Storage::fake('local');
+        config()->set('forms.upload_disk', 'local');
+        Storage::disk('local')->put('form-uploads/old/file.txt', 'old');
+        $form = Form::query()->create([
+            'name' => 'Retention', 'slug' => 'retention', 'is_active' => true,
+            'settings' => ['retention_days' => 30],
+        ]);
+        $field = $form->fields()->create(['name' => 'document', 'label' => 'Document', 'type' => 'file']);
+        $submission = $form->submissions()->create([
+            'submission_id' => fake()->uuid(), 'status' => 'read',
+        ]);
+        $submission->forceFill(['created_at' => now()->subDays(31)])->save();
+        $submission->values()->create([
+            'field_id' => $field->id,
+            'value' => ['disk' => 'local', 'path' => 'form-uploads/old/file.txt', 'name' => 'file.txt'],
+        ]);
+
+        $this->assertSame(1, (new FormSubmissionRetentionService)->cleanup($form));
+        $this->assertDatabaseMissing('form_submissions', ['id' => $submission->id]);
+        Storage::disk('local')->assertMissing('form-uploads/old/file.txt');
+    }
+
+    public function test_form_analytics_use_recorded_views_instead_of_placeholder_values(): void
+    {
+        $form = Form::query()->create(['name' => 'Analytics', 'slug' => 'analytics', 'is_active' => true]);
+        $analytics = new FormAnalyticsService;
+        $analytics->recordView($form, '192.0.2.20', 'Test Agent');
+        $analytics->recordView($form, '192.0.2.20', 'Test Agent');
+
+        $result = $analytics->getAnalytics($form, 30);
+        $this->assertSame(2, $result['views']);
+        $this->assertSame(1, $result['unique_visitors']);
+    }
+
+    public function test_submission_anonymization_removes_direct_identifiers(): void
+    {
+        $form = Form::query()->create(['name' => 'Privacy', 'slug' => 'privacy', 'is_active' => true]);
+        $email = $form->fields()->create(['name' => 'email', 'label' => 'Email', 'type' => 'email']);
+        $submission = $form->submissions()->create([
+            'submission_id' => fake()->uuid(),
+            'status' => 'read',
+            'ip_address' => '192.0.2.30',
+            'user_agent' => 'Private Agent',
+        ]);
+        $value = $submission->values()->create(['field_id' => $email->id, 'value' => 'person@example.test']);
+
+        (new FormSubmissionRetentionService)->anonymizeSubmission($submission);
+
+        $this->assertNull($submission->fresh()->ip_address);
+        $this->assertNull($submission->fresh()->user_agent);
+        $this->assertSame('[anonymized]', $value->fresh()->value);
+        $this->assertNotNull($submission->fresh()->meta['anonymized_at']);
     }
 
     private function formService(?EmailService $emailService = null): FormService

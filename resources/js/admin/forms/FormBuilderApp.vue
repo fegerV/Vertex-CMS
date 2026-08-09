@@ -171,6 +171,7 @@ const analyticsError = ref('');
 const submissions = ref([]);
 const submissionsPagination = ref(null);
 const analytics = ref(null);
+const selectedSubmissionIds = ref([]);
 const draggedFieldIndex = ref(null);
 const dragOverFieldIndex = ref(null);
 
@@ -181,6 +182,7 @@ const ui = reactive({
     paletteSearch: '',
     showTemplates: false,
     submissionsSearch: '',
+    submissionsStatus: '',
     analyticsDays: 30,
 });
 
@@ -208,6 +210,7 @@ const form = reactive({
         autoresponder_body: 'Здравствуйте! Спасибо за обращение, мы скоро ответим.',
         webhooks: [],
         require_login: false,
+        retention_days: 365,
         ...(props.initialForm.settings ?? {}),
     },
     fields: [],
@@ -855,6 +858,7 @@ async function loadSubmissions(page = 1) {
         if (ui.submissionsSearch.trim()) {
             url.searchParams.set('search', ui.submissionsSearch.trim());
         }
+        if (ui.submissionsStatus) url.searchParams.set('status', ui.submissionsStatus);
 
         const response = await fetch(url.toString(), {
             headers: { Accept: 'application/json' },
@@ -873,6 +877,40 @@ async function loadSubmissions(page = 1) {
     } finally {
         loadingSubmissions.value = false;
     }
+}
+
+async function bulkSubmissions(action) {
+    if (!submissionsUrl.value || selectedSubmissionIds.value.length === 0) return;
+    const response = await fetch(`${submissionsUrl.value}/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': props.csrfToken },
+        credentials: 'same-origin',
+        body: JSON.stringify({ ids: selectedSubmissionIds.value, action }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        submissionsError.value = data.message || 'Bulk action failed.';
+        return;
+    }
+    selectedSubmissionIds.value = [];
+    await loadSubmissions(submissionsPagination.value?.current_page || 1);
+}
+
+function exportSubmissions() {
+    if (!submissionsUrl.value) return;
+    const exportForm = document.createElement('form');
+    exportForm.method = 'POST';
+    exportForm.action = submissionsUrl.value.replace(/\/submissions$/, '/export-submissions');
+    Object.entries({ _token: props.csrfToken, status: ui.submissionsStatus, search: ui.submissionsSearch }).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value || '';
+        exportForm.appendChild(input);
+    });
+    document.body.appendChild(exportForm);
+    exportForm.submit();
+    exportForm.remove();
 }
 
 async function loadAnalytics() {
@@ -1462,6 +1500,12 @@ onBeforeUnmount(() => {
                         <input v-model="form.settings.redirect_url" type="url" placeholder="https://example.com/thanks" class="w-full rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm">
                     </label>
 
+                    <label v-if="ui.workspace === 'behavior'" class="block rounded-2xl border border-[var(--vc-border)] bg-white p-4">
+                        <span class="mb-1 block text-sm font-medium text-[var(--vc-text)]">Хранение заявок, дней</span>
+                        <input v-model.number="form.settings.retention_days" type="number" min="0" max="3650" class="w-full rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm">
+                        <span class="mt-2 block text-xs text-[var(--vc-text-soft)]">0 — хранить бессрочно. Просроченные заявки и приватные файлы удаляются ежедневной задачей.</span>
+                    </label>
+
                     <label v-if="ui.workspace === 'emails'" class="block rounded-2xl border border-[var(--vc-border)] bg-white p-4">
                         <span class="mb-1 block text-sm font-medium text-[var(--vc-text)]">Email администраторов</span>
                         <input v-model="form.settings.notify_admin_emails" type="text" class="w-full rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm">
@@ -1507,8 +1551,22 @@ onBeforeUnmount(() => {
                                 class="min-w-[220px] flex-1 rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm"
                                 @keydown.enter.prevent="loadSubmissions()"
                             >
+                            <select v-model="ui.submissionsStatus" class="rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm" @change="loadSubmissions()">
+                                <option value="">Все статусы</option>
+                                <option value="unread">Новые</option>
+                                <option value="read">Прочитанные</option>
+                                <option value="spam">Спам</option>
+                                <option value="trashed">Корзина</option>
+                            </select>
                             <button type="button" class="vc-button vc-button-secondary" @click="loadSubmissions()">Refresh</button>
-                            <a v-if="submissionsUrl" :href="submissionsUrl" target="_blank" rel="noopener" class="vc-button vc-button-secondary">Open JSON</a>
+                            <button type="button" class="vc-button vc-button-secondary" @click="exportSubmissions">CSV</button>
+                        </div>
+
+                        <div v-if="selectedSubmissionIds.length" class="flex flex-wrap items-center gap-2 rounded-2xl border border-sky-700/30 bg-sky-950/30 p-3 text-sm">
+                            <span>{{ selectedSubmissionIds.length }} выбрано</span>
+                            <button type="button" class="vc-button vc-button-secondary" @click="bulkSubmissions('mark_read')">Прочитано</button>
+                            <button type="button" class="vc-button vc-button-secondary" @click="bulkSubmissions('mark_spam')">Спам</button>
+                            <button type="button" class="vc-button vc-button-danger" @click="bulkSubmissions('delete')">Удалить</button>
                         </div>
 
                         <div v-if="!form.id" class="rounded-2xl border border-dashed border-[var(--vc-border)] bg-white p-5 text-sm text-[var(--vc-text-soft)]">
@@ -1521,6 +1579,7 @@ onBeforeUnmount(() => {
                             <table v-else class="w-full text-left text-sm">
                                 <thead class="bg-[var(--vc-surface-strong)] text-xs uppercase tracking-[0.16em] text-[var(--vc-text-soft)]">
                                     <tr>
+                                        <th class="px-4 py-3"></th>
                                         <th class="px-4 py-3">ID</th>
                                         <th class="px-4 py-3">Status</th>
                                         <th class="px-4 py-3">IP</th>
@@ -1530,6 +1589,7 @@ onBeforeUnmount(() => {
                                 </thead>
                                 <tbody class="divide-y divide-[var(--vc-border)]">
                                     <tr v-for="submission in submissions" :key="submission.id">
+                                        <td class="px-4 py-3"><input v-model="selectedSubmissionIds" type="checkbox" :value="submission.id"></td>
                                         <td class="px-4 py-3 font-medium text-[var(--vc-text)]">{{ submission.submission_id || submission.id }}</td>
                                         <td class="px-4 py-3 text-[var(--vc-text-soft)]">{{ submission.status }}</td>
                                         <td class="px-4 py-3 text-[var(--vc-text-soft)]">{{ submission.ip_address }}</td>

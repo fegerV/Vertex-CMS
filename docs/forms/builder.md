@@ -68,6 +68,11 @@ The email workspace now maps its admin-recipient and autoresponder settings to
 the backend notification flow. Builder edits also have a 50-step undo/redo
 history with toolbar controls and Ctrl/Cmd+Z shortcuts.
 
+P2 work now includes value-aware submission search, status filters and bulk
+actions, memory-safe filtered CSV streaming, privacy retention with private-file
+cleanup, anonymization support, and analytics based on recorded form views
+instead of synthetic placeholder traffic.
+
 ## Product Direction
 
 The target experience for `vertex-forms` is now defined as:

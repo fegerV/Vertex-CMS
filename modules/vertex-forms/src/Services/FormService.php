@@ -308,7 +308,7 @@ class FormService
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                     'user_id' => $request->user()?->id,
-                    'status' => 'completed',
+                    'status' => 'unread',
                     'meta' => ['total' => $total],
                 ]);
 

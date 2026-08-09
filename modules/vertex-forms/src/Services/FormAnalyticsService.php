@@ -32,10 +32,9 @@ class FormAnalyticsService
 
         // Total stats
         $totalSubmissions = $form->submissions()->count();
-        $uniqueIPs = $form->submissions()->select("ip_address")->distinct()->count();
-        
-        // Views would be logged separately (FormViewLog model in future)
-        $views = $totalSubmissions * 3; // placeholder until view logging implemented
+        $analyticsQuery = FormAnalytic::query()->where("form_id", $form->id)->where("date", ">=", $dateFrom);
+        $views = (int) (clone $analyticsQuery)->sum("views");
+        $uniqueVisitors = (int) (clone $analyticsQuery)->sum("unique_visitors");
 
         // Build daily time series
         $dates = [];
@@ -63,7 +62,7 @@ class FormAnalyticsService
 
         return [
             "total_submissions" => $totalSubmissions,
-            "unique_visitors" => $uniqueIPs,
+            "unique_visitors" => $uniqueVisitors,
             "views" => $views,
             "conversion_rate" => $views > 0 ? round(($totalSubmissions / $views) * 100, 2) : 0,
             "daily" => [
@@ -81,12 +80,15 @@ class FormAnalyticsService
     public function recordView(Form $form, string $ip, ?string $userAgent = null): void
     {
         $date = now()->toDateString();
-        $analytic = FormAnalytic::firstOrNew(["form_id" => $form->id, "date" => $date]);
+        $analytic = FormAnalytic::query()
+            ->where("form_id", $form->id)
+            ->whereDate("date", $date)
+            ->first() ?? FormAnalytic::create(["form_id" => $form->id, "date" => $date]);
         $analytic->increment("views");
 
         // Unique visitor tracking (simplified)
-        $hash = md5($ip . ($userAgent ?? ""));
-        $key = "form_view_unique:{$form->id}:{$date}:" . substr($hash, 0, 8);
+        $hash = hash("sha256", $ip . ($userAgent ?? "") . config("app.key"));
+        $key = "form_view_unique:{$form->id}:{$date}:" . substr($hash, 0, 16);
         if (!cache()->get($key)) {
             $analytic->increment("unique_visitors");
             cache()->put($key, true, 86400 * 7); // keep for a week

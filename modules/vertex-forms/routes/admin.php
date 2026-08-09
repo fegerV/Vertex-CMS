@@ -16,11 +16,14 @@ Route::middleware(["vertex.permission:forms.view"])->prefix("forms")->name("form
     Route::get("/", [FormController::class, "index"])->name("index");
     Route::get("{form}/submissions", [FormSubmissionController::class, "index"])->name("submissions.index");
     Route::get("{form}/submissions/{submission}", [FormSubmissionController::class, "show"])->name("submissions.show");
+    Route::patch("{form}/submissions/{submission}/status", [FormSubmissionController::class, "updateStatus"])->name("submissions.status");
+    Route::post("{form}/submissions/bulk", [FormSubmissionController::class, "bulk"])->name("submissions.bulk");
     Route::get("{form}/submissions/{submission}/files/{value}/{fileIndex?}", [FormSubmissionFileController::class, "download"])
         ->middleware("vertex.permission:forms.view_submissions")
         ->whereNumber('fileIndex')
         ->name("submissions.files.download");
     Route::delete("{form}/submissions/{submission}", [FormSubmissionController::class, "destroy"])->name("submissions.destroy");
+    Route::post("{form}/submissions/{submission}/anonymize", [FormSubmissionController::class, "anonymize"])->name("submissions.anonymize");
     Route::delete("{form}/clear-submissions", [FormSubmissionController::class, "clear"])->name("submissions.clear");
     Route::post("{form}/export-submissions", [FormSubmissionController::class, "export"])->name("submissions.export");
 

@@ -138,6 +138,11 @@ Admin UI allows filtering by date range:
 
 ## Best Practices
 
+
+Submission retention is handled separately by `php artisan
+forms:cleanup-submissions`. It uses each form's `retention_days` setting or the
+global `FORMS_SUBMISSION_RETENTION_DAYS` fallback and deletes associated private
+uploads before removing expired submissions. The command is scheduled daily.
 1. Wait for at least 100 views before drawing conclusions
 2. A/B test form layouts to improve conversion
 3. Monitor abandonment rate – high rate indicates complex form

@@ -77,6 +77,7 @@ return [
     'log_form_views' => env('FORMS_LOG_VIEWS', true),
     'log_view_details' => env('FORMS_LOG_VIEW_DETAILS', false),
     'analytics_retention_days' => env('FORMS_ANALYTICS_RETENTION_DAYS', 90),
+    'submission_retention_days' => env('FORMS_SUBMISSION_RETENTION_DAYS', 365),
 
     /*
      * Import/Export.
