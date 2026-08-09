@@ -63,7 +63,7 @@ class FormApiController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', 'unique:forms,slug'],
-            'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll'],
+            'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll,quiz'],
             'description' => ['nullable', 'string', 'max:2000'],
             'settings' => ['nullable', 'array'],
             'require_login' => ['nullable', 'boolean'],
@@ -136,7 +136,7 @@ class FormApiController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', 'unique:forms,slug,'.$form->id],
-            'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll'],
+            'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll,quiz'],
             'description' => ['nullable', 'string', 'max:2000'],
             'settings' => ['nullable', 'array'],
             'require_login' => ['nullable', 'boolean'],

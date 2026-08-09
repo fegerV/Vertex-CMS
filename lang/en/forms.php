@@ -59,6 +59,9 @@ return [
     'validation_file_too_big' => 'File too large (max {max} KB)',
     'error_network' => 'Network error. Please try again.',
     'error_required_field' => '{label} is required',
+    'save_and_continue' => 'Save and continue later',
+    'error_draft_save' => 'Could not save the draft.',
+    'error_draft_expired' => 'This saved draft has expired.',
 
     // ── Validation errors ─────────────────────────────────
     'validation_required' => 'This field is required',

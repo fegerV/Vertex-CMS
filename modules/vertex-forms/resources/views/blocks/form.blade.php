@@ -27,6 +27,8 @@
     $recaptchaSiteKey = config('forms.recaptcha_site_key');
     $turnstileEnabled = $form->settings['turnstile_enabled'] ?? config('forms.turnstile_enabled', false);
     $turnstileSiteKey = config('forms.turnstile_site_key');
+    $saveResumeEnabled = $form->settings['save_resume_enabled'] ?? false;
+    $draftUrl = route('public.forms.draft.save', $form);
 @endphp
 
 <div
@@ -105,6 +107,12 @@
                 </div>
             @endforeach
 
+            @if($saveResumeEnabled)
+                <button type="button" class="w-full rounded-md border px-4 py-2 text-sm font-semibold hover:bg-gray-50" @click="saveDraft()">
+                    {{ __('forms.save_and_continue') }}
+                </button>
+            @endif
+
             @if($totalPages > 1)
                 <div class="vc-form-pagination flex justify-between items-center mt-6 pt-4 border-t">
                     <button
@@ -177,6 +185,7 @@ document.addEventListener('alpine:init', () => {
         submitted: false,
         formData: {},
         errors: {},
+        resumeToken: null,
         idempotencyKey: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
 
         init() {
@@ -194,6 +203,40 @@ document.addEventListener('alpine:init', () => {
 
             this.setupCalculators();
             this.setupConditionals();
+            @if($saveResumeEnabled)
+                this.loadDraft();
+            @endif
+        },
+
+        async loadDraft() {
+            const token = localStorage.getItem(`vertex-form-draft-${formConfig.form_id || {{ (int) $formId }}}`);
+            if (!token) return;
+            const response = await fetch({{ Illuminate\Support\Js::from($draftUrl) }} + '/' + encodeURIComponent(token), {
+                headers: { Accept: 'application/json' }, credentials: 'same-origin'
+            });
+            if (!response.ok) {
+                if ([404, 410].includes(response.status)) localStorage.removeItem(`vertex-form-draft-${formConfig.form_id || {{ (int) $formId }}}`);
+                return;
+            }
+            const data = await response.json();
+            this.resumeToken = token;
+            Object.assign(this.formData, data.draft?.values || {});
+        },
+
+        async saveDraft() {
+            const response = await fetch({{ Illuminate\Support\Js::from($draftUrl) }}, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': this.$el.querySelector('input[name="_token"]').value },
+                credentials: 'same-origin',
+                body: JSON.stringify({ ...this.formData, resume_token: this.resumeToken }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                this.errors.general = data.message || {{ Illuminate\Support\Js::from(__('forms.error_draft_save')) }};
+                return;
+            }
+            this.resumeToken = data.draft.resume_token;
+            localStorage.setItem(`vertex-form-draft-${formConfig.form_id || {{ (int) $formId }}}`, this.resumeToken);
         },
 
         setupCalculators() {
@@ -388,6 +431,7 @@ document.addEventListener('alpine:init', () => {
                 }
             });
             formData.set('idempotency_key', this.idempotencyKey);
+            if (this.resumeToken) formData.set('resume_token', this.resumeToken);
             ['g-recaptcha-response', 'recaptcha_token', 'cf-turnstile-response'].forEach(key => {
                 const input = this.$refs.formElement.querySelector(`[name="${key}"]`);
                 if (input?.value) formData.set(key, input.value);
@@ -415,6 +459,9 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 this.submitted = true;
+                @if($saveResumeEnabled)
+                    localStorage.removeItem(`vertex-form-draft-${formConfig.form_id || {{ (int) $formId }}}`);
+                @endif
 
                 this.$el.dispatchEvent(new CustomEvent('form-submitted', {
                     detail: { submissionId: data.submission_id, formId: {{ $formId }} }

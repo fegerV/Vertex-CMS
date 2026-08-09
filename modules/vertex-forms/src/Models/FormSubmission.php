@@ -13,6 +13,8 @@ class FormSubmission extends Model
         'form_id',
         'submission_id',
         'idempotency_key',
+        'resume_token_hash',
+        'resume_expires_at',
         'ip_address',
         'user_agent',
         'user_id',
@@ -22,6 +24,7 @@ class FormSubmission extends Model
 
     protected $casts = [
         'meta' => 'array',
+        'resume_expires_at' => 'datetime',
     ];
 
     public function form(): BelongsTo

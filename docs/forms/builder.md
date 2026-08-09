@@ -203,6 +203,20 @@ Stage 2 is partially implemented: the Vue builder now has autosave for existing 
 
 - add integrations, payments, calculators, multi-step polish
 
+### P3 capabilities
+
+- **Save and continue:** forms can issue expiring, single-purpose resume tokens. Only a
+  SHA-256 hash is stored, and a completed submission consumes its draft.
+- **Quiz outcomes:** quiz forms calculate points, percentage, and pass/fail state on
+  the server from each field's `correct_answer` and optional `points` settings.
+- **Poll results:** polls may expose aggregate answer counts when `show_results` is
+  enabled; individual submissions and visitor details are never returned.
+- **Lifecycle events:** `FormDraftSaved` and `FormSubmitted` allow modules to attach
+  CRM, analytics, and automation listeners without modifying submission logic.
+
+Payments, repeatable groups, and a public extension marketplace remain later-stage
+work and are intentionally outside this P3 increment.
+
 ## References
 
 - Forminator docs: <https://wpmudev.com/docs/wpmu-dev-plugins/forminator/>

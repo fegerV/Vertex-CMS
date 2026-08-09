@@ -211,6 +211,8 @@ const form = reactive({
         webhooks: [],
         require_login: false,
         retention_days: 365,
+        save_resume_enabled: false,
+        resume_days: 30,
         ...(props.initialForm.settings ?? {}),
     },
     fields: [],
@@ -1498,6 +1500,16 @@ onBeforeUnmount(() => {
                     <label v-if="ui.workspace === 'behavior'" class="block rounded-2xl border border-[var(--vc-border)] bg-white p-4">
                         <span class="mb-1 block text-sm font-medium text-[var(--vc-text)]">URL редиректа после отправки</span>
                         <input v-model="form.settings.redirect_url" type="url" placeholder="https://example.com/thanks" class="w-full rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm">
+                    </label>
+
+                    <label v-if="ui.workspace === 'behavior'" class="inline-flex items-center gap-2 rounded-2xl border border-[var(--vc-border)] bg-white px-4 py-3 text-sm">
+                        <input v-model="form.settings.save_resume_enabled" type="checkbox" class="rounded border-slate-300">
+                        <span>Разрешить сохранить черновик и продолжить позже</span>
+                    </label>
+
+                    <label v-if="ui.workspace === 'behavior' && form.settings.save_resume_enabled" class="block rounded-2xl border border-[var(--vc-border)] bg-white p-4">
+                        <span class="mb-1 block text-sm font-medium text-[var(--vc-text)]">Срок ссылки продолжения, дней</span>
+                        <input v-model.number="form.settings.resume_days" type="number" min="1" max="365" class="w-full rounded-xl border border-[var(--vc-border)] bg-white px-3 py-2 text-sm">
                     </label>
 
                     <label v-if="ui.workspace === 'behavior'" class="block rounded-2xl border border-[var(--vc-border)] bg-white p-4">

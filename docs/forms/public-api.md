@@ -227,6 +227,24 @@ POST /forms/{slug}/webhook – push submission data to external URL (configured 
 - Default: JSON
 - CSV (via admin only)
 
+## Save and Resume
+
+When `save_resume_enabled` is enabled for a form, clients can store incomplete data:
+
+- `POST /forms/{slug}/draft` with `{ "data": { ... } }` creates or updates a draft.
+  Send the previously issued token as `resume_token` to update it.
+- `GET /forms/{slug}/draft/{token}` returns the saved field values and expiry time.
+- Include `resume_token` in the final submission to consume the draft after success.
+
+Resume tokens are credentials and must not be logged or shared. Expired tokens return
+HTTP 410.
+
+## Poll Results
+
+`GET /forms/{slug}/results` returns aggregate counts for radio, select, and checkbox
+poll fields. The endpoint is available only for poll forms with `show_results`
+enabled and never exposes individual entries.
+
 ## Versioning
 
 Public API version is implicit in URL structure. Future v2 API might be under /api/v2/forms/... with different schemas.

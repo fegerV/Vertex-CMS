@@ -59,6 +59,9 @@ return [
     'validation_file_too_big' => 'Файл слишком большой (макс. {max} КБ)',
     'error_network' => 'Ошибка сети. Попробуйте позже.',
     'error_required_field' => '{label} обязательно для заполнения',
+    'save_and_continue' => 'Сохранить и продолжить позже',
+    'error_draft_save' => 'Не удалось сохранить черновик.',
+    'error_draft_expired' => 'Срок действия черновика истёк.',
 
     // ── Validation errors ─────────────────────────────────
     'validation_required' => 'Обязательное поле',

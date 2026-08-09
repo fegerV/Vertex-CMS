@@ -11,8 +11,10 @@ use Vertex\Forms\Repositories\EloquentFormRepository;
 use Vertex\Forms\Services\FormAnalyticsService;
 use Vertex\Forms\Services\FormCalculatorEngine;
 use Vertex\Forms\Services\FormConditionEngine;
+use Vertex\Forms\Services\FormDraftService;
 use Vertex\Forms\Services\FormImportExportService;
 use Vertex\Forms\Services\FormIntegrationService;
+use Vertex\Forms\Services\FormResultsService;
 use Vertex\Forms\Services\FormService;
 use Vertex\Forms\Services\FormSpamProtectionService;
 use Vertex\Forms\Services\FormSubmissionRetentionService;
@@ -32,6 +34,8 @@ class VertexFormsServiceProvider extends ServiceProvider
         $this->app->singleton(FormSpamProtectionService::class, fn () => new FormSpamProtectionService);
         $this->app->singleton(FormIntegrationService::class, fn () => new FormIntegrationService);
         $this->app->singleton(FormSubmissionRetentionService::class, fn () => new FormSubmissionRetentionService);
+        $this->app->singleton(FormDraftService::class, fn () => new FormDraftService);
+        $this->app->singleton(FormResultsService::class, fn () => new FormResultsService);
 
         $this->app->singleton(FormService::class, function ($app) {
             return new FormService(
@@ -81,6 +85,8 @@ class VertexFormsServiceProvider extends ServiceProvider
             FormSpamProtectionService::class,
             FormIntegrationService::class,
             FormSubmissionRetentionService::class,
+            FormDraftService::class,
+            FormResultsService::class,
             FormRepositoryInterface::class,
             CalculatorEngineInterface::class,
         ];

@@ -15,6 +15,7 @@ use Illuminate\Validation\Factory as ValidatorFactory;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 use Throwable;
+use Vertex\Forms\Events\FormSubmitted;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormField;
 use Vertex\Forms\Models\FormSubmission;
@@ -295,12 +296,13 @@ class FormService
 
         $this->checkLimits($form, $request);
         $total = $this->calculateTotal($form, $request->all());
+        $outcome = $this->calculateOutcome($form, $request->all());
         $visibleFieldNames = $this->conditionEngine->evaluateFields($form->fields->all(), $request->all());
 
         $storedFiles = [];
 
         try {
-            $submission = DB::transaction(function () use ($form, $request, $total, $visibleFieldNames, $idempotencyKey, &$storedFiles): FormSubmission {
+            $submission = DB::transaction(function () use ($form, $request, $total, $outcome, $visibleFieldNames, $idempotencyKey, &$storedFiles): FormSubmission {
                 $submission = FormSubmission::create([
                     'form_id' => $form->id,
                     'submission_id' => Str::uuid()->toString(),
@@ -309,7 +311,7 @@ class FormService
                     'user_agent' => $request->userAgent(),
                     'user_id' => $request->user()?->id,
                     'status' => 'unread',
-                    'meta' => ['total' => $total],
+                    'meta' => array_filter(['total' => $total, 'outcome' => $outcome], fn ($value) => $value !== null),
                 ]);
 
                 foreach ($form->fields as $field) {
@@ -393,6 +395,8 @@ class FormService
             ]);
         }
 
+        FormSubmitted::dispatch($form, $submission);
+
         return $submission;
     }
 
@@ -439,6 +443,35 @@ class FormService
         // Discount
 
         return max(0, round($total, 2));
+    }
+
+    private function calculateOutcome(Form $form, array $data): ?array
+    {
+        if ($form->type !== 'quiz') {
+            return null;
+        }
+
+        $score = 0.0;
+        $maximum = 0.0;
+        foreach ($form->fields as $field) {
+            if (! array_key_exists('correct_answer', $field->options ?? [])) {
+                continue;
+            }
+            $points = (float) ($field->options['points'] ?? 1);
+            $maximum += $points;
+            $actual = $data[$field->name] ?? null;
+            $expected = $field->options['correct_answer'];
+            if ((array) $actual === (array) $expected || (string) $actual === (string) $expected) {
+                $score += $points;
+            }
+        }
+
+        return [
+            'score' => $score,
+            'maximum' => $maximum,
+            'percentage' => $maximum > 0 ? round(($score / $maximum) * 100, 1) : 0,
+            'passed' => $maximum > 0 && ($score / $maximum) * 100 >= (float) ($form->settings['passing_score'] ?? 70),
+        ];
     }
 
     /**

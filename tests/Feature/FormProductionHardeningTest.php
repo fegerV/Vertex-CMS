@@ -7,6 +7,7 @@ use App\System\Services\EmailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
@@ -18,6 +19,8 @@ use Tests\TestCase;
 use Vertex\Forms\Contracts\FormRepositoryInterface;
 use Vertex\Forms\Controllers\FormSubmissionController;
 use Vertex\Forms\Controllers\FormSubmissionFileController;
+use Vertex\Forms\Events\FormDraftSaved;
+use Vertex\Forms\Events\FormSubmitted;
 use Vertex\Forms\Jobs\DeliverFormWebhook;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormSubmissionValue;
@@ -26,8 +29,10 @@ use Vertex\Forms\Repositories\EloquentFormRepository;
 use Vertex\Forms\Services\FormAnalyticsService;
 use Vertex\Forms\Services\FormCalculatorEngine;
 use Vertex\Forms\Services\FormConditionEngine;
+use Vertex\Forms\Services\FormDraftService;
 use Vertex\Forms\Services\FormImportExportService;
 use Vertex\Forms\Services\FormIntegrationService;
+use Vertex\Forms\Services\FormResultsService;
 use Vertex\Forms\Services\FormService;
 use Vertex\Forms\Services\FormSpamProtectionService;
 use Vertex\Forms\Services\FormSubmissionRetentionService;
@@ -457,6 +462,66 @@ class FormProductionHardeningTest extends TestCase
         $this->assertNull($submission->fresh()->user_agent);
         $this->assertSame('[anonymized]', $value->fresh()->value);
         $this->assertNotNull($submission->fresh()->meta['anonymized_at']);
+    }
+
+    public function test_partial_draft_can_be_saved_resumed_and_consumed_without_plain_token_storage(): void
+    {
+        Event::fake([FormDraftSaved::class]);
+        $form = Form::query()->create([
+            'name' => 'Resume', 'slug' => 'resume', 'is_active' => true,
+            'settings' => ['save_resume_enabled' => true, 'resume_days' => 7],
+        ]);
+        $form->fields()->create(['name' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => true]);
+        $form->fields()->create(['name' => 'notes', 'label' => 'Notes', 'type' => 'textarea']);
+        $drafts = new FormDraftService;
+
+        $saved = $drafts->save($form, Request::create('/draft', 'POST', ['notes' => 'Partial answer']));
+        $this->assertSame('Partial answer', $drafts->load($form, $saved['resume_token'])['values']['notes']);
+        $this->assertDatabaseHas('form_submissions', ['status' => 'draft']);
+        $this->assertDatabaseMissing('form_submissions', ['resume_token_hash' => $saved['resume_token']]);
+        Event::assertDispatched(FormDraftSaved::class);
+
+        $drafts->consume($form, $saved['resume_token']);
+        $this->assertDatabaseMissing('form_submissions', ['status' => 'draft']);
+    }
+
+    public function test_quiz_submission_calculates_score_and_dispatches_lifecycle_event(): void
+    {
+        Event::fake([FormSubmitted::class]);
+        $form = Form::query()->create([
+            'name' => 'Quiz', 'slug' => 'quiz', 'type' => 'quiz', 'is_active' => true,
+            'settings' => ['honeypot_enabled' => false, 'passing_score' => 60],
+        ]);
+        $form->fields()->create([
+            'name' => 'answer', 'label' => 'Answer', 'type' => 'radio',
+            'options' => ['correct_answer' => 'yes', 'points' => 2],
+        ]);
+        $form->load('fields');
+
+        $submission = $this->formService()->submit($form, Request::create('/submit', 'POST', ['answer' => 'yes']));
+
+        $this->assertEquals(2.0, $submission->meta['outcome']['score']);
+        $this->assertEquals(100.0, $submission->meta['outcome']['percentage']);
+        $this->assertTrue($submission->meta['outcome']['passed']);
+        Event::assertDispatched(FormSubmitted::class);
+    }
+
+    public function test_poll_results_are_aggregated_without_exposing_submissions(): void
+    {
+        $form = Form::query()->create([
+            'name' => 'Poll', 'slug' => 'poll', 'type' => 'poll', 'is_active' => true,
+            'settings' => ['show_results' => true],
+        ]);
+        $field = $form->fields()->create(['name' => 'choice', 'label' => 'Choice', 'type' => 'radio']);
+        foreach (['red', 'red', 'blue'] as $answer) {
+            $submission = $form->submissions()->create(['submission_id' => fake()->uuid(), 'status' => 'read']);
+            $submission->values()->create(['field_id' => $field->id, 'value' => $answer]);
+        }
+
+        $results = (new FormResultsService)->poll($form);
+        $this->assertSame(3, $results['total_responses']);
+        $this->assertSame(2, $results['fields']['choice']['answers']['red']);
+        $this->assertSame(1, $results['fields']['choice']['answers']['blue']);
     }
 
     private function formService(?EmailService $emailService = null): FormService

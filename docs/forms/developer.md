@@ -306,6 +306,17 @@ class FormCalculatorEngineTest extends TestCase
 }
 `
 
+## P3 extension points
+
+Listen for `Vertex\Forms\Events\FormDraftSaved` to react to a saved partial entry and
+`Vertex\Forms\Events\FormSubmitted` to react after a durable final submission. The
+events carry the form and submission models; listeners that perform network I/O
+should be queued.
+
+`FormDraftService` owns token hashing, expiry, field filtering, and draft consumption.
+`FormResultsService` produces privacy-safe poll aggregates. Quiz scoring remains in
+`FormService` so the authoritative result is stored atomically with the submission.
+
 ### Feature Test Example
 
 `php
