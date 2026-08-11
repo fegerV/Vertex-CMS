@@ -33,6 +33,11 @@ class BuilderLibraryManagerTest extends TestCase
         $this->assertArrayHasKey('sections_count', $templates[0]);
         $this->assertArrayHasKey('blocks_count', $templates[0]);
         $this->assertFalse($templates[0]['can_edit']);
+        $this->assertGreaterThanOrEqual(5, count($templates));
+        $this->assertSame('hero', $templates[0]['sections'][0]['blocks'][0]['type']);
+        $this->assertNotNull(collect($templates)->firstWhere('id', 'landing-page-starter'));
+        $this->assertNotNull(collect($templates)->firstWhere('id', 'feature-section'));
+        $this->assertNotNull(collect($templates)->firstWhere('id', 'cta-section'));
     }
 
     public function test_builder_library_manager_exposes_quick_add_template_starters(): void
@@ -44,7 +49,8 @@ class BuilderLibraryManagerTest extends TestCase
         $this->assertSame('template-hero-heading', $templates[0]['id']);
         $this->assertSame('template', $templates[0]['kind']);
         $this->assertArrayHasKey('blocks', $templates[0]);
-        $this->assertSame('heading', $templates[0]['blocks'][0]['type']);
+        $this->assertSame('hero', $templates[0]['blocks'][0]['type']);
+        $this->assertNotNull(collect($templates)->firstWhere('id', 'template-cta-starter'));
     }
 
     public function test_builder_library_manager_exposes_design_library_workspace_contract(): void
