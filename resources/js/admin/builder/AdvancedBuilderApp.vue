@@ -32,14 +32,14 @@
                     <span class="vc-builder-status-dot" :class="`vc-builder-status-dot-${autoSaveStatus}`"></span>
                     {{ autoSaveStatusText }}
                 </span>
-                <button type="button" class="vc-builder-appbar-button" :disabled="!canUndo" @click="undo">Undo</button>
-                <button type="button" class="vc-builder-appbar-button" :disabled="!canRedo" @click="redo">Redo</button>
-                <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'live' }" @click="canvasMode = 'live'">Live</button>
-                <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'edit' }" @click="canvasMode = 'edit'">Edit</button>
-                <button type="button" class="vc-builder-appbar-button" @click="previewContent">Preview</button>
-                <button type="button" class="vc-builder-appbar-button" @click="openDesignLibrary">Library</button>
+                <button type="button" class="vc-builder-appbar-button" :disabled="!canUndo" @click="undo">Назад</button>
+                <button type="button" class="vc-builder-appbar-button" :disabled="!canRedo" @click="redo">Вперёд</button>
+                <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'live' }" @click="canvasMode = 'live'">Сайт</button>
+                <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'edit' }" @click="canvasMode = 'edit'">Редактор</button>
+                <button type="button" class="vc-builder-appbar-button" @click="previewContent">Просмотр</button>
+                <button type="button" class="vc-builder-appbar-button" @click="openDesignLibrary">Библиотека</button>
                 <button type="button" class="vc-builder-appbar-save" :disabled="saving" @click="saveContent">
-                    {{ saving ? 'Saving...' : 'Save' }}
+                    {{ saving ? 'Сохраняю…' : 'Сохранить' }}
                 </button>
             </div>
         </header>
@@ -102,10 +102,20 @@
                             :class="{
                                 'vc-builder-structure-card-active': selectedSection === sIndex,
                                 'vc-builder-structure-card-dragging': draggedSectionIndex === sIndex,
+                                'vc-builder-structure-card-drop': dropSectionIndex === sIndex && draggedSectionIndex !== null && draggedSectionIndex !== sIndex,
                             }"
+                            @dragover.prevent="onSectionDragOver(sIndex)"
+                            @drop.prevent="onSectionDrop(sIndex)"
                         >
                             <div class="vc-builder-structure-section">
-                                <span class="vc-builder-structure-drag">⋮⋮</span>
+                                <span
+                                    class="vc-builder-structure-drag"
+                                    draggable="true"
+                                    title="Перетащить секцию"
+                                    aria-label="Перетащить секцию"
+                                    @dragstart="onSectionDragStart(sIndex, $event)"
+                                    @dragend="onSectionDragEnd"
+                                >⋮⋮</span>
                                 <button
                                     type="button"
                                     class="vc-builder-structure-toggle"
@@ -142,8 +152,14 @@
                                     :class="{
                                         'vc-builder-structure-block-active': selectedSection === sIndex && selectedBlock === bIndex,
                                         'vc-builder-structure-block-dragging': isDraggedBlock(sIndex, bIndex),
+                                        'vc-builder-structure-block-drop': isBlockDropTarget(sIndex, bIndex),
                                     }"
+                                    draggable="true"
                                     @click="selectBlock(sIndex, bIndex)"
+                                    @dragstart.stop="onBlockDragStart(sIndex, bIndex, $event)"
+                                    @dragend="onBlockDragEnd"
+                                    @dragover.prevent.stop="onBlockDragOver(sIndex, bIndex)"
+                                    @drop.prevent.stop="onBlockDrop(sIndex, bIndex)"
                                 >
                                     <span class="vc-builder-structure-node-rail"></span>
                                     <span class="vc-builder-library-card-mark" aria-hidden="true">
@@ -156,7 +172,14 @@
                                     <span class="vc-builder-structure-inline-meta">{{ String(bIndex + 1).padStart(2, '0') }}</span>
                                 </button>
 
-                                <button type="button" class="vc-builder-structure-add" @click="openQuickAdd(sIndex, section.blocks.length)">
+                                <button
+                                    type="button"
+                                    class="vc-builder-structure-add"
+                                    :class="{ 'vc-builder-structure-add-drop': isInsertTarget(sIndex, section.blocks.length) }"
+                                    @click="openQuickAdd(sIndex, section.blocks.length)"
+                                    @dragover.prevent.stop="onInsertDragOver(sIndex, section.blocks.length)"
+                                    @drop.prevent.stop="onInsertDrop(sIndex, section.blocks.length)"
+                                >
                                     Добавить блок
                                 </button>
                             </div>
