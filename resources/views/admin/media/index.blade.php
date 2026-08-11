@@ -36,6 +36,8 @@
     $mediaConfig = [
         'apiBase' => url('/admin/api/media'),
         'folderApiBase' => url('/admin/api/media/folders'),
+        'bulkDeleteUrl' => route('admin.media.bulk-delete'),
+        'bulkMoveUrl' => route('admin.media.bulk-move'),
         'canManageFolders' => $canManageFolders,
         'canUploadMedia' => $canUploadMedia,
         'canEditMedia' => $canEditMedia,

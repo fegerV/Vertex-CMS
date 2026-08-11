@@ -25,11 +25,13 @@ class MediaApiController extends Controller
             'ids' => ['nullable', 'array'],
             'ids.*' => ['integer'],
             'kind' => ['nullable', 'string', 'max:50'],
+            'type' => ['nullable', 'in:all,image,pdf,document'],
+            'sort' => ['nullable', 'in:created_at_desc,created_at_asc,name_asc,name_desc,size_desc,size_asc'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:60'],
             'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
 
-        $query = Media::query()->latest();
+        $query = Media::query();
 
         if ($request->filled('ids')) {
             $query->whereIn('id', $request->input('ids', []));
@@ -53,6 +55,23 @@ class MediaApiController extends Controller
         if ($request->input('kind') === 'image') {
             $query->where('mime_type', 'like', 'image/%');
         }
+
+        match ($request->input('type', 'all')) {
+            'image' => $query->where('mime_type', 'like', 'image/%'),
+            'pdf' => $query->where('mime_type', 'application/pdf'),
+            'document' => $query->where('mime_type', 'not like', 'image/%')
+                ->where('mime_type', '!=', 'application/pdf'),
+            default => null,
+        };
+
+        match ($request->input('sort', 'created_at_desc')) {
+            'created_at_asc' => $query->oldest(),
+            'name_asc' => $query->orderBy('original_filename'),
+            'name_desc' => $query->orderByDesc('original_filename'),
+            'size_desc' => $query->orderByDesc('size'),
+            'size_asc' => $query->orderBy('size'),
+            default => $query->latest(),
+        };
 
         return response()->json(
             $query

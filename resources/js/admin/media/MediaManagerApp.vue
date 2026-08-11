@@ -260,7 +260,21 @@
         </div>
 
         <div v-else class="media-grid">
-          <article v-for="item in items" :key="item.id" class="media-card">
+          <article
+            v-for="item in items"
+            :key="item.id"
+            class="media-card"
+            :class="{ 'media-card-selected': isSelected(item) }"
+          >
+            <label v-if="!isPickerMode" class="media-select-control" @click.stop>
+              <input
+                type="checkbox"
+                :checked="isSelected(item)"
+                :aria-label="`Выбрать ${item.title || item.original_filename}`"
+                @change="toggleSelection(item)"
+              >
+              <span aria-hidden="true">✓</span>
+            </label>
             <button
               type="button"
               class="media-preview-button"
@@ -453,6 +467,33 @@
       </div>
     </div>
 
+    <div v-if="bulkMoveModal" class="media-modal-backdrop" @click.self="closeBulkMoveModal">
+      <div class="media-modal media-modal-compact" role="dialog" aria-modal="true" aria-labelledby="bulk-move-title">
+        <div class="media-modal-head">
+          <div>
+            <h3 id="bulk-move-title">Переместить файлы</h3>
+            <p>Выбрано файлов: {{ selectedItems.length }}</p>
+          </div>
+          <button type="button" class="media-modal-close" aria-label="Закрыть" @click="closeBulkMoveModal">×</button>
+        </div>
+        <div class="media-modal-body">
+          <label class="vc-field">
+            <span class="vc-field-label">Папка назначения</span>
+            <select v-model="bulkMoveFolderId" class="vc-select">
+              <option :value="null">Корень медиатеки</option>
+              <option v-for="folder in folderOptions" :key="folder.id" :value="folder.id">{{ folder.label }}</option>
+            </select>
+          </label>
+        </div>
+        <div class="media-modal-actions">
+          <button type="button" class="media-button media-button-secondary" @click="closeBulkMoveModal">Отмена</button>
+          <button type="button" class="media-button media-button-primary" :disabled="bulkProcessing" @click="bulkMove">
+            {{ bulkProcessing ? 'Перемещаю…' : 'Переместить' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="previewMedia" class="media-modal-backdrop media-preview-backdrop" @click.self="closePreview">
       <div class="media-modal media-preview-modal">
         <div class="media-modal-head">
@@ -555,6 +596,12 @@ const uploading = ref(false);
 const dragOver = ref(false);
 const selectedFolderId = ref(null);
 const searchQuery = ref('');
+const filterType = ref('all');
+const sortBy = ref('created_at_desc');
+const selectedItems = ref([]);
+const bulkMoveModal = ref(false);
+const bulkMoveFolderId = ref(null);
+const bulkProcessing = ref(false);
 const errorMessage = ref('');
 const previewMedia = ref(null);
 const editingMedia = ref(null);
@@ -739,6 +786,9 @@ async function loadMedia() {
             params.set('q', searchQuery.value);
         }
 
+        params.set('type', filterType.value);
+        params.set('sort', sortBy.value);
+
         if (props.selectionKind) {
             params.set('kind', props.selectionKind);
         }
@@ -750,6 +800,8 @@ async function loadMedia() {
 
         const payload = await response.json();
         items.value = Array.isArray(payload.data) ? payload.data : [];
+        const visibleIds = new Set(items.value.map((item) => Number(item.id)));
+        selectedItems.value = selectedItems.value.filter((id) => visibleIds.has(id));
         totalItems.value = Number(payload.total || items.value.length || 0);
         currentPage.value = Number(payload.current_page || currentPage.value || 1);
         lastPage.value = Math.max(1, Number(payload.last_page || 1));
@@ -772,6 +824,77 @@ async function refreshAll() {
 
 function selectFolder(folderId) {
     selectedFolderId.value = folderId;
+}
+
+function isSelected(item) {
+    return selectedItems.value.includes(Number(item.id));
+}
+
+function toggleSelection(item) {
+    const id = Number(item.id);
+    selectedItems.value = isSelected(item)
+        ? selectedItems.value.filter((selectedId) => selectedId !== id)
+        : [...selectedItems.value, id];
+}
+
+function clearSelection() {
+    selectedItems.value = [];
+}
+
+async function bulkDelete() {
+    if (!selectedItems.value.length || !confirm(`Удалить выбранные файлы (${selectedItems.value.length})?`)) return;
+
+    bulkProcessing.value = true;
+    try {
+        const response = await fetch(props.config.bulkDeleteUrl, {
+            method: 'POST',
+            headers: requestHeaders(true),
+            body: JSON.stringify({ ids: selectedItems.value }),
+        });
+        if (!response.ok) {
+            const payload = await safeJson(response);
+            throw new Error(payload?.message || 'Не удалось удалить выбранные файлы.');
+        }
+        clearSelection();
+        await refreshAll();
+    } catch (error) {
+        errorMessage.value = error instanceof Error ? error.message : 'Ошибка массового удаления.';
+    } finally {
+        bulkProcessing.value = false;
+    }
+}
+
+function openBulkMoveModal() {
+    bulkMoveFolderId.value = selectedFolderId.value;
+    bulkMoveModal.value = true;
+}
+
+function closeBulkMoveModal() {
+    bulkMoveModal.value = false;
+}
+
+async function bulkMove() {
+    if (!selectedItems.value.length) return;
+
+    bulkProcessing.value = true;
+    try {
+        const response = await fetch(props.config.bulkMoveUrl, {
+            method: 'POST',
+            headers: requestHeaders(true),
+            body: JSON.stringify({ ids: selectedItems.value, folder_id: bulkMoveFolderId.value }),
+        });
+        if (!response.ok) {
+            const payload = await safeJson(response);
+            throw new Error(payload?.message || 'Не удалось переместить выбранные файлы.');
+        }
+        closeBulkMoveModal();
+        clearSelection();
+        await refreshAll();
+    } catch (error) {
+        errorMessage.value = error instanceof Error ? error.message : 'Ошибка перемещения файлов.';
+    } finally {
+        bulkProcessing.value = false;
+    }
 }
 
 function changePage(step) {
@@ -1050,6 +1173,11 @@ watch(searchQuery, () => {
         currentPage.value = 1;
         loadMedia();
     }, 250);
+});
+
+watch([filterType, sortBy], () => {
+    currentPage.value = 1;
+    loadMedia();
 });
 
 watch(() => props.initialSelectedId, (value) => {
@@ -1510,11 +1638,54 @@ onMounted(() => {
 }
 
 .media-card {
+  position: relative;
   border: 1px solid var(--vc-border);
   border-radius: 1.15rem;
   overflow: hidden;
   background: var(--vc-surface);
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
+}
+
+.media-card-selected {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 2px rgba(34, 113, 177, 0.2);
+}
+
+.media-select-control {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  z-index: 3;
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border: 1px solid rgba(15, 23, 42, 0.24);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+}
+
+.media-select-control input {
+  position: absolute;
+  opacity: 0;
+}
+
+.media-select-control span {
+  opacity: 0;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.media-select-control:has(input:checked) {
+  border-color: #2271b1;
+  background: #2271b1;
+}
+
+.media-select-control:has(input:checked) span {
+  opacity: 1;
 }
 
 .media-preview-button {
@@ -1649,6 +1820,10 @@ onMounted(() => {
 
 .media-modal-wide {
   width: min(960px, 100%);
+}
+
+.media-modal-compact {
+  width: min(480px, 100%);
 }
 
 .media-preview-modal {
@@ -1877,8 +2052,8 @@ onMounted(() => {
 
 .media-grid,
 .media-grid-loading {
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.65rem;
 }
 
 .media-card {
@@ -1895,12 +2070,12 @@ onMounted(() => {
 }
 
 .media-preview-button {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
 }
 
 .media-card-body {
-  gap: 0.65rem;
-  padding: 0.85rem;
+  gap: 0.45rem;
+  padding: 0.6rem;
 }
 
 .media-card-head {
@@ -1916,17 +2091,21 @@ onMounted(() => {
 }
 
 .media-card-subtitle {
-  display: -webkit-box;
   overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
   font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .media-card-actions {
   display: flex;
   flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.media-card-meta {
   gap: 0.45rem;
+  font-size: 0.72rem;
 }
 
 .media-button {

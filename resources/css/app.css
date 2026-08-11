@@ -2534,6 +2534,11 @@ html[data-theme='dark'] .vc-builder-empty {
     opacity: 0.76;
 }
 
+.vc-builder-structure-card-drop {
+    border-color: #00a0d2;
+    box-shadow: inset 0 2px 0 #00a0d2;
+}
+
 .vc-builder-structure-section {
     display: flex;
     align-items: center;
@@ -2547,6 +2552,12 @@ html[data-theme='dark'] .vc-builder-empty {
     letter-spacing: -0.08em;
     user-select: none;
     flex-shrink: 0;
+    cursor: grab;
+    padding: 0.25rem 0.15rem;
+}
+
+.vc-builder-structure-drag:active {
+    cursor: grabbing;
 }
 
 .vc-builder-structure-section-main {
@@ -2707,6 +2718,85 @@ html[data-theme='dark'] .vc-builder-empty {
 .vc-builder-structure-block-dragging {
     border-style: dashed;
     opacity: 0.72;
+}
+
+.vc-builder-structure-block-drop {
+    border-color: #00a0d2;
+    box-shadow: inset 0 2px 0 #00a0d2;
+}
+
+.vc-builder-structure-add-drop {
+    border-color: #00a0d2 !important;
+    background: rgba(0, 160, 210, 0.12) !important;
+    color: #fff !important;
+}
+
+/* Compact editor density: keep the hierarchy readable without oversized tiles. */
+.vc-builder-shell-modern .vc-builder-sidebar-stack {
+    gap: 0;
+    padding: 0;
+}
+
+.vc-builder-shell-modern .vc-builder-surface-card {
+    padding: 0.7rem;
+}
+
+.vc-builder-shell-modern .vc-builder-sidebar-mode-switch {
+    gap: 1px;
+    margin-top: 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.vc-builder-shell-modern .vc-builder-segment {
+    min-height: 2rem;
+    border: 0;
+    border-radius: 0;
+    padding: 0.35rem;
+    font-size: 0.7rem;
+}
+
+.vc-builder-shell-modern .vc-builder-structure-root,
+.vc-builder-shell-modern .vc-builder-structure-card,
+.vc-builder-shell-modern .vc-builder-structure-block {
+    border-radius: 4px;
+}
+
+.vc-builder-shell-modern .vc-builder-structure-list {
+    gap: 0.3rem;
+}
+
+.vc-builder-shell-modern .vc-builder-structure-section {
+    gap: 0.4rem;
+    padding: 0.38rem 0.45rem;
+}
+
+.vc-builder-shell-modern .vc-builder-structure-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.vc-builder-shell-modern .vc-builder-structure-children {
+    gap: 0.2rem;
+    padding: 0 0.35rem 0.35rem 1.7rem;
+}
+
+.vc-builder-shell-modern .vc-builder-structure-block {
+    gap: 0.45rem;
+    min-height: 2.15rem;
+    padding: 0.3rem 0.42rem;
+}
+
+.vc-builder-shell-modern .vc-builder-structure-block .vc-builder-library-card-mark {
+    width: 1.45rem;
+    height: 1.45rem;
+}
+
+.vc-builder-shell-modern .vc-builder-library-card,
+.vc-builder-shell-modern .vc-builder-template-card {
+    min-height: 3.25rem;
 }
 
 .vc-builder-structure-inline-meta {

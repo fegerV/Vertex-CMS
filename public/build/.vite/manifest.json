@@ -17,7 +17,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BVBbvUQ9.js",
+    "file": "assets/app-BTp962uV.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -29,7 +29,7 @@
       "resources/js/telegram-widget.js"
     ],
     "css": [
-      "assets/app-Dx-ErDkv.css"
+      "assets/app-CAAyy_Az.css"
     ]
   },
   "resources/js/builder/index.js": {
@@ -39,7 +39,7 @@
     "isEntry": true
   },
   "resources/js/telegram-widget.js": {
-    "file": "assets/telegram-widget-DVEBPC1m.js",
+    "file": "assets/telegram-widget-YjHtnlkB.js",
     "name": "telegram-widget",
     "src": "resources/js/telegram-widget.js",
     "isDynamicEntry": true,
