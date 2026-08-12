@@ -41,8 +41,9 @@
         data-builder-route-template="{{ route('admin.forms.builder', ['form' => '__FORM_ID__']) }}"
         data-public-preview-url="{{ $form?->slug ? url('/forms/' . $form->slug) : '' }}"
         data-exit-url="{{ route('admin.forms.index') }}"
-        data-initial-form='@json($builderPayload)'
+        data-initial-form-id="vc-form-builder-payload"
         class="min-h-[calc(100vh-9rem)]"
     ></div>
+    <script id="vc-form-builder-payload" type="application/json">{!! json_encode($builderPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
 </div>
 @endsection

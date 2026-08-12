@@ -26,7 +26,10 @@ export function mountFormBuilder() {
             publicPreviewUrl: element.dataset.publicPreviewUrl || '',
             exitUrl: element.dataset.exitUrl,
             csrfToken: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
-            initialForm: parseJsonAttribute(element.dataset.initialForm, {}),
+            initialForm: parseJsonAttribute(
+                document.getElementById(element.dataset.initialFormId)?.textContent,
+                {},
+            ),
         }).mount(element);
     });
 }

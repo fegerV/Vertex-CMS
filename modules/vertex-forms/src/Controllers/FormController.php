@@ -9,6 +9,8 @@ use Vertex\Forms\Services\FormImportExportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class FormController extends Controller
@@ -106,14 +108,18 @@ class FormController extends Controller
 
     public function duplicate(Form $form): RedirectResponse
     {
-        $new = $form->replicate();
-        $new->name = $form->name . " (" . __("forms.duplicated_name_suffix") . ")";
-        $new->slug = $form->slug . "-copy-" . time();
-        $new->save();
+        $new = DB::transaction(function () use ($form): Form {
+            $copy = $form->replicate();
+            $copy->name = $form->name . " (" . __("forms.duplicated_name_suffix") . ")";
+            $copy->slug = $form->slug . "-copy-" . Str::lower(Str::random(8));
+            $copy->save();
 
-        foreach ($form->fields as $field) {
-            $field->replicate(["form_id"])->save();
-        }
+            foreach ($form->fields as $field) {
+                $copy->fields()->create($field->replicate(["form_id"])->toArray());
+            }
+
+            return $copy;
+        });
 
         return redirect()->route("admin.forms.edit", $new)->with("status", __("forms.duplicated"));
     }
