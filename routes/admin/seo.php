@@ -263,7 +263,7 @@ Route::prefix('images')->name('images.')->group(function () {
 // ==========================================
 // Keyword Maps (Auto-Linking) Routes
 // ==========================================
-Route::prefix('keyword-maps')->name('keyword-maps.')->middleware('vertex.permission:seo.edit')->group(function () {
+Route::prefix('seo/keyword-maps')->name('seo.keyword-maps.')->middleware('vertex.permission:seo.edit')->group(function () {
     Route::get('/', [KeywordMapsController::class, 'index'])->name('index');
     Route::get('/create', [KeywordMapsController::class, 'create'])->name('create');
     Route::post('/', [KeywordMapsController::class, 'store'])->name('store');
@@ -277,14 +277,14 @@ Route::prefix('keyword-maps')->name('keyword-maps.')->middleware('vertex.permiss
 });
 
 // Маршруты для справки SEO
-Route::get('/help', [App\Http\Controllers\Admin\Seo\HelpController::class, 'index'])->name('help.index');
-Route::get('/help/{section}/{topic?}', [App\Http\Controllers\Admin\Seo\HelpController::class, 'show'])->name('help.show');
-Route::get('/help/search', [App\Http\Controllers\Admin\Seo\HelpController::class, 'search'])->name('help.search');
+Route::get('seo/help', [App\Http\Controllers\Admin\Seo\HelpController::class, 'index'])->name('seo.help.index');
+Route::get('seo/help/search', [App\Http\Controllers\Admin\Seo\HelpController::class, 'search'])->name('seo.help.search');
+Route::get('seo/help/{section}/{topic?}', [App\Http\Controllers\Admin\Seo\HelpController::class, 'show'])->name('seo.help.show');
 
 // ==========================================
 // AI RAG Knowledge Base Routes
 // ==========================================
-Route::prefix('ai-kb')->name('ai-kb.')->middleware('vertex.permission:seo.edit')->group(function () {
+Route::prefix('seo/ai-kb')->name('seo.ai-kb.')->middleware('vertex.permission:seo.edit')->group(function () {
     Route::get('/', [AiKnowledgeBaseController::class, 'index'])->name('index');
     Route::get('/categories', [AiKnowledgeBaseController::class, 'categories'])->name('categories');
     Route::post('/categories', [AiKnowledgeBaseController::class, 'storeCategory'])->name('categories.store');

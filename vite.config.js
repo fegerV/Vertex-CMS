@@ -34,12 +34,6 @@ export default defineConfig({
                 chunkFileNames: 'assets/[name]-[hash].js',
                 assetFileNames: 'assets/[name]-[hash].[ext]',
             },
-            input: {
-                // Separate entry points for admin and frontend
-                app: resolve(__dirname, 'resources/js/app.js'),
-                admin: resolve(__dirname, 'resources/js/admin/app.js'),
-                builder: resolve(__dirname, 'resources/js/builder/index.js'),
-            },
         },
         // Minification
         minify: 'terser',
@@ -54,7 +48,9 @@ export default defineConfig({
         // CSS code splitting
         cssCodeSplit: true,
         // Long-term cache with manifest
-        manifest: true,
+        // Laravel's Vite integration reads public/build/manifest.json.
+        // Vite 6 writes a boolean manifest to .vite/manifest.json instead.
+        manifest: 'manifest.json',
     },
     plugins: [
         laravel({

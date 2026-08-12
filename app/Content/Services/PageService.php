@@ -97,7 +97,7 @@ class PageService
             'slug' => $slug,
             'uri' => $this->buildUri($slug, $parentId),
             'status' => $status,
-            'template' => $payload['template'] ?: 'default',
+            'template' => $payload['template'] ?? 'default',
             'content_json' => $this->normalizeContent($payload['content_json'] ?? null),
             'custom_fields_json' => $this->normalizeCustomFieldsPayload($payload['custom_fields_json'] ?? null),
             'published_at' => $this->publishedAt($status, $page),

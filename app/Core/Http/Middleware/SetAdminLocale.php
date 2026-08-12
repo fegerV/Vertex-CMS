@@ -13,7 +13,10 @@ class SetAdminLocale
     {
         // Only apply to admin routes
         if ($request->is('admin*')) {
-            $locale = config_value('site.admin_locale', 'ru');
+            $locale = $request->session()->get('admin_locale', config_value('site.admin_locale', 'ru'));
+            if (! in_array($locale, ['en', 'ru'], true)) {
+                $locale = 'ru';
+            }
             App::setLocale($locale);
         }
 

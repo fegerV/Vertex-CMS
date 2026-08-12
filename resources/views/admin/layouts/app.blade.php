@@ -108,7 +108,18 @@
             ['label' => 'Пользователи', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'icon' => 'users'],
             ['label' => 'Роли', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'icon' => 'shield'],
             ['label' => 'Настройки', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'icon' => 'cog'],
-            ['label' => 'Система', 'route' => 'admin.system.info', 'active' => 'admin.system.*', 'permission' => 'system.view', 'icon' => 'server'],
+            [
+                'label' => 'Система',
+                'route' => 'admin.system.info',
+                'active' => 'admin.system.*',
+                'permission' => 'system.view',
+                'icon' => 'server',
+                'children' => [
+                    ['label' => 'Информация', 'route' => 'admin.system.info', 'permission' => 'system.view'],
+                    ['label' => 'Кеш', 'route' => 'admin.system.cache', 'permission' => 'system.view'],
+                    ['label' => 'Логи', 'route' => 'admin.system.logs', 'permission' => 'system.view'],
+                ],
+            ],
         ];
         
         $icons = [
@@ -192,6 +203,7 @@
             <!-- Navigation -->
             <nav class="flex-1 overflow-y-auto px-2 py-3 space-y-1">
                 @foreach ($navigation as $item)
+                    @continue(! \Illuminate\Support\Facades\Route::has($item['route']))
                     @continue($item['permission'] && ! $user?->hasPermission($item['permission']))
                     
                     @if(isset($item['children']) && count($item['children']) > 0)
@@ -214,6 +226,7 @@
                                  x-collapse
                                  class="ml-4 mt-1 space-y-1 pl-3 border-l-2 border-slate-200 dark:border-slate-700">
                                 @foreach($item['children'] as $child)
+                                    @continue(! \Illuminate\Support\Facades\Route::has($child['route']))
                                     @continue($child['permission'] && ! $user?->hasPermission($child['permission']))
                                     <a
                                         href="{{ route($child['route']) }}"
