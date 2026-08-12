@@ -7,8 +7,9 @@ use App\Services\AI\ChatBotService;
 use App\Services\AI\ContentGenerationService;
 use App\Services\AI\ImageAnalysisService;
 use App\Services\AI\SmartSearchService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AIController extends Controller
 {
@@ -52,7 +53,7 @@ class AIController extends Controller
             'data' => 'required|array',
         ]);
 
-        $response = match($validated['type']) {
+        $response = match ($validated['type']) {
             'product_description' => $this->contentGenerationService->generateProductDescription($validated['data']),
             'meta_tags' => $this->contentGenerationService->generateMetaTags($validated['data']),
             'blog_post' => $this->contentGenerationService->generateBlogPost($validated['data']),
@@ -93,7 +94,7 @@ class AIController extends Controller
         $validated = $request->validate([
             'query' => 'required|string|max:500',
             'filters' => 'nullable|array',
-            'model' => 'nullable|string',
+            'model' => ['nullable', 'string', Rule::in(SmartSearchService::SEARCHABLE_MODELS)],
         ]);
 
         if ($validated['model'] ?? null) {

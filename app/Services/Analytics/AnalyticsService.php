@@ -5,8 +5,8 @@ namespace App\Services\Analytics;
 use App\Models\Analytics\Dashboard;
 use App\Models\Analytics\FunnelStep;
 use App\Models\Analytics\Heatmap;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
 {
@@ -24,7 +24,7 @@ class AnalyticsService
 
     public function getWidgetData(array $widget, array $filters = [])
     {
-        return match($widget['type']) {
+        return match ($widget['type']) {
             'funnel' => $this->getFunnelData($widget['config'] ?? [], $filters),
             'heatmap' => $this->getHeatmapData($widget['config'] ?? [], $filters),
             'chart' => $this->getChartData($widget['config'] ?? [], $filters),
@@ -43,7 +43,7 @@ class AnalyticsService
 
         foreach ($steps as $step) {
             $count = $this->calculateEventCount($step->event_name, $filters);
-            
+
             if ($totalUsers === 0) {
                 $totalUsers = $count;
             }
@@ -96,18 +96,34 @@ class AnalyticsService
 
     public function getChartData(array $config, array $filters = [])
     {
-        // Реализация для различных типов графиков
+        $metric = in_array($config['metric'] ?? 'visits', ['visits', 'visitors'], true)
+            ? ($config['metric'] ?? 'visits')
+            : 'visits';
+        $query = DB::table('analytics_aggregates')
+            ->select('visit_date', DB::raw("SUM({$metric}) AS aggregate_value"))
+            ->when($config['kind'] ?? null, fn ($builder, $kind) => $builder->where('kind', $kind))
+            ->when($filters['date_from'] ?? null, fn ($builder, $date) => $builder->whereDate('visit_date', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn ($builder, $date) => $builder->whereDate('visit_date', '<=', $date))
+            ->groupBy('visit_date')
+            ->orderBy('visit_date')
+            ->get();
+
         return [
-            'labels' => [],
-            'datasets' => [],
+            'labels' => $query->pluck('visit_date')->all(),
+            'datasets' => [[
+                'label' => ucfirst($metric),
+                'data' => $query->pluck('aggregate_value')->map(fn ($value) => (int) $value)->all(),
+            ]],
         ];
     }
 
     private function calculateEventCount(string $eventName, array $filters = []): int
     {
-        // Здесь должна быть логика подсчета событий из вашей системы аналитики
-        // Для примера возвращаем случайное число
-        return rand(100, 1000);
+        return (int) DB::table('analytics_aggregates')
+            ->where('kind', $eventName)
+            ->when($filters['date_from'] ?? null, fn ($query, $date) => $query->whereDate('visit_date', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn ($query, $date) => $query->whereDate('visit_date', '<=', $date))
+            ->sum('visits');
     }
 
     public function recordHeatmapData(string $url, string $type, array $points, int $viewportWidth, int $viewportHeight)

@@ -2,24 +2,29 @@
 
 namespace App\Services\AI;
 
-use Laravel\Scout\EngineManager;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Ecommerce\Product;
+use App\Models\Page;
+use Laravel\Scout\Searchable;
 
 class SmartSearchService
 {
+    public const SEARCHABLE_MODELS = [
+        Product::class,
+        Page::class,
+    ];
+
     public function search(string $query, array $options = []): array
     {
         $models = $options['models'] ?? [
-            \App\Models\Ecommerce\Product::class,
-            \App\Models\Content\Page::class,
-            \App\Models\Content\Post::class,
+            Product::class,
+            Page::class,
         ];
 
         $results = [];
 
         foreach ($models as $model) {
             $modelResults = $this->searchInModel($model, $query, $options);
-            if (!empty($modelResults)) {
+            if (! empty($modelResults)) {
                 $results[$model] = $modelResults;
             }
         }
@@ -29,8 +34,9 @@ class SmartSearchService
 
     private function searchInModel(string $model, string $query, array $options = [])
     {
+        $this->assertSearchableModel($model);
         // Если модель использует Scout
-        if (in_array(\Laravel\Scout\Searchable::class, class_uses_recursive($model))) {
+        if (in_array(Searchable::class, class_uses_recursive($model))) {
             return $model::search($query)->take($options['limit'] ?? 10)->get();
         }
 
@@ -58,21 +64,21 @@ class SmartSearchService
     private function getSearchableColumns(string $model): array
     {
         // Определяем колонки для поиска на основе модели
-        return match($model) {
-            \App\Models\Ecommerce\Product::class => ['name', 'description', 'sku'],
-            \App\Models\Content\Page::class => ['title', 'slug', 'meta_description'],
-            \App\Models\Content\Post::class => ['title', 'slug', 'excerpt', 'content'],
-            default => ['name', 'title', 'description'],
+        return match ($model) {
+            Product::class => ['name', 'description', 'sku'],
+            Page::class => ['title', 'slug', 'uri'],
+            default => [],
         };
     }
 
     public function semanticSearch(string $query, string $model, int $limit = 10): array
     {
+        $this->assertSearchableModel($model);
         // Используем AI для расширения запроса синонимами
-        $generationService = new ContentGenerationService();
-        
+        $generationService = new ContentGenerationService;
+
         $prompt = "Подбери 5 синонимов и связанных слов для поискового запроса: \"{$query}\". Верни только слова через запятую.";
-        
+
         $result = $generationService->generateText($prompt, [
             'max_tokens' => 100,
             'temperature' => 0.5,
@@ -81,7 +87,7 @@ class SmartSearchService
         $expandedQuery = $query;
         if ($result['success']) {
             $synonyms = explode(',', $result['content']);
-            $expandedQuery = $query . ' ' . implode(' ', array_map('trim', $synonyms));
+            $expandedQuery = $query.' '.implode(' ', array_map('trim', $synonyms));
         }
 
         // Ищем по расширенному запросу
@@ -91,6 +97,7 @@ class SmartSearchService
 
     public function searchWithFilters(string $query, array $filters, string $model): array
     {
+        $this->assertSearchableModel($model);
         $results = $this->searchInModel($model, $query, ['limit' => 100]);
 
         // Применяем фильтры
@@ -118,7 +125,7 @@ class SmartSearchService
 
         // Сортировка
         if (isset($filters['sort'])) {
-            $collection = match($filters['sort']) {
+            $collection = match ($filters['sort']) {
                 'price_asc' => $collection->sortBy('price'),
                 'price_desc' => $collection->sortByDesc('price'),
                 'newest' => $collection->sortByDesc('created_at'),
@@ -133,10 +140,10 @@ class SmartSearchService
     public function suggestQueries(string $partialQuery): array
     {
         // Используем AI для генерации подсказок
-        $generationService = new ContentGenerationService();
-        
+        $generationService = new ContentGenerationService;
+
         $prompt = "Пользователь начал вводить поисковый запрос: \"{$partialQuery}\". Предложи 5 вариантов завершения запроса для интернет-магазина. Верни только варианты, каждый с новой строки.";
-        
+
         $result = $generationService->generateText($prompt, [
             'max_tokens' => 150,
             'temperature' => 0.7,
@@ -144,6 +151,7 @@ class SmartSearchService
 
         if ($result['success']) {
             $suggestions = explode("\n", trim($result['content']));
+
             return array_filter(array_map('trim', $suggestions));
         }
 
@@ -163,7 +171,7 @@ class SmartSearchService
         ];
 
         return collect($popularQueries)
-            ->filter(fn($q) => stripos($q, $prefix) === 0)
+            ->filter(fn ($q) => stripos($q, $prefix) === 0)
             ->take(5)
             ->toArray();
     }
@@ -181,6 +189,18 @@ class SmartSearchService
         // Удаление модели из поискового индекса
         if (method_exists($model, 'unsearchable')) {
             $model->unsearchable();
+        }
+    }
+
+    public function isSearchableModel(string $model): bool
+    {
+        return in_array($model, self::SEARCHABLE_MODELS, true);
+    }
+
+    private function assertSearchableModel(string $model): void
+    {
+        if (! $this->isSearchableModel($model)) {
+            throw new \InvalidArgumentException('Unsupported search model.');
         }
     }
 }

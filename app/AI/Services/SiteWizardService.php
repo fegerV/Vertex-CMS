@@ -2,17 +2,21 @@
 
 namespace App\AI\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use App\Core\Services\SettingsService;
+use App\Models\Menu;
+use App\Models\MenuItem;
+use App\Models\Page;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SiteWizardService
 {
     public function __construct(
         private readonly AiProviderRegistry $providers,
-    ) {
-    }
+        private readonly SettingsService $settings,
+    ) {}
 
     /**
      * Generate complete site structure from description
@@ -20,8 +24,8 @@ class SiteWizardService
     public function generateSiteStructure(array $data): array
     {
         $provider = $this->providers->find($data['provider'] ?? null);
-        
-        if (!$provider || !($provider['configured'] ?? false)) {
+
+        if (! $provider || ! ($provider['configured'] ?? false)) {
             return [
                 'success' => false,
                 'error' => 'AI provider not configured',
@@ -29,19 +33,19 @@ class SiteWizardService
         }
 
         $prompt = $this->buildSiteStructurePrompt($data);
-        
+
         $response = $this->callAiApi($provider, $prompt, [
             'max_tokens' => 4000,
             'temperature' => 0.7,
             'response_format' => ['type' => 'json_object'],
         ]);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             return $response;
         }
 
         $structure = json_decode($response['content'], true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             return [
                 'success' => false,
@@ -63,25 +67,25 @@ class SiteWizardService
     public function generateSemanticCore(array $siteData): array
     {
         $provider = $this->providers->find($siteData['provider'] ?? null);
-        
-        if (!$provider || !($provider['configured'] ?? false)) {
+
+        if (! $provider || ! ($provider['configured'] ?? false)) {
             return ['success' => false, 'error' => 'AI provider not configured'];
         }
 
         $prompt = $this->buildSemanticCorePrompt($siteData);
-        
+
         $response = $this->callAiApi($provider, $prompt, [
             'max_tokens' => 3000,
             'temperature' => 0.6,
             'response_format' => ['type' => 'json_object'],
         ]);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             return $response;
         }
 
         $keywords = json_decode($response['content'], true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             return [
                 'success' => false,
@@ -102,25 +106,25 @@ class SiteWizardService
     public function generateArticlePlan(array $sectionData): array
     {
         $provider = $this->providers->find($sectionData['provider'] ?? null);
-        
-        if (!$provider || !($provider['configured'] ?? false)) {
+
+        if (! $provider || ! ($provider['configured'] ?? false)) {
             return ['success' => false, 'error' => 'AI provider not configured'];
         }
 
         $prompt = $this->buildArticlePlanPrompt($sectionData);
-        
+
         $response = $this->callAiApi($provider, $prompt, [
             'max_tokens' => 2500,
             'temperature' => 0.7,
             'response_format' => ['type' => 'json_object'],
         ]);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             return $response;
         }
 
         $articles = json_decode($response['content'], true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             return [
                 'success' => false,
@@ -141,19 +145,19 @@ class SiteWizardService
     public function generateArticleContent(array $articleData): array
     {
         $provider = $this->providers->find($articleData['provider'] ?? null);
-        
-        if (!$provider || !($provider['configured'] ?? false)) {
+
+        if (! $provider || ! ($provider['configured'] ?? false)) {
             return ['success' => false, 'error' => 'AI provider not configured'];
         }
 
         $prompt = $this->buildArticleContentPrompt($articleData);
-        
+
         $response = $this->callAiApi($provider, $prompt, [
             'max_tokens' => 5000,
             'temperature' => 0.7,
         ]);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             return $response;
         }
 
@@ -170,19 +174,19 @@ class SiteWizardService
     public function generateImagePrompt(array $contextData): array
     {
         $provider = $this->providers->find($contextData['provider'] ?? null);
-        
-        if (!$provider || !($provider['configured'] ?? false)) {
+
+        if (! $provider || ! ($provider['configured'] ?? false)) {
             return ['success' => false, 'error' => 'AI provider not configured'];
         }
 
         $prompt = $this->buildImagePromptPrompt($contextData);
-        
+
         $response = $this->callAiApi($provider, $prompt, [
             'max_tokens' => 500,
             'temperature' => 0.8,
         ]);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             return $response;
         }
 
@@ -198,9 +202,9 @@ class SiteWizardService
      */
     public function generateImage(string $prompt, array $options = []): array
     {
-        $apiKey = config('services.openai.api_key') ?: config('vertex.ai.openai_api_key');
-        
-        if (!$apiKey) {
+        $apiKey = $this->settings->get('ai.openai_api_key');
+
+        if (! $apiKey) {
             return ['success' => false, 'error' => 'OpenAI API key not configured'];
         }
 
@@ -218,6 +222,7 @@ class SiteWizardService
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return [
                     'success' => true,
                     'images' => collect($data['data'] ?? [])
@@ -245,7 +250,7 @@ class SiteWizardService
     public function saveSiteStructure(array $structure, array $options = []): array
     {
         DB::beginTransaction();
-        
+
         try {
             $results = [
                 'pages' => [],
@@ -254,48 +259,48 @@ class SiteWizardService
             ];
 
             // Create pages
+            $pagesByUri = [];
             foreach ($structure['pages'] ?? [] as $pageData) {
-                $page = DB::table('pages')->insertGetId([
+                $slug = Str::slug($pageData['slug'] ?? $pageData['title']);
+                $uri = '/'.ltrim((string) ($pageData['uri'] ?? $slug), '/');
+                $page = Page::query()->create([
                     'title' => $pageData['title'],
-                    'slug' => Str::slug($pageData['title']),
-                    'uri' => '/' . Str::slug($pageData['title']),
+                    'slug' => $slug,
+                    'uri' => $uri,
                     'status' => 'draft',
-                    'meta_title' => $pageData['meta_title'] ?? $pageData['title'],
-                    'meta_description' => $pageData['meta_description'] ?? '',
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'content_json' => $this->normalizePageContent($pageData),
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
                 ]);
 
-                // Insert page content
-                DB::table('page_contents')->insert([
-                    'page_id' => $page,
-                    'content' => $pageData['content'] ?? '',
-                    'blocks' => json_encode($pageData['blocks'] ?? []),
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                $page->seoMeta()->create([
+                    'title' => $pageData['meta_title'] ?? $pageData['title'],
+                    'description' => $pageData['meta_description'] ?? '',
                 ]);
-
-                $results['pages'][] = $page;
+                $pagesByUri[$uri] = $page;
+                $results['pages'][] = $page->id;
             }
 
-            // Create menu
-            $menuId = DB::table('menus')->insertGetId([
+            $menu = Menu::query()->create([
                 'name' => $options['menu_name'] ?? 'Main Menu',
-                'slug' => 'main-menu',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'slug' => $this->uniqueMenuSlug($options['menu_slug'] ?? 'main-menu'),
+                'location' => $options['menu_location'] ?? 'primary',
             ]);
 
             foreach ($structure['menu'] ?? [] as $index => $menuItem) {
-                DB::table('menu_items')->insert([
-                    'menu_id' => $menuId,
+                $url = (string) ($menuItem['url'] ?? '#');
+                $page = $pagesByUri[$url] ?? null;
+                $item = MenuItem::query()->create([
+                    'menu_id' => $menu->id,
                     'title' => $menuItem['title'],
-                    'url' => $menuItem['url'] ?? '#',
-                    'order' => $index,
+                    'url' => $url,
+                    'sort_order' => $index,
                     'parent_id' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'type' => $page ? 'page' : 'custom',
+                    'entity_type' => $page ? Page::class : null,
+                    'entity_id' => $page?->id,
                 ]);
+                $results['menu_items'][] = $item->id;
             }
 
             DB::commit();
@@ -483,13 +488,13 @@ PROMPT;
     private function callAiApi(array $provider, string $prompt, array $options = []): array
     {
         $apiKey = match ($provider['id']) {
-            'openai' => config('vertex.ai.openai_api_key'),
-            'anthropic' => config('vertex.ai.anthropic_api_key'),
-            'custom' => config('vertex.ai.custom_api_key'),
+            'openai' => $this->settings->get('ai.openai_api_key'),
+            'anthropic' => $this->settings->get('ai.anthropic_api_key'),
+            'custom' => $this->settings->get('ai.custom_api_key'),
             default => null,
         };
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return ['success' => false, 'error' => 'API key not configured'];
         }
 
@@ -497,11 +502,11 @@ PROMPT;
             $endpoint = match ($provider['id']) {
                 'openai' => 'https://api.openai.com/v1/chat/completions',
                 'anthropic' => 'https://api.anthropic.com/v1/messages',
-                'custom' => config('vertex.ai.custom_api_base'),
+                'custom' => $this->settings->get('ai.custom_api_base'),
                 default => null,
             };
 
-            if (!$endpoint) {
+            if (! $endpoint) {
                 return ['success' => false, 'error' => 'Invalid provider'];
             }
 
@@ -524,9 +529,9 @@ PROMPT;
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 $content = $this->extractContent($provider['id'], $data);
-                
+
                 return [
                     'success' => true,
                     'content' => $content,
@@ -618,7 +623,7 @@ PROMPT;
         foreach ($structure['pages'] ?? [] as $page) {
             $normalized['pages'][] = [
                 'title' => $page['title'] ?? 'Untitled Page',
-                'uri' => '/' . Str::slug($page['title'] ?? 'page'),
+                'uri' => '/'.Str::slug($page['title'] ?? 'page'),
                 'meta_title' => $page['meta_title'] ?? $page['title'] ?? '',
                 'meta_description' => $page['meta_description'] ?? '',
                 'content' => $page['content'] ?? '',
@@ -637,5 +642,29 @@ PROMPT;
         }
 
         return $normalized;
+    }
+
+    private function normalizePageContent(array $pageData): array
+    {
+        $blocks = $pageData['blocks'] ?? [];
+
+        if ($blocks === [] && filled($pageData['content'] ?? null)) {
+            $blocks = [['type' => 'text', 'data' => ['content' => $pageData['content']]]];
+        }
+
+        return ['version' => 1, 'blocks' => array_values($blocks)];
+    }
+
+    private function uniqueMenuSlug(string $slug): string
+    {
+        $base = Str::slug($slug) ?: 'main-menu';
+        $candidate = $base;
+        $suffix = 2;
+
+        while (Menu::query()->where('slug', $candidate)->exists()) {
+            $candidate = $base.'-'.$suffix++;
+        }
+
+        return $candidate;
     }
 }
