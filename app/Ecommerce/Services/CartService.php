@@ -2,8 +2,10 @@
 
 namespace App\Ecommerce\Services;
 
+use App\Ecommerce\Models\CartItem;
 use App\Ecommerce\Models\Product;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 class CartService
 {
@@ -13,7 +15,7 @@ class CartService
             return collect(session()->get('cart', []));
         }
 
-        return collect(\App\Ecommerce\Models\CartItem::query()
+        return collect(CartItem::query()
             ->where('session_id', $sessionId)
             ->with('product')
             ->get());
@@ -21,19 +23,26 @@ class CartService
 
     public function addToCart(Product $product, int $quantity = 1, ?string $sessionId = null): Collection
     {
+        if ($quantity < 1 || $product->status !== 'active' || $product->published_at === null || $product->published_at->isFuture()) {
+            throw ValidationException::withMessages(['product_id' => 'This product is not available.']);
+        }
+
         if ($sessionId === null) {
             $sessionId = session()->getId();
         }
 
-        $cartItem = \App\Ecommerce\Models\CartItem::query()
+        $cartItem = CartItem::query()
             ->where('session_id', $sessionId)
             ->where('product_id', $product->id)
             ->first();
 
+        $newQuantity = ($cartItem?->quantity ?? 0) + $quantity;
+        $this->ensureStockIsAvailable($product, $newQuantity);
+
         if ($cartItem) {
             $cartItem->increment('quantity', $quantity);
         } else {
-            \App\Ecommerce\Models\CartItem::query()->create([
+            CartItem::query()->create([
                 'session_id' => $sessionId,
                 'product_id' => $product->id,
                 'quantity' => $quantity,
@@ -49,7 +58,7 @@ class CartService
             $sessionId = session()->getId();
         }
 
-        $cartItem = \App\Ecommerce\Models\CartItem::query()
+        $cartItem = CartItem::query()
             ->where('id', $cartItemId)
             ->where('session_id', $sessionId)
             ->firstOrFail();
@@ -57,6 +66,7 @@ class CartService
         if ($quantity <= 0) {
             $cartItem->delete();
         } else {
+            $this->ensureStockIsAvailable($cartItem->product, $quantity);
             $cartItem->update(['quantity' => $quantity]);
         }
 
@@ -69,7 +79,7 @@ class CartService
             $sessionId = session()->getId();
         }
 
-        \App\Ecommerce\Models\CartItem::query()
+        CartItem::query()
             ->where('id', $cartItemId)
             ->where('session_id', $sessionId)
             ->delete();
@@ -83,7 +93,7 @@ class CartService
             $sessionId = session()->getId();
         }
 
-        \App\Ecommerce\Models\CartItem::query()
+        CartItem::query()
             ->where('session_id', $sessionId)
             ->delete();
     }
@@ -108,5 +118,14 @@ class CartService
             'discount' => $discount,
             'total' => $subtotal + $tax - $discount,
         ];
+    }
+
+    private function ensureStockIsAvailable(Product $product, int $quantity): void
+    {
+        if ($product->track_inventory && $quantity > $product->quantity) {
+            throw ValidationException::withMessages([
+                'quantity' => 'The requested quantity is not available.',
+            ]);
+        }
     }
 }

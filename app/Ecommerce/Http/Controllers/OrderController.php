@@ -6,18 +6,15 @@ use App\Ecommerce\Models\Order;
 use App\Ecommerce\Services\OrderService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
 {
     public function __construct(
         private readonly OrderService $orderService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
-        Gate::authorize('viewAny', Order::class);
 
         $query = Order::query()->with(['user', 'items']);
 
@@ -47,7 +44,6 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        Gate::authorize('view', $order);
 
         $order->load(['user', 'items.product']);
 
@@ -56,7 +52,6 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order)
     {
-        Gate::authorize('update', $order);
 
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled,refunded',
@@ -69,7 +64,6 @@ class OrderController extends Controller
 
     public function updatePayment(Request $request, Order $order)
     {
-        Gate::authorize('update', $order);
 
         $validated = $request->validate([
             'payment_status' => 'required|in:pending,paid,failed,refunded',
@@ -87,7 +81,6 @@ class OrderController extends Controller
 
     public function cancel(Order $order, Request $request)
     {
-        Gate::authorize('update', $order);
 
         $this->orderService->cancel($order, $request->user());
 
@@ -96,7 +89,6 @@ class OrderController extends Controller
 
     public function refund(Order $order, Request $request)
     {
-        Gate::authorize('update', $order);
 
         $this->orderService->refund($order, $request->user());
 

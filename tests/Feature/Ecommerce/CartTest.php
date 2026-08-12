@@ -2,96 +2,69 @@
 
 namespace Tests\Feature\Ecommerce;
 
+use App\Ecommerce\Models\Product;
+use App\Ecommerce\Services\CartService;
 use App\Models\User;
-use App\Modules\Ecommerce\Models\Product;
-use App\Modules\Ecommerce\Models\Cart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class CartTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $user;
-    protected Product $product;
-
-    protected function setUp(): void
+    public function test_active_product_can_be_added_and_totals_are_calculated(): void
     {
-        parent::setUp();
-        
-        $this->user = User::factory()->create();
-        $this->product = Product::factory()->create([
-            'price' => 1000,
-            'stock' => 10
+        $product = $this->product(['price' => 1000, 'quantity' => 10]);
+
+        $cart = app(CartService::class)->addToCart($product, 2, 'cart-session');
+
+        $this->assertDatabaseHas('ecommerce_cart_items', [
+            'session_id' => 'cart-session',
+            'product_id' => $product->id,
+            'quantity' => 2,
         ]);
+        $this->assertSame(2000.0, app(CartService::class)->getTotals($cart)['total']);
     }
 
-    public function test_user_can_add_item_to_cart(): void
+    public function test_cart_rejects_quantity_above_tracked_stock(): void
     {
-        $response = $this->actingAs($this->user)
-            ->postJson('/api/cart/add', [
-                'product_id' => $this->product->id,
-                'quantity' => 2
-            ]);
+        $product = $this->product(['quantity' => 2]);
 
-        $response->assertStatus(200);
-        
-        $this->assertDatabaseHas('carts', [
-            'user_id' => $this->user->id,
-            'product_id' => $this->product->id,
-            'quantity' => 2
-        ]);
+        $this->expectException(ValidationException::class);
+
+        app(CartService::class)->addToCart($product, 3, 'cart-session');
     }
 
-    public function test_user_cannot_add_more_than_stock(): void
+    public function test_unpublished_product_cannot_be_added(): void
     {
-        $response = $this->actingAs($this->user)
-            ->postJson('/api/cart/add', [
-                'product_id' => $this->product->id,
-                'quantity' => 15 // More than stock (10)
-            ]);
+        $product = $this->product(['status' => 'draft', 'published_at' => null]);
 
-        $response->assertStatus(422);
+        $this->expectException(ValidationException::class);
+
+        app(CartService::class)->addToCart($product, 1, 'cart-session');
     }
 
-    public function test_user_can_update_cart_quantity(): void
+    private function product(array $attributes = []): Product
     {
-        Cart::create([
-            'user_id' => $this->user->id,
-            'product_id' => $this->product->id,
-            'quantity' => 1
+        $user = User::query()->create([
+            'name' => 'Store owner',
+            'email' => uniqid().'@example.test',
+            'password' => Hash::make('password'),
+            'status' => 'active',
         ]);
 
-        $response = $this->actingAs($this->user)
-            ->putJson('/api/cart/update', [
-                'product_id' => $this->product->id,
-                'quantity' => 5
-            ]);
-
-        $response->assertStatus(200);
-        
-        $this->assertDatabaseHas('carts', [
-            'user_id' => $this->user->id,
-            'product_id' => $this->product->id,
-            'quantity' => 5
-        ]);
-    }
-
-    public function test_user_can_clear_cart(): void
-    {
-        Cart::create([
-            'user_id' => $this->user->id,
-            'product_id' => $this->product->id,
-            'quantity' => 3
-        ]);
-
-        $response = $this->actingAs($this->user)
-            ->deleteJson('/api/cart/clear');
-
-        $response->assertStatus(200);
-        
-        $this->assertDatabaseMissing('carts', [
-            'user_id' => $this->user->id
-        ]);
+        return Product::query()->create(array_merge([
+            'name' => 'Test product',
+            'slug' => 'test-product-'.uniqid(),
+            'price' => 100,
+            'quantity' => 5,
+            'track_inventory' => true,
+            'status' => 'active',
+            'published_at' => now(),
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ], $attributes));
     }
 }

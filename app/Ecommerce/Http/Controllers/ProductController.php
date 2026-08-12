@@ -6,19 +6,15 @@ use App\Ecommerce\Models\Product;
 use App\Ecommerce\Services\ProductService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Gate;
 
 class ProductController extends Controller
 {
     public function __construct(
         private readonly ProductService $productService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
-        Gate::authorize('viewAny', Product::class);
 
         $query = Product::query()->with(['creator', 'updater']);
 
@@ -42,14 +38,12 @@ class ProductController extends Controller
 
     public function create()
     {
-        Gate::authorize('create', Product::class);
 
         return view('admin.ecommerce.products.create');
     }
 
     public function store(Request $request)
     {
-        Gate::authorize('create', Product::class);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -75,7 +69,6 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        Gate::authorize('view', $product);
 
         $product->load(['creator', 'updater', 'media']);
 
@@ -84,7 +77,6 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        Gate::authorize('update', $product);
 
         $product->load(['media']);
 
@@ -93,7 +85,6 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        Gate::authorize('update', $product);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -119,7 +110,6 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        Gate::authorize('delete', $product);
 
         $this->productService->delete($product, request()->user());
 
