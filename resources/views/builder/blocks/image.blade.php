@@ -15,7 +15,8 @@
     }
 @endphp
 
-<img 
+@if($imageUrl)
+<img
     src="{{ $imageUrl }}"
     alt="{{ $alt }}"
     class="pb-image pb-image--radius-{{ $radius }} pb-image--shadow-{{ $shadow }}"
@@ -25,3 +26,6 @@
     "
     loading="lazy"
 />
+@else
+    <div class="vc-media-placeholder vc-image-placeholder">Image placeholder</div>
+@endif

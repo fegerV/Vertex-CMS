@@ -43,6 +43,13 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
     ])->group(function (): void {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+        Route::get('/locale/{locale}', function (string $locale) {
+            abort_unless(in_array($locale, ['en', 'ru'], true), 404);
+
+            session(['admin_locale' => $locale]);
+
+            return back();
+        })->name('locale.change');
 
         // Modular route files
         require __DIR__.'/admin/pages.php';
@@ -66,74 +73,6 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
 
         // Forms module routes (vertex-forms)
         require base_path('modules/vertex-forms/routes/admin.php');
-
-        // Builder routes
-        Route::get('pages', [PageController::class, 'index'])
-            ->middleware('vertex.permission:pages.view')
-            ->name('pages.index');
-        Route::get('pages/create', [PageController::class, 'create'])
-            ->middleware('vertex.permission:pages.create')
-            ->name('pages.create');
-        Route::post('pages', [PageController::class, 'store'])
-            ->middleware('vertex.permission:pages.create')
-            ->name('pages.store');
-        Route::get('pages/{page}/edit', [PageController::class, 'edit'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.edit');
-        Route::put('pages/{page}', [PageController::class, 'update'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.update');
-        Route::delete('pages/{page}', [PageController::class, 'destroy'])
-            ->middleware('vertex.permission:pages.delete')
-            ->name('pages.destroy');
-        Route::get('pages/{page}/builder', [PageBuilderController::class, 'edit'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.builder');
-        Route::put('pages/{page}/builder', [PageBuilderController::class, 'update'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.builder.update');
-        Route::get('pages/{page}/builder/advanced', [AdvancedBuilderController::class, 'advanced'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.builder.advanced');
-        Route::post('pages/{page}/builder/advanced/save', [AdvancedBuilderController::class, 'saveAdvanced'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.builder.advanced.save');
-        Route::post('pages/{page}/builder/advanced/auto-save', [AdvancedBuilderController::class, 'autoSave'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.builder.advanced.autosave');
-        Route::post('pages/{page}/builder/preview', [PageBuilderController::class, 'preview'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.builder.preview');
-        Route::post('pages/{page}/revisions/{revision}/restore', [AdvancedBuilderController::class, 'restoreRevision'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.revisions.restore');
-        Route::get('pages/{page}/revisions/compare/{revisionA}/{revisionB}', [AdvancedBuilderController::class, 'compareRevisions'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.revisions.compare');
-        Route::get('pages/{page}/revisions', [AdvancedBuilderController::class, 'getRevisions'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.revisions');
-        Route::post('pages/export-sections', [AdvancedBuilderController::class, 'exportSections'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.export-sections');
-        Route::post('pages/import-sections', [AdvancedBuilderController::class, 'importSections'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.import-sections');
-        Route::get('pages/templates', [AdvancedBuilderController::class, 'getTemplates'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.templates');
-        Route::post('pages/{page}/apply-template', [AdvancedBuilderController::class, 'applyTemplate'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.apply-template');
-        Route::post('pages/{page}/builder/template', [AdvancedBuilderController::class, 'applyTemplate'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.builder.template');
-        Route::post('pages/{page}/builder/auto-save', [AdvancedBuilderController::class, 'autoSave'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.builder.autosave');
-        Route::get('pages/{page}/search', [AdvancedBuilderController::class, 'searchContent'])
-            ->middleware('vertex.permission:pages.edit')
-            ->name('pages.search');
 
         // Builder API routes
         Route::get('api/builder/blocks', [BuilderApiController::class, 'blocks'])
@@ -198,19 +137,6 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::get('media/tags', [MediaController::class, 'tags'])
             ->middleware('vertex.permission:media.view')
             ->name('media.tags');
-
-        Route::get('seo/redirects', [RedirectController::class, 'index'])
-            ->middleware('vertex.permission:seo.view')
-            ->name('redirects.index');
-        Route::post('seo/redirects', [RedirectController::class, 'store'])
-            ->middleware('vertex.permission:seo.edit')
-            ->name('redirects.store');
-        Route::put('seo/redirects/{redirect}', [RedirectController::class, 'update'])
-            ->middleware('vertex.permission:seo.edit')
-            ->name('redirects.update');
-        Route::delete('seo/redirects/{redirect}', [RedirectController::class, 'destroy'])
-            ->middleware('vertex.permission:seo.edit')
-            ->name('redirects.destroy');
 
         Route::get('system/info', [SystemController::class, 'info'])
             ->middleware('vertex.permission:system.view')
