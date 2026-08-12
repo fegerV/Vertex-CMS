@@ -5,9 +5,13 @@ use App\Core\Http\Middleware\EnsureNotInstalled;
 use App\Core\Http\Middleware\GdprCookieMiddleware;
 use App\Core\Http\Middleware\IpFilterMiddleware;
 use App\Core\Http\Middleware\RequirePermission;
+use App\Core\Http\Middleware\SetLocale;
 use App\Seo\Http\Middleware\ResolveSeoRedirect;
-use App\System\Http\Middleware\CheckMaintenanceMode;
 use App\Support\Api\ApiResponse;
+use App\System\Http\Middleware\CheckMaintenanceMode;
+use App\Vertex\Security\Middleware\BasicRateLimiter;
+use App\Vertex\Security\Middleware\SecureHeaders;
+use App\Vertex\Security\Middleware\SessionGuard;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -16,6 +20,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
+use Sentry\Laravel\Integration;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -31,11 +36,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(EnsureInstalled::class);
-        $middleware->append(\App\Core\Http\Middleware\SetLocale::class);
+        $middleware->append(SetLocale::class);
         $middleware->append(GdprCookieMiddleware::class);
         $middleware->append(IpFilterMiddleware::class);
         $middleware->append(CheckMaintenanceMode::class);
         $middleware->append(ResolveSeoRedirect::class);
+        $middleware->append(SecureHeaders::class);
+        $middleware->append(SessionGuard::class);
+        $middleware->append(BasicRateLimiter::class);
 
         $middleware->redirectGuestsTo(function (Request $request) {
             return $request->is('admin', 'admin/*') ? route('admin.login') : null;
@@ -48,7 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $exception): bool {
+        $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $exception): bool {
             return ApiResponse::isApiRequest($request);
         });
 
@@ -76,7 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::error('forbidden', $exception->getMessage() ?: 'This action is forbidden.', status: 403);
         });
 
-        $exceptions->render(function (\Throwable $exception, Request $request) {
+        $exceptions->render(function (Throwable $exception, Request $request) {
             if (! ApiResponse::isApiRequest($request)) {
                 return null;
             }
@@ -96,9 +104,9 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::error($code, $message, status: $status);
         });
 
-        $exceptions->reportable(function (\Throwable $e) {
-            if (class_exists(\Sentry\Laravel\Integration::class)) {
-                \Sentry\Laravel\Integration::captureUnhandledException($e);
+        $exceptions->reportable(function (Throwable $e) {
+            if (class_exists(Integration::class)) {
+                Integration::captureUnhandledException($e);
             }
         });
     })

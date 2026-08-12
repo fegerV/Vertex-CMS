@@ -11,7 +11,7 @@
     <a 
         href="{{ $url }}"
         target="{{ $target }}"
-        rel="@if($target === '_blank')noopener noreferrer@endif"
+        rel="{{ $target === '_blank' ? 'noopener noreferrer' : '' }}"
         class="pb-button pb-button--{{ $style }} pb-button--{{ $size }}"
     >
         @if($icon)
