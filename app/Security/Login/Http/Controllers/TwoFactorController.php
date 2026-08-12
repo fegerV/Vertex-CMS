@@ -3,8 +3,11 @@
 namespace App\Security\Login\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Security\Login\Services\TwoFactorService;
+use App\Models\User;
+use App\Security\Login\Rules\TotpCode;
 use App\Security\Login\Services\LoginAttemptService;
+use App\Security\Login\Services\TwoFactorService;
+use App\Security\Login\Support\TwoFactorSession;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,8 +19,7 @@ class TwoFactorController extends Controller
     public function __construct(
         private readonly TwoFactorService $twoFactor,
         private readonly LoginAttemptService $loginAttempt,
-    ) {
-    }
+    ) {}
 
     public function show(): View
     {
@@ -27,10 +29,10 @@ class TwoFactorController extends Controller
     public function verify(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', new \App\Security\Login\Rules\TotpCode],
+            'code' => ['required', 'string', new TotpCode],
         ]);
 
-        $user = $request->session()->get('2fa:user');
+        $user = User::query()->find($request->session()->get(TwoFactorSession::USER_ID));
         if (! $user) {
             return redirect()->route('admin.login');
         }
@@ -50,7 +52,8 @@ class TwoFactorController extends Controller
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
-        $request->session()->forget('2fa:user');
+        $request->session()->forget(TwoFactorSession::USER_ID);
+        $request->session()->put(TwoFactorSession::VERIFIED, true);
 
         return redirect()->intended(route('admin.dashboard'));
     }

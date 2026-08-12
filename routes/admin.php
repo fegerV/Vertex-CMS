@@ -2,13 +2,19 @@
 
 use App\Admin\Http\Controllers\DashboardController;
 use App\Admin\Http\Controllers\SettingsController;
-use App\Auth\Http\Controllers\AdminAuthController;
 use App\Builder\Http\Controllers\AdvancedBuilderController;
 use App\Builder\Http\Controllers\BuilderApiController;
 use App\Builder\Http\Controllers\PageBuilderController;
 use App\Content\Http\Controllers\CustomFieldGroupController;
 use App\Core\Http\Middleware\SetAdminLocale;
+use App\Ecommerce\Http\Controllers\CartController;
+use App\Ecommerce\Http\Controllers\OrderApiController;
+use App\Ecommerce\Http\Controllers\OrderController;
+use App\Ecommerce\Http\Controllers\ProductController;
+use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\UpdateController;
 use App\Media\Http\Controllers\MediaController;
+use App\Security\Login\Http\Controllers\LoginController;
 use App\Security\Login\Http\Controllers\TwoFactorController;
 use App\Seo\Http\Controllers\RedirectController;
 use App\System\Http\Controllers\QueueController;
@@ -16,46 +22,47 @@ use App\System\Http\Controllers\SecurityController;
 use App\System\Http\Controllers\SystemController;
 use Illuminate\Support\Facades\Route;
 
-Route::name("admin.")->prefix("admin")->group(function (): void {
-     Route::middleware("guest")->group(function (): void {
-         Route::get("/login", [AdminAuthController::class, "showLogin"])->name("login");
-         Route::post("/login", [AdminAuthController::class, "login"])->middleware("throttle:10,5");
-     });
+Route::name('admin.')->prefix('admin')->group(function (): void {
+    Route::middleware('guest')->group(function (): void {
+        Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
+        Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:10,5');
+    });
 
-     // Two-Factor Authentication (requires auth but not yet 2FA verified)
-     Route::middleware(["auth", "login.2fa", SetAdminLocale::class])->group(function (): void {
-         Route::get("2fa/verify", [TwoFactorController::class, "show"])->name("2fa.verify");
-         Route::post("2fa/verify", [TwoFactorController::class, "verify"])->name("2fa.verify.submit");
-     });
+    // Two-Factor Authentication (requires auth but not yet 2FA verified)
+    Route::middleware(['auth', 'login.2fa', SetAdminLocale::class])->group(function (): void {
+        Route::get('2fa/verify', [TwoFactorController::class, 'show'])->name('2fa.verify');
+        Route::post('2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.verify.submit');
+    });
 
-     // Already fully authenticated (passport + optional 2FA)
-     Route::middleware([
-         "auth",
-         SetAdminLocale::class,
-         "login.password.expiry",
-     ])->group(function (): void {
-        Route::get("/", [DashboardController::class, "index"])->name("dashboard");
-        Route::post("/logout", [AdminAuthController::class, "logout"])->name("logout");
+    // Already fully authenticated (passport + optional 2FA)
+    Route::middleware([
+        'auth',
+        SetAdminLocale::class,
+        'login.2fa',
+        'login.password.expiry',
+    ])->group(function (): void {
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
         // Modular route files
-        require __DIR__ . "/admin/pages.php";
-        require __DIR__ . "/admin/users.php";
-        require __DIR__ . "/admin/taxonomies.php";
-        require __DIR__ . "/admin/email.php";
-        require __DIR__ . "/admin/system.php";
-        require __DIR__ . "/admin/seo.php";
+        require __DIR__.'/admin/pages.php';
+        require __DIR__.'/admin/users.php';
+        require __DIR__.'/admin/taxonomies.php';
+        require __DIR__.'/admin/email.php';
+        require __DIR__.'/admin/system.php';
+        require __DIR__.'/admin/seo.php';
 
         // Custom Field Groups
-        Route::get("custom-field-groups", [CustomFieldGroupController::class, "index"])->middleware("vertex.permission:pages.edit")->name("custom-field-groups.index");
-        Route::post("custom-field-groups", [CustomFieldGroupController::class, "store"])->middleware("vertex.permission:pages.edit")->name("custom-field-groups.store");
-        Route::put("custom-field-groups/{customFieldGroup}", [CustomFieldGroupController::class, "update"])->middleware("vertex.permission:pages.edit")->name("custom-field-groups.update");
-        Route::delete("custom-field-groups/{customFieldGroup}", [CustomFieldGroupController::class, "destroy"])->middleware("vertex.permission:pages.edit")->name("custom-field-groups.destroy");
+        Route::get('custom-field-groups', [CustomFieldGroupController::class, 'index'])->middleware('vertex.permission:pages.edit')->name('custom-field-groups.index');
+        Route::post('custom-field-groups', [CustomFieldGroupController::class, 'store'])->middleware('vertex.permission:pages.edit')->name('custom-field-groups.store');
+        Route::put('custom-field-groups/{customFieldGroup}', [CustomFieldGroupController::class, 'update'])->middleware('vertex.permission:pages.edit')->name('custom-field-groups.update');
+        Route::delete('custom-field-groups/{customFieldGroup}', [CustomFieldGroupController::class, 'destroy'])->middleware('vertex.permission:pages.edit')->name('custom-field-groups.destroy');
 
         // Media
-        Route::get("media", [MediaController::class, "index"])->middleware("vertex.permission:media.view")->name("media.index");
-        Route::post("media/upload", [MediaController::class, "store"])->middleware("vertex.permission:media.upload")->name("media.store");
-        Route::put("media/{media}", [MediaController::class, "update"])->middleware("vertex.permission:media.edit")->name("media.update");
-        Route::delete("media/{media}", [MediaController::class, "destroy"])->middleware("vertex.permission:media.delete")->name("media.destroy");
+        Route::get('media', [MediaController::class, 'index'])->middleware('vertex.permission:media.view')->name('media.index');
+        Route::post('media/upload', [MediaController::class, 'store'])->middleware('vertex.permission:media.upload')->name('media.store');
+        Route::put('media/{media}', [MediaController::class, 'update'])->middleware('vertex.permission:media.edit')->name('media.update');
+        Route::delete('media/{media}', [MediaController::class, 'destroy'])->middleware('vertex.permission:media.delete')->name('media.destroy');
 
         // Forms module routes (vertex-forms)
         require base_path('modules/vertex-forms/routes/admin.php');
@@ -160,7 +167,7 @@ Route::name("admin.")->prefix("admin")->group(function (): void {
         Route::delete('media/{media}', [MediaController::class, 'destroy'])
             ->middleware('vertex.permission:media.delete')
             ->name('media.destroy');
-        
+
         // Массовые операции
         Route::post('media/bulk-delete', [MediaController::class, 'bulkDelete'])
             ->middleware('vertex.permission:media.delete')
@@ -168,7 +175,7 @@ Route::name("admin.")->prefix("admin")->group(function (): void {
         Route::post('media/bulk-move', [MediaController::class, 'bulkMove'])
             ->middleware('vertex.permission:media.edit')
             ->name('media.bulk-move');
-        
+
         // Версии файлов
         Route::get('media/{media}/versions', [MediaController::class, 'versions'])
             ->middleware('vertex.permission:media.view')
@@ -176,17 +183,17 @@ Route::name("admin.")->prefix("admin")->group(function (): void {
         Route::post('media/versions/{version}/revert', [MediaController::class, 'revertVersion'])
             ->middleware('vertex.permission:media.edit')
             ->name('media.revert-version');
-        
+
         // Использование файла
         Route::get('media/{media}/usage', [MediaController::class, 'usageStats'])
             ->middleware('vertex.permission:media.view')
             ->name('media.usage');
-        
+
         // Оптимизация
         Route::post('media/{media}/optimize', [MediaController::class, 'optimize'])
             ->middleware('vertex.permission:media.edit')
             ->name('media.optimize');
-        
+
         // Теги
         Route::get('media/tags', [MediaController::class, 'tags'])
             ->middleware('vertex.permission:media.view')
@@ -256,101 +263,101 @@ Route::name("admin.")->prefix("admin")->group(function (): void {
             ->name('security.ip-filters.destroy');
 
         // Backup routes
-        Route::get('system/backups', [\App\Http\Controllers\Admin\BackupController::class, 'index'])
+        Route::get('system/backups', [BackupController::class, 'index'])
             ->middleware('vertex.permission:system.view')
             ->name('system.backups');
-        Route::get('api/backups', [\App\Http\Controllers\Admin\BackupController::class, 'apiList'])
+        Route::get('api/backups', [BackupController::class, 'apiList'])
             ->middleware('vertex.permission:system.view')
             ->name('api.backups.list');
-        Route::post('api/backups/create', [\App\Http\Controllers\Admin\BackupController::class, 'apiCreate'])
+        Route::post('api/backups/create', [BackupController::class, 'apiCreate'])
             ->middleware('vertex.permission:system.edit')
             ->name('api.backups.create');
-        Route::get('api/backups/download/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'apiDownload'])
+        Route::get('api/backups/download/{filename}', [BackupController::class, 'apiDownload'])
             ->middleware('vertex.permission:system.view')
             ->name('api.backups.download');
-        Route::post('api/backups/restore', [\App\Http\Controllers\Admin\BackupController::class, 'apiRestore'])
+        Route::post('api/backups/restore', [BackupController::class, 'apiRestore'])
             ->middleware('vertex.permission:system.edit')
             ->name('api.backups.restore');
-        Route::delete('api/backups/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'apiDelete'])
+        Route::delete('api/backups/{filename}', [BackupController::class, 'apiDelete'])
             ->middleware('vertex.permission:system.edit')
             ->name('api.backups.delete');
-        Route::get('api/backup-schedule', [\App\Http\Controllers\Admin\BackupController::class, 'getSchedule'])
+        Route::get('api/backup-schedule', [BackupController::class, 'getSchedule'])
             ->middleware('vertex.permission:system.view')
             ->name('api.backup.schedule.get');
-        Route::post('api/backup-schedule', [\App\Http\Controllers\Admin\BackupController::class, 'saveSchedule'])
+        Route::post('api/backup-schedule', [BackupController::class, 'saveSchedule'])
             ->middleware('vertex.permission:system.edit')
             ->name('api.backup.schedule.save');
 
         // Queue monitoring API routes
-        Route::get('api/queues/stats', [\App\Http\Controllers\Admin\QueueController::class, 'apiStats'])
+        Route::get('api/queues/stats', [App\Http\Controllers\Admin\QueueController::class, 'apiStats'])
             ->middleware('vertex.permission:system.view')
             ->name('api.queues.stats');
-        Route::get('api/queues/workers', [\App\Http\Controllers\Admin\QueueController::class, 'apiWorkerStatus'])
+        Route::get('api/queues/workers', [App\Http\Controllers\Admin\QueueController::class, 'apiWorkerStatus'])
             ->middleware('vertex.permission:system.view')
             ->name('api.queues.workers');
-        Route::post('api/queues/failed/{id}/retry', [\App\Http\Controllers\Admin\QueueController::class, 'apiRetryFailed'])
+        Route::post('api/queues/failed/{id}/retry', [App\Http\Controllers\Admin\QueueController::class, 'apiRetryFailed'])
             ->middleware('vertex.permission:system.edit')
             ->name('api.queues.retry-failed');
-        Route::post('api/queues/failed/retry-all', [\App\Http\Controllers\Admin\QueueController::class, 'apiRetryAllFailed'])
+        Route::post('api/queues/failed/retry-all', [App\Http\Controllers\Admin\QueueController::class, 'apiRetryAllFailed'])
             ->middleware('vertex.permission:system.edit')
             ->name('api.queues.retry-all');
-        Route::delete('api/queues/failed/{id}', [\App\Http\Controllers\Admin\QueueController::class, 'apiDeleteFailed'])
+        Route::delete('api/queues/failed/{id}', [App\Http\Controllers\Admin\QueueController::class, 'apiDeleteFailed'])
             ->middleware('vertex.permission:system.edit')
             ->name('api.queues.delete-failed');
-        Route::post('api/queues/clear', [\App\Http\Controllers\Admin\QueueController::class, 'apiClearQueue'])
+        Route::post('api/queues/clear', [App\Http\Controllers\Admin\QueueController::class, 'apiClearQueue'])
             ->middleware('vertex.permission:system.edit')
             ->name('api.queues.clear');
-     });
+    });
 });
 
 // System Updates
 Route::prefix('system')->name('system.')->group(function () {
-    Route::get('/updates', [App\Http\Controllers\Admin\UpdateController::class, 'index'])->name('updates.index');
-    Route::get('/updates/check', [App\Http\Controllers\Admin\UpdateController::class, 'check'])->name('updates.check');
-    Route::post('/updates/update', [App\Http\Controllers\Admin\UpdateController::class, 'update'])->name('updates.update');
-    Route::post('/optimize', [App\Http\Controllers\Admin\UpdateController::class, 'optimize'])->name('optimize');
+    Route::get('/updates', [UpdateController::class, 'index'])->name('updates.index');
+    Route::get('/updates/check', [UpdateController::class, 'check'])->name('updates.check');
+    Route::post('/updates/update', [UpdateController::class, 'update'])->name('updates.update');
+    Route::post('/optimize', [UpdateController::class, 'optimize'])->name('optimize');
 });
 
 // E-commerce routes
 Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function (): void {
     // Products
-    Route::get('ecommerce/products', [App\Ecommerce\Http\Controllers\ProductController::class, 'index'])
+    Route::get('ecommerce/products', [ProductController::class, 'index'])
         ->name('ecommerce.products.index');
-    Route::get('ecommerce/products/create', [App\Ecommerce\Http\Controllers\ProductController::class, 'create'])
+    Route::get('ecommerce/products/create', [ProductController::class, 'create'])
         ->name('ecommerce.products.create');
-    Route::post('ecommerce/products', [App\Ecommerce\Http\Controllers\ProductController::class, 'store'])
+    Route::post('ecommerce/products', [ProductController::class, 'store'])
         ->name('ecommerce.products.store');
-    Route::get('ecommerce/products/{product}', [App\Ecommerce\Http\Controllers\ProductController::class, 'show'])
+    Route::get('ecommerce/products/{product}', [ProductController::class, 'show'])
         ->name('ecommerce.products.show');
-    Route::get('ecommerce/products/{product}/edit', [App\Ecommerce\Http\Controllers\ProductController::class, 'edit'])
+    Route::get('ecommerce/products/{product}/edit', [ProductController::class, 'edit'])
         ->name('ecommerce.products.edit');
-    Route::put('ecommerce/products/{product}', [App\Ecommerce\Http\Controllers\ProductController::class, 'update'])
+    Route::put('ecommerce/products/{product}', [ProductController::class, 'update'])
         ->name('ecommerce.products.update');
-    Route::delete('ecommerce/products/{product}', [App\Ecommerce\Http\Controllers\ProductController::class, 'destroy'])
+    Route::delete('ecommerce/products/{product}', [ProductController::class, 'destroy'])
         ->name('ecommerce.products.destroy');
 
     // Orders
-    Route::get('ecommerce/orders', [App\Ecommerce\Http\Controllers\OrderController::class, 'index'])
+    Route::get('ecommerce/orders', [OrderController::class, 'index'])
         ->name('ecommerce.orders.index');
-    Route::get('ecommerce/orders/{order}', [App\Ecommerce\Http\Controllers\OrderController::class, 'show'])
+    Route::get('ecommerce/orders/{order}', [OrderController::class, 'show'])
         ->name('ecommerce.orders.show');
-    Route::post('ecommerce/orders/{order}/status', [App\Ecommerce\Http\Controllers\OrderApiController::class, 'updateStatus'])
+    Route::post('ecommerce/orders/{order}/status', [OrderApiController::class, 'updateStatus'])
         ->name('ecommerce.orders.update-status');
-    Route::post('ecommerce/orders/{order}/cancel', [App\Ecommerce\Http\Controllers\OrderApiController::class, 'cancel'])
+    Route::post('ecommerce/orders/{order}/cancel', [OrderApiController::class, 'cancel'])
         ->name('ecommerce.orders.cancel');
 
     // Cart (admin view)
-    Route::get('ecommerce/cart', [App\Ecommerce\Http\Controllers\CartController::class, 'index'])
+    Route::get('ecommerce/cart', [CartController::class, 'index'])
         ->name('ecommerce.cart.index');
 });
 
 // E-commerce settings and notifications routes (placeholder)
 Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function (): void {
-    Route::get('ecommerce/settings', function() {
+    Route::get('ecommerce/settings', function () {
         return view('admin.ecommerce.settings.index');
     })->name('ecommerce.settings');
-    
-    Route::get('ecommerce/notifications', function() {
+
+    Route::get('ecommerce/notifications', function () {
         return view('admin.ecommerce.notifications.index');
     })->name('ecommerce.notifications');
 });

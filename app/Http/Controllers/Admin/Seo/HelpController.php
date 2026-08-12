@@ -21,7 +21,7 @@ class HelpController extends Controller
                     ['name' => 'Понимание SEO Score', 'anchor' => 'seo-score'],
                     ['name' => 'Интерпретация графиков', 'anchor' => 'charts'],
                     ['name' => 'Работа с виджетами', 'anchor' => 'widgets'],
-                ]
+                ],
             ],
             'analysis' => [
                 'title' => 'Анализ контента',
@@ -32,7 +32,7 @@ class HelpController extends Controller
                     ['name' => 'Оптимизация мета-тегов', 'anchor' => 'meta-tags'],
                     ['name' => 'Работа с заголовками', 'anchor' => 'headings'],
                     ['name' => 'Плотность ключевых слов', 'anchor' => 'keyword-density'],
-                ]
+                ],
             ],
             'bulk-editor' => [
                 'title' => 'Массовое редактирование',
@@ -42,7 +42,7 @@ class HelpController extends Controller
                     ['name' => 'Фильтрация и поиск', 'anchor' => 'filtering'],
                     ['name' => 'Пакетное обновление', 'anchor' => 'bulk-update'],
                     ['name' => 'Экспорт данных', 'anchor' => 'export'],
-                ]
+                ],
             ],
             'redirects' => [
                 'title' => 'Менеджер редиректов',
@@ -53,7 +53,7 @@ class HelpController extends Controller
                     ['name' => 'Мониторинг 404', 'anchor' => '404-monitor'],
                     ['name' => 'Импорт из логов', 'anchor' => 'import-logs'],
                     ['name' => 'Регулярные выражения', 'anchor' => 'regex'],
-                ]
+                ],
             ],
             'social-media' => [
                 'title' => 'Социальные сети (Open Graph)',
@@ -64,7 +64,7 @@ class HelpController extends Controller
                     ['name' => 'Twitter Cards', 'anchor' => 'twitter-cards'],
                     ['name' => 'Загрузка изображений', 'anchor' => 'og-images'],
                     ['name' => 'Предпросмотр', 'anchor' => 'preview'],
-                ]
+                ],
             ],
             'semantics' => [
                 'title' => 'Семантическое ядро',
@@ -74,7 +74,7 @@ class HelpController extends Controller
                     ['name' => 'Сбор семантики', 'anchor' => 'keyword-research'],
                     ['name' => 'Кластеризация', 'anchor' => 'clustering'],
                     ['name' => 'Привязка к страницам', 'anchor' => 'page-mapping'],
-                ]
+                ],
             ],
             'internal-links' => [
                 'title' => 'Внутренние ссылки',
@@ -84,7 +84,7 @@ class HelpController extends Controller
                     ['name' => 'Граф связей', 'anchor' => 'link-graph'],
                     ['name' => 'Сиротские страницы', 'anchor' => 'orphan-pages'],
                     ['name' => 'Авто-линки', 'anchor' => 'auto-links'],
-                ]
+                ],
             ],
             'ai-assistant' => [
                 'title' => 'AI Ассистент',
@@ -95,7 +95,7 @@ class HelpController extends Controller
                     ['name' => 'Написание контента', 'anchor' => 'ai-content'],
                     ['name' => 'Работа с промптами', 'anchor' => 'prompts'],
                     ['name' => 'Лимиты использования', 'anchor' => 'limits'],
-                ]
+                ],
             ],
             'schema' => [
                 'title' => 'Конструктор Schema.org',
@@ -105,7 +105,7 @@ class HelpController extends Controller
                     ['name' => 'Типы схем', 'anchor' => 'schema-types'],
                     ['name' => 'JSON-LD формат', 'anchor' => 'json-ld'],
                     ['name' => 'Тестирование разметки', 'anchor' => 'testing'],
-                ]
+                ],
             ],
             'indexnow' => [
                 'title' => 'Мгновенная индексация',
@@ -115,7 +115,7 @@ class HelpController extends Controller
                     ['name' => 'Настройка API ключа', 'anchor' => 'api-key'],
                     ['name' => 'Автоматическая отправка', 'anchor' => 'auto-submit'],
                     ['name' => 'Ручная отправка', 'anchor' => 'manual-submit'],
-                ]
+                ],
             ],
             'keyword-maps' => [
                 'title' => 'Карты ключевых слов',
@@ -125,7 +125,7 @@ class HelpController extends Controller
                     ['name' => 'Создание правил', 'anchor' => 'creating-rules'],
                     ['name' => 'AI варианты фраз', 'anchor' => 'ai-variations'],
                     ['name' => 'Настройки применения', 'anchor' => 'rule-settings'],
-                ]
+                ],
             ],
             'images' => [
                 'title' => 'Анализатор изображений',
@@ -135,7 +135,7 @@ class HelpController extends Controller
                     ['name' => 'Оптимизация ALT', 'anchor' => 'alt-optimization'],
                     ['name' => 'Сжатие WebP', 'anchor' => 'webp-compression'],
                     ['name' => 'Lazy Load', 'anchor' => 'lazy-load'],
-                ]
+                ],
             ],
             'tools' => [
                 'title' => 'Инструменты и отладка',
@@ -145,7 +145,7 @@ class HelpController extends Controller
                     ['name' => 'Очистка данных', 'anchor' => 'cleanup'],
                     ['name' => 'Перестройка индексов', 'anchor' => 'rebuild-index'],
                     ['name' => 'Восстановление таблиц', 'anchor' => 'restore-tables'],
-                ]
+                ],
             ],
         ];
 
@@ -158,8 +158,8 @@ class HelpController extends Controller
     public function show($section, $topic = null)
     {
         $content = $this->getHelpContent($section, $topic);
-        
-        if (!$content) {
+
+        if (! $content) {
             abort(404, 'Статья справки не найдена');
         }
 
@@ -174,13 +174,26 @@ class HelpController extends Controller
         $query = $request->input('q', '');
         $results = [];
 
-        if (strlen($query) >= 3) {
-            // Здесь будет логика поиска по контенту справки
-            // Пока возвращаем заглушку
-            $results = [
-                ['title' => 'Как настроить редиректы?', 'section' => 'redirects', 'excerpt' => 'Пошаговое руководство по созданию 301 и 302 редиректов...'],
-                ['title' => 'Оптимизация изображений', 'section' => 'images', 'excerpt' => 'Как сжимать изображения и добавлять ALT теги автоматически...'],
-            ];
+        if (mb_strlen($query) >= 3) {
+            $needle = mb_strtolower($query);
+            foreach (glob(resource_path('views/admin/seo/help/articles/*.md')) ?: [] as $path) {
+                $markdown = (string) file_get_contents($path);
+                if (! str_contains(mb_strtolower($markdown), $needle)) {
+                    continue;
+                }
+
+                $slug = preg_replace('/^help_/', '', pathinfo($path, PATHINFO_FILENAME));
+                [$section, $topic] = array_pad(explode('_', $slug, 2), 2, $slug);
+                $plain = trim(preg_replace('/\s+/', ' ', strip_tags(preg_replace('/[#*_`>\[\]()]/', ' ', $markdown))));
+                $position = mb_stripos($plain, $query);
+                $excerptStart = max(0, ($position === false ? 0 : $position) - 60);
+                $results[] = [
+                    'title' => $this->formatTitle(str_replace('_', '-', $topic)),
+                    'section' => $section,
+                    'topic' => str_replace('_', '-', $topic),
+                    'excerpt' => mb_substr($plain, $excerptStart, 180),
+                ];
+            }
         }
 
         return view('admin.seo.help.search', compact('results', 'query'));
@@ -248,14 +261,14 @@ class HelpController extends Controller
             ],
         ];
 
-        if (!isset($files[$section][$topic])) {
+        if (! isset($files[$section][$topic])) {
             return null;
         }
 
         $filename = $files[$section][$topic];
-        $path = resource_path('views/admin/seo/help/articles/' . $filename);
+        $path = resource_path('views/admin/seo/help/articles/'.$filename);
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             return $this->generateDefaultContent($section, $topic);
         }
 

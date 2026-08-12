@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Security\Login\Support\TwoFactorSession;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,9 +18,9 @@ class TwoFactorAuth
         // Проверка включен ли 2FA у пользователя
         if ($request->user() && $request->user()->two_factor_enabled) {
             // Если сессия не подтверждена 2FA
-            if (!$request->session()->get('2fa_verified')) {
+            if (! $request->session()->boolean(TwoFactorSession::VERIFIED)) {
                 // Если это не запрос на верификацию 2FA
-                if (!$request->routeIs('admin.2fa.*')) {
+                if (! $request->routeIs('admin.2fa.*')) {
                     return redirect()->route('admin.2fa.verify');
                 }
             }

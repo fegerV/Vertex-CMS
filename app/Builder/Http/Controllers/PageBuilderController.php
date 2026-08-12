@@ -8,7 +8,6 @@ use App\Content\Services\PageService;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -20,16 +19,18 @@ class PageBuilderController extends Controller
         private readonly PageService $pages,
         private readonly PageRenderer $renderer,
         private readonly PageBuilderService $builder,
-    ) {
-    }
+    ) {}
 
-    public function edit(Page $page): View
+    public function edit(Request $request, Page $page): View
     {
+        $this->authorizeBuilderAccess($request);
+
         return view('admin.builder.edit', compact('page'));
     }
 
     public function update(Request $request, Page $page): JsonResponse
     {
+        $this->authorizeBuilderAccess($request);
         try {
             if ($request->has('content')) {
                 $payload = $request->validate([
@@ -69,6 +70,17 @@ class PageBuilderController extends Controller
                         'content_json' => 'Invalid JSON content.',
                     ]);
                 }
+
+                $sections = $this->builder->normalizeSections($content['sections'] ?? []);
+                $errors = $this->builder->validateBlocks($sections);
+                if ($errors !== []) {
+                    return response()->json(['ok' => false, 'errors' => $errors], 422);
+                }
+                $content = [
+                    'version' => '1.0',
+                    'layout' => is_string($content['layout'] ?? null) ? $content['layout'] : 'default',
+                    'sections' => $sections,
+                ];
             }
 
             $page->forceFill([
@@ -95,6 +107,7 @@ class PageBuilderController extends Controller
 
     public function preview(Request $request, Page $page): JsonResponse
     {
+        $this->authorizeBuilderAccess($request);
         $payload = $request->validate([
             'content' => ['required', 'array'],
             'document' => ['sometimes', 'boolean'],
@@ -154,5 +167,10 @@ class PageBuilderController extends Controller
                 'message' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
+    }
+
+    private function authorizeBuilderAccess(Request $request): void
+    {
+        abort_unless($request->user()?->hasPermission('pages.edit'), 403);
     }
 }
