@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Webhook;
+use App\Models\WebhookLog;
 use App\Services\Webhooks\WebhookService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,6 +15,13 @@ class ProcessWebhook implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 5;
+
+    public function backoff(): array
+    {
+        return [60, 300, 900, 1800];
+    }
+
     public function __construct(
         public Webhook $webhook,
         public string $event,
@@ -24,7 +32,7 @@ class ProcessWebhook implements ShouldQueue
     {
         $result = $webhookService->sendWebhook($this->webhook, $this->event, $this->payload);
 
-        \App\Models\WebhookLog::create([
+        WebhookLog::create([
             'webhook_id' => $this->webhook->id,
             'event' => $this->event,
             'payload' => $this->payload,
@@ -35,14 +43,14 @@ class ProcessWebhook implements ShouldQueue
             'delivered_at' => ($result['success'] ?? false) ? now() : null,
         ]);
 
-        if (!($result['success'] ?? false) && $this->attempts() < $this->webhook->retry_count) {
-            $this->release(60 * $this->attempts());
+        if (! ($result['success'] ?? false) && $this->attempts() < min($this->tries, $this->webhook->retry_count)) {
+            throw new \RuntimeException($result['error'] ?? 'Webhook delivery failed.');
         }
     }
 
     public function failed(\Throwable $exception): void
     {
-        \App\Models\WebhookLog::create([
+        WebhookLog::create([
             'webhook_id' => $this->webhook->id,
             'event' => $this->event,
             'payload' => $this->payload,

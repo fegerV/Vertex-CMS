@@ -2,15 +2,19 @@
 
 namespace App\Services\Webhooks;
 
+use App\Jobs\ProcessWebhook;
+use App\Models\Webhook;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class WebhookService
 {
     public function createWebhook(array $data)
     {
-        return \App\Models\Webhook::create([
+        $this->assertSafeUrl($data['url']);
+
+        return Webhook::create([
             'name' => $data['name'],
             'url' => $data['url'],
             'events' => $data['events'] ?? [],
@@ -24,43 +28,49 @@ class WebhookService
 
     public function triggerWebhook(string $event, array $payload)
     {
-        $webhooks = \App\Models\Webhook::where('is_active', true)
+        $webhooks = Webhook::where('is_active', true)
             ->whereJsonContains('events', $event)
             ->get();
 
         foreach ($webhooks as $webhook) {
-            dispatch(new \App\Jobs\ProcessWebhook($webhook, $event, $payload));
+            dispatch(new ProcessWebhook($webhook, $event, $payload));
         }
 
         return count($webhooks);
     }
 
-    public function verifySignature(string $payload, string $signature, string $secret): bool
+    public function verifySignature(string $payload, string $signature, string $secret, int|string|null $timestamp = null): bool
     {
-        $expectedSignature = hash_hmac('sha256', $payload, $secret);
+        $expectedSignature = hash_hmac('sha256', $payload.($timestamp ?? ''), $secret);
+
         return hash_equals($expectedSignature, $signature);
     }
 
-    public function sendWebhook(\App\Models\Webhook $webhook, string $event, array $payload): array
+    public function sendWebhook(Webhook $webhook, string $event, array $payload): array
     {
         $timestamp = Carbon::now()->timestamp;
-        $signature = hash_hmac('sha256', json_encode($payload) . $timestamp, $webhook->secret);
+        $this->assertSafeUrl($webhook->url);
+        $body = [
+            'event' => $event,
+            'timestamp' => $timestamp,
+            'data' => $payload,
+        ];
+        $encodedBody = json_encode($body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        $signature = hash_hmac('sha256', $encodedBody.$timestamp, $webhook->secret);
 
-        $headers = array_merge([
+        // System headers deliberately win over user-supplied headers.
+        $headers = array_merge($webhook->headers ?? [], [
             'Content-Type' => 'application/json',
             'X-Webhook-Signature' => $signature,
             'X-Webhook-Timestamp' => $timestamp,
             'X-Webhook-Event' => $event,
-        ], $webhook->headers ?? []);
+        ]);
 
         try {
             $response = Http::withHeaders($headers)
                 ->timeout($webhook->timeout)
-                ->post($webhook->url, [
-                    'event' => $event,
-                    'timestamp' => $timestamp,
-                    'data' => $payload,
-                ]);
+                ->withBody($encodedBody, 'application/json')
+                ->post($webhook->url);
 
             return [
                 'success' => $response->successful(),
@@ -90,5 +100,35 @@ class WebhookService
             'payment.success' => 'Оплата успешна',
             'payment.failed' => 'Оплата не удалась',
         ];
+    }
+
+    private function assertSafeUrl(string $url): void
+    {
+        $parts = parse_url($url);
+        if (! is_array($parts) || ($parts['scheme'] ?? null) !== 'https' || empty($parts['host'])) {
+            throw new \InvalidArgumentException('Webhook URL must be an absolute HTTPS URL.');
+        }
+
+        $host = strtolower(rtrim($parts['host'], '.'));
+        if ($host === 'localhost' || str_ends_with($host, '.localhost')) {
+            throw new \InvalidArgumentException('Webhook URL cannot target a local address.');
+        }
+
+        $addresses = filter_var($host, FILTER_VALIDATE_IP)
+            ? [$host]
+            : array_values(array_unique(array_merge(
+                gethostbynamel($host) ?: [],
+                array_column(dns_get_record($host, DNS_AAAA), 'ipv6'),
+            )));
+
+        if ($addresses === []) {
+            throw new \InvalidArgumentException('Webhook host could not be resolved.');
+        }
+
+        foreach ($addresses as $address) {
+            if (! filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                throw new \InvalidArgumentException('Webhook URL cannot target private or reserved networks.');
+            }
+        }
     }
 }
