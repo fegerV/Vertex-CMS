@@ -19,6 +19,7 @@
 - Settings foundation: UI и persistence для site/seo/api/ai/pwa/cache, public settings API, PWA manifest, AI sidebar scaffold.
 - Builder advanced foundation: 60+ block definitions, revisions, preview, export/import sections, template apply, modular Vite-based client layer (`canvas`, `history`, `inspector`, `templates`, `commands`) and shared media library/picker bridge.
 - Custom fields foundation: `custom_fields_json`, field groups, reusable presets, apply/save/update/delete preset workflow, template/scope rules.
+- E-commerce foundation: единая начальная схема для товаров, корзин, заказов, позиций заказа и платежей; согласованные модели/сервисы, проверка доступности и остатков товара, защищённые admin-маршруты товаров, заказов и статусов оплаты.
 - Documentation foundation: roadmap, versioning, API strategy, AI, PWA/theme/taxonomy, installer.
 
 Automated verification на 2026-05-12:
@@ -32,6 +33,7 @@ Automated verification на 2026-05-12:
 - Нужен прогон сценариев в браузере и на реальном web runtime.
 - Миграции и сиды нужно отдельно прогнать на целевой БД/окружении.
 - Интеграции с внешними AI provider SDK ещё не подтверждены живыми ключами.
+- E-commerce checkout и интеграции с реальными платёжными провайдерами ещё не подключены; таблица платежей хранит provider-neutral состояние и идентификаторы для будущих адаптеров.
 
 ## Статус P0
 

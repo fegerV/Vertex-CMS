@@ -4,6 +4,7 @@ namespace App\Ecommerce\Services;
 
 use App\Ecommerce\Models\Order;
 use App\Ecommerce\Models\OrderItem;
+use App\Ecommerce\Models\Product;
 use App\Models\User;
 use App\System\Services\ActivityLogService;
 use Illuminate\Support\Facades\DB;
@@ -14,8 +15,7 @@ class OrderService
 
     public function __construct(
         private readonly ActivityLogService $activityLog,
-    ) {
-    }
+    ) {}
 
     public function createFromCart(array $checkoutData, ?User $user = null, ?string $sessionId = null): Order
     {
@@ -47,18 +47,24 @@ class OrderService
             ]);
 
             foreach ($cartItems as $item) {
+                $product = Product::query()->lockForUpdate()->findOrFail($item->product_id);
+
+                if ($product->track_inventory && $product->quantity < $item->quantity) {
+                    throw new \RuntimeException("Insufficient stock for {$product->name}.");
+                }
+
                 OrderItem::query()->create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
-                    'product_name' => $item->product?->name ?? 'Unknown',
-                    'sku' => $item->product?->sku ?? null,
+                    'product_name' => $product->name,
+                    'sku' => $product->sku,
                     'quantity' => $item->quantity,
-                    'price' => $item->product?->price ?? 0,
-                    'total' => ($item->product?->price ?? 0) * $item->quantity,
+                    'price' => $product->price,
+                    'total' => (float) $product->price * $item->quantity,
                 ]);
 
-                if ($item->product?->track_inventory) {
-                    $item->product->decrement('quantity', $item->quantity);
+                if ($product->track_inventory) {
+                    $product->decrement('quantity', $item->quantity);
                 }
             }
 

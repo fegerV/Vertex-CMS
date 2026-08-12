@@ -8,7 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Products table
         Schema::create('ecommerce_products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -25,72 +24,81 @@ return new class extends Migration
             $table->string('meta_title')->nullable();
             $table->string('meta_description')->nullable();
             $table->text('meta_keywords')->nullable();
-            $table->foreignId('created_by')->constrained('users')->onDelete('set null');
-            $table->foreignId('updated_by')->constrained('users')->onDelete('set null');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
-            
+
             $table->index(['status', 'published_at']);
-            $table->index('slug');
         });
 
-        // Cart items table
         Schema::create('ecommerce_cart_items', function (Blueprint $table) {
             $table->id();
             $table->string('session_id')->index();
             $table->foreignId('product_id')->constrained('ecommerce_products')->onDelete('cascade');
             $table->integer('quantity')->default(1);
             $table->timestamps();
-            
+
             $table->unique(['session_id', 'product_id']);
         });
 
-        // Orders table
         Schema::create('ecommerce_orders', function (Blueprint $table) {
             $table->id();
-            $table->string('order_number')->unique();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->string('session_id')->index();
-            $table->string('email');
-            $table->string('name');
-            $table->json('shipping_address');
-            $table->json('billing_address')->nullable();
-            $table->string('payment_method');
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('session_id')->nullable()->index();
+            $table->string('customer_email');
+            $table->string('customer_name');
+            $table->json('shipping_address_json');
+            $table->json('billing_address_json')->nullable();
             $table->text('notes')->nullable();
             $table->enum('status', ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])->default('pending');
             $table->decimal('subtotal', 10, 2)->default(0);
             $table->decimal('tax', 10, 2)->default(0);
             $table->decimal('discount', 10, 2)->default(0);
             $table->decimal('total', 10, 2)->default(0);
+            $table->enum('payment_status', ['pending', 'paid', 'failed', 'refunded'])->default('pending');
+            $table->string('payment_method')->nullable();
+            $table->string('payment_transaction_id')->nullable();
             $table->timestamp('paid_at')->nullable();
-            $table->timestamp('shipped_at')->nullable();
-            $table->timestamp('delivered_at')->nullable();
-            $table->timestamp('cancelled_at')->nullable();
-            $table->foreignId('cancelled_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
-            
-            $table->index('order_number');
+
             $table->index('status');
-            $table->index('email');
+            $table->index('payment_status');
+            $table->index('customer_email');
         });
 
-        // Order items table
         Schema::create('ecommerce_order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('ecommerce_orders')->onDelete('cascade');
-            $table->foreignId('product_id')->constrained('ecommerce_products')->onDelete('restrict');
+            $table->foreignId('product_id')->nullable()->constrained('ecommerce_products')->nullOnDelete();
             $table->string('product_name');
-            $table->string('product_sku')->nullable();
+            $table->string('sku')->nullable();
             $table->integer('quantity')->default(1);
             $table->decimal('price', 10, 2)->default(0);
             $table->decimal('total', 10, 2)->default(0);
             $table->timestamps();
-            
-            $table->index('order_id');
+
+        });
+
+        Schema::create('ecommerce_payments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('order_id')->constrained('ecommerce_orders')->cascadeOnDelete();
+            $table->string('provider');
+            $table->string('provider_payment_id')->nullable();
+            $table->enum('status', ['pending', 'processing', 'succeeded', 'failed', 'cancelled', 'refunded'])->default('pending');
+            $table->decimal('amount', 10, 2);
+            $table->char('currency', 3)->default('USD');
+            $table->json('metadata')->nullable();
+            $table->timestamp('processed_at')->nullable();
+            $table->timestamps();
+
+            $table->unique(['provider', 'provider_payment_id']);
+            $table->index(['order_id', 'status']);
         });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('ecommerce_payments');
         Schema::dropIfExists('ecommerce_order_items');
         Schema::dropIfExists('ecommerce_orders');
         Schema::dropIfExists('ecommerce_cart_items');

@@ -2,13 +2,9 @@
 
 use App\Admin\Http\Controllers\DashboardController;
 use App\Admin\Http\Controllers\SettingsController;
-use App\Builder\Http\Controllers\AdvancedBuilderController;
 use App\Builder\Http\Controllers\BuilderApiController;
-use App\Builder\Http\Controllers\PageBuilderController;
 use App\Content\Http\Controllers\CustomFieldGroupController;
 use App\Core\Http\Middleware\SetAdminLocale;
-use App\Ecommerce\Http\Controllers\CartController;
-use App\Ecommerce\Http\Controllers\OrderApiController;
 use App\Ecommerce\Http\Controllers\OrderController;
 use App\Ecommerce\Http\Controllers\ProductController;
 use App\Http\Controllers\Admin\BackupController;
@@ -16,7 +12,6 @@ use App\Http\Controllers\Admin\UpdateController;
 use App\Media\Http\Controllers\MediaController;
 use App\Security\Login\Http\Controllers\LoginController;
 use App\Security\Login\Http\Controllers\TwoFactorController;
-use App\Seo\Http\Controllers\RedirectController;
 use App\System\Http\Controllers\QueueController;
 use App\System\Http\Controllers\SecurityController;
 use App\System\Http\Controllers\SystemController;
@@ -244,48 +239,39 @@ Route::prefix('system')->name('system.')->group(function () {
     Route::post('/optimize', [UpdateController::class, 'optimize'])->name('optimize');
 });
 
-// E-commerce routes
-Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function (): void {
-    // Products
-    Route::get('ecommerce/products', [ProductController::class, 'index'])
-        ->name('ecommerce.products.index');
-    Route::get('ecommerce/products/create', [ProductController::class, 'create'])
-        ->name('ecommerce.products.create');
-    Route::post('ecommerce/products', [ProductController::class, 'store'])
-        ->name('ecommerce.products.store');
-    Route::get('ecommerce/products/{product}', [ProductController::class, 'show'])
-        ->name('ecommerce.products.show');
-    Route::get('ecommerce/products/{product}/edit', [ProductController::class, 'edit'])
-        ->name('ecommerce.products.edit');
-    Route::put('ecommerce/products/{product}', [ProductController::class, 'update'])
-        ->name('ecommerce.products.update');
-    Route::delete('ecommerce/products/{product}', [ProductController::class, 'destroy'])
-        ->name('ecommerce.products.destroy');
+Route::prefix('admin/ecommerce')->name('admin.ecommerce.')->middleware([
+    'auth',
+    SetAdminLocale::class,
+    'login.2fa',
+    'login.password.expiry',
+])->group(function (): void {
+    Route::get('products', [ProductController::class, 'index'])
+        ->middleware('vertex.permission:ecommerce.products.view')->name('products.index');
+    Route::get('products/create', [ProductController::class, 'create'])
+        ->middleware('vertex.permission:ecommerce.products.create')->name('products.create');
+    Route::post('products', [ProductController::class, 'store'])
+        ->middleware('vertex.permission:ecommerce.products.create')->name('products.store');
+    Route::get('products/{product}', [ProductController::class, 'show'])
+        ->middleware('vertex.permission:ecommerce.products.view')->name('products.show');
+    Route::get('products/{product}/edit', [ProductController::class, 'edit'])
+        ->middleware('vertex.permission:ecommerce.products.edit')->name('products.edit');
+    Route::put('products/{product}', [ProductController::class, 'update'])
+        ->middleware('vertex.permission:ecommerce.products.edit')->name('products.update');
+    Route::delete('products/{product}', [ProductController::class, 'destroy'])
+        ->middleware('vertex.permission:ecommerce.products.delete')->name('products.destroy');
 
-    // Orders
-    Route::get('ecommerce/orders', [OrderController::class, 'index'])
-        ->name('ecommerce.orders.index');
-    Route::get('ecommerce/orders/{order}', [OrderController::class, 'show'])
-        ->name('ecommerce.orders.show');
-    Route::post('ecommerce/orders/{order}/status', [OrderApiController::class, 'updateStatus'])
-        ->name('ecommerce.orders.update-status');
-    Route::post('ecommerce/orders/{order}/cancel', [OrderApiController::class, 'cancel'])
-        ->name('ecommerce.orders.cancel');
-
-    // Cart (admin view)
-    Route::get('ecommerce/cart', [CartController::class, 'index'])
-        ->name('ecommerce.cart.index');
-});
-
-// E-commerce settings and notifications routes (placeholder)
-Route::middleware(['auth', 'vertex.permission:admin.access'])->group(function (): void {
-    Route::get('ecommerce/settings', function () {
-        return view('admin.ecommerce.settings.index');
-    })->name('ecommerce.settings');
-
-    Route::get('ecommerce/notifications', function () {
-        return view('admin.ecommerce.notifications.index');
-    })->name('ecommerce.notifications');
+    Route::get('orders', [OrderController::class, 'index'])
+        ->middleware('vertex.permission:ecommerce.orders.view')->name('orders.index');
+    Route::get('orders/{order}', [OrderController::class, 'show'])
+        ->middleware('vertex.permission:ecommerce.orders.view')->name('orders.show');
+    Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])
+        ->middleware('vertex.permission:ecommerce.orders.update')->name('orders.update-status');
+    Route::post('orders/{order}/payment', [OrderController::class, 'updatePayment'])
+        ->middleware('vertex.permission:ecommerce.payments.update')->name('orders.update-payment');
+    Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])
+        ->middleware('vertex.permission:ecommerce.orders.update')->name('orders.cancel');
+    Route::post('orders/{order}/refund', [OrderController::class, 'refund'])
+        ->middleware('vertex.permission:ecommerce.payments.update')->name('orders.refund');
 });
 
 // Settings routes

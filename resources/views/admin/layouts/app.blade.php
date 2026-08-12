@@ -70,8 +70,6 @@
                 'children' => [
                     ['label' => 'Товары', 'route' => 'admin.ecommerce.products.index', 'permission' => 'ecommerce.products.view'],
                     ['label' => 'Заказы', 'route' => 'admin.ecommerce.orders.index', 'permission' => 'ecommerce.orders.view'],
-                    ['label' => 'Настройки', 'route' => 'admin.ecommerce.settings', 'permission' => 'ecommerce.settings.view'],
-                    ['label' => 'Уведомления', 'route' => 'admin.ecommerce.notifications', 'permission' => 'ecommerce.notifications.view'],
                 ]
             ],
             [
