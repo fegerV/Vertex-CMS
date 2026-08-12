@@ -3,6 +3,19 @@
 namespace App\Vertex\Security;
 
 use App\Vertex\Security\Console\Commands\RunSecurityScanner;
+use App\Vertex\Security\Middleware\BasicRateLimiter;
+use App\Vertex\Security\Middleware\SecureHeaders;
+use App\Vertex\Security\Middleware\SessionGuard;
+use App\Vertex\Security\Modules\Alerts\AlertsModule;
+use App\Vertex\Security\Modules\Cloudflare\CloudflareModule;
+use App\Vertex\Security\Modules\GeoIp\GeoIpMiddleware;
+use App\Vertex\Security\Modules\GeoIp\GeoIpModule;
+use App\Vertex\Security\Modules\Hibp\HibpModule;
+use App\Vertex\Security\Modules\Integrity\IntegrityModule;
+use App\Vertex\Security\Modules\Scanner\ScannerModule;
+use App\Vertex\Security\Modules\Waf\WafMiddleware;
+use App\Vertex\Security\Modules\Waf\WafModule;
+use App\Vertex\Security\Support\ModuleRegistry;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Foundation\Application;
@@ -11,23 +24,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use App\Vertex\Security\Middleware\BasicRateLimiter;
-use App\Vertex\Security\Middleware\SecureHeaders;
-use App\Vertex\Security\Middleware\SessionGuard;
-use App\Vertex\Security\Modules\Alerts\AlertsModule;
-use App\Vertex\Security\Modules\Cloudflare\CloudflareModule;
-use App\Vertex\Security\Modules\GeoIp\GeoIpModule;
-use App\Vertex\Security\Modules\Hibp\HibpModule;
-use App\Vertex\Security\Modules\Integrity\IntegrityModule;
-use App\Vertex\Security\Modules\Scanner\ScannerModule;
-use App\Vertex\Security\Modules\Waf\WafModule;
-use App\Vertex\Security\Support\ModuleRegistry;
 
 class SecurityServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(ModuleRegistry::class, fn () => new ModuleRegistry());
+        $this->app->singleton(ModuleRegistry::class, fn () => new ModuleRegistry);
     }
 
     public function boot(): void
@@ -168,5 +170,24 @@ class SecurityServiceProvider extends ServiceProvider
             $module = $this->app->make($moduleClass);
             $module->register($this->app);
         }
+
+        $middleware = array_filter([
+            config('security.modules.waf', false) ? WafMiddleware::class : null,
+            config('security.modules.geoip', false) ? GeoIpMiddleware::class : null,
+        ]);
+
+        $register = function (object $kernel) use ($middleware): void {
+            if (! method_exists($kernel, 'prependMiddleware')) {
+                return;
+            }
+            foreach (array_reverse($middleware) as $item) {
+                $kernel->prependMiddleware($item);
+            }
+        };
+
+        if ($this->app->resolved(HttpKernelContract::class)) {
+            $register($this->app->make(HttpKernelContract::class));
+        }
+        $this->app->afterResolving(HttpKernelContract::class, $register);
     }
 }
