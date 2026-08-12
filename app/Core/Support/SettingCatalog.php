@@ -21,6 +21,24 @@ class SettingCatalog
                     'site.admin_locale' => ['label' => 'Язык админ-панели', 'type' => 'string', 'input' => 'select', 'options' => ['ru' => 'Русский', 'en' => 'English'], 'rules' => ['required', 'string', 'max:5'], 'description' => 'Язык интерфейса административной панели'],
                 ],
             ],
+            'design' => [
+                'label' => 'Глобальный дизайн',
+                'description' => 'Единая палитра, типографика, размеры контейнеров и кнопок для всех страниц.',
+                'fields' => [
+                    'design.primary_color' => ['label' => 'Основной цвет', 'type' => 'string', 'input' => 'color', 'rules' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'], 'description' => 'Основные кнопки, ссылки и акценты.'],
+                    'design.secondary_color' => ['label' => 'Дополнительный цвет', 'type' => 'string', 'input' => 'color', 'rules' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'], 'description' => 'Вторичные элементы интерфейса.'],
+                    'design.accent_color' => ['label' => 'Акцентный цвет', 'type' => 'string', 'input' => 'color', 'rules' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'], 'description' => 'Выделения и декоративные акценты.'],
+                    'design.text_color' => ['label' => 'Цвет текста', 'type' => 'string', 'input' => 'color', 'rules' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/']],
+                    'design.background_color' => ['label' => 'Цвет фона', 'type' => 'string', 'input' => 'color', 'rules' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/']],
+                    'design.heading_font' => ['label' => 'Шрифт заголовков', 'type' => 'string', 'input' => 'text', 'rules' => ['nullable', 'string', 'max:80'], 'description' => 'Системный, загруженный или подключенный веб-шрифт.'],
+                    'design.body_font' => ['label' => 'Шрифт текста', 'type' => 'string', 'input' => 'text', 'rules' => ['nullable', 'string', 'max:80']],
+                    'design.base_font_size' => ['label' => 'Базовый размер текста, px', 'type' => 'integer', 'input' => 'number', 'rules' => ['nullable', 'integer', 'min:12', 'max:24']],
+                    'design.content_width' => ['label' => 'Ширина контейнера, px', 'type' => 'integer', 'input' => 'number', 'rules' => ['nullable', 'integer', 'min:640', 'max:1920']],
+                    'design.section_spacing' => ['label' => 'Вертикальный отступ секций, px', 'type' => 'integer', 'input' => 'number', 'rules' => ['nullable', 'integer', 'min:0', 'max:200']],
+                    'design.button_radius' => ['label' => 'Скругление кнопок, px', 'type' => 'integer', 'input' => 'number', 'rules' => ['nullable', 'integer', 'min:0', 'max:100']],
+                    'design.button_weight' => ['label' => 'Насыщенность кнопок', 'type' => 'integer', 'input' => 'select', 'options' => [400 => 'Обычная', 500 => 'Средняя', 600 => 'Полужирная', 700 => 'Жирная'], 'rules' => ['nullable', 'integer', 'in:400,500,600,700']],
+                ],
+            ],
             'seo' => [
                 'label' => 'SEO',
                 'description' => 'Глобальные SEO-настройки и поведение индексации.',
@@ -819,4 +837,3 @@ class SettingCatalog
             ->all();
     }
 }
-

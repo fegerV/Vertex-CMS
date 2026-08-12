@@ -5,6 +5,7 @@ namespace App\Builder\Http\Controllers;
 use App\Builder\Config\BlockRegistry;
 use App\Builder\Config\SectionRegistry;
 use App\Builder\Services\PageBuilderService;
+use App\Builder\Services\DesignSystemService;
 use App\Builder\Support\BuilderContractSerializer;
 use App\Builder\Support\BuilderLibraryManager;
 use App\Http\Controllers\Controller;
@@ -24,6 +25,7 @@ class AdvancedBuilderController extends Controller
         private readonly BuilderLibraryManager $library,
         private readonly BuilderContractSerializer $serializer,
         private readonly ActivityLogService $activityLog,
+        private readonly DesignSystemService $designSystem,
     ) {}
 
     public function advanced(Request $request, Page $page): View
@@ -524,6 +526,7 @@ class AdvancedBuilderController extends Controller
             'categories' => BlockRegistry::getCategories(),
             'total_blocks' => count(BlockRegistry::all()),
             'blocks' => $serializedBlocks,
+            'design_system' => $this->designSystem->tokens(),
             'quick_add' => [
                 'templates' => $this->library->quickAddTemplates(),
             ],
