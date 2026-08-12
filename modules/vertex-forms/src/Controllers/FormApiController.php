@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Vertex\Forms\FieldTypeRegistry;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormField;
@@ -60,37 +61,29 @@ class FormApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', 'unique:forms,slug'],
-            'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'settings' => ['nullable', 'array'],
-            'require_login' => ['nullable', 'boolean'],
-            'entry_limit' => ['nullable', 'integer', 'min:0'],
-            'daily_limit' => ['nullable', 'integer', 'min:0'],
-            'available_from' => ['nullable', 'date'],
-            'available_to' => ['nullable', 'date', 'after_or_equal:available_from'],
-            'fields' => ['nullable', 'array'],
-        ]);
+        $validated = $request->validate($this->formRules());
 
-        $form = Form::query()->create([
-            'name' => $validated['name'],
-            'slug' => $this->resolveSlug($validated['slug'] ?? null, $validated['name']),
-            'type' => $validated['type'] ?? 'standard',
-            'description' => $validated['description'] ?? null,
-            'settings' => $validated['settings'] ?? [],
-            'require_login' => $validated['require_login'] ?? false,
-            'entry_limit' => $validated['entry_limit'] ?? null,
-            'daily_limit' => $validated['daily_limit'] ?? null,
-            'available_from' => $validated['available_from'] ?? null,
-            'available_to' => $validated['available_to'] ?? null,
-            'created_by' => $request->user()?->id,
-        ]);
+        $form = DB::transaction(function () use ($request, $validated): Form {
+            $form = Form::query()->create([
+                'name' => $validated['name'],
+                'slug' => $this->resolveSlug($validated['slug'] ?? null, $validated['name']),
+                'type' => $validated['type'] ?? 'standard',
+                'description' => $validated['description'] ?? null,
+                'settings' => $validated['settings'] ?? [],
+                'require_login' => $validated['require_login'] ?? false,
+                'entry_limit' => $validated['entry_limit'] ?? null,
+                'daily_limit' => $validated['daily_limit'] ?? null,
+                'available_from' => $validated['available_from'] ?? null,
+                'available_to' => $validated['available_to'] ?? null,
+                'created_by' => $request->user()?->id,
+            ]);
 
-        if (! empty($validated['fields'])) {
-            $this->syncFields($form, $validated['fields']);
-        }
+            if (! empty($validated['fields'])) {
+                $this->syncFields($form, $validated['fields']);
+            }
+
+            return $form;
+        });
 
         return response()->json([
             'form' => $form->load('fields'),
@@ -131,21 +124,7 @@ class FormApiController extends Controller
 
     public function update(Request $request, Form $form): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', 'unique:forms,slug,'.$form->id],
-            'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'settings' => ['nullable', 'array'],
-            'require_login' => ['nullable', 'boolean'],
-            'entry_limit' => ['nullable', 'integer', 'min:0'],
-            'daily_limit' => ['nullable', 'integer', 'min:0'],
-            'available_from' => ['nullable', 'date'],
-            'available_to' => ['nullable', 'date', 'after_or_equal:available_from'],
-            'is_active' => ['nullable', 'boolean'],
-            'sort_order' => ['nullable', 'integer'],
-            'fields' => ['nullable', 'array'],
-        ]);
+        $validated = $request->validate($this->formRules($form));
 
         DB::transaction(function () use ($form, $validated): void {
             if (config('forms.auto_snapshot_on_save', true)) {
@@ -306,11 +285,45 @@ class FormApiController extends Controller
             'sort_order' => $fieldData['sort_order'] ?? $index,
             'required' => (bool) ($fieldData['required'] ?? $defaultField['required'] ?? false),
             'visible' => (bool) ($fieldData['visible'] ?? $defaultField['visible'] ?? true),
-            'options' => is_array($fieldData['options'] ?? null) ? $fieldData['options'] : [],
-            'default_value' => $fieldData['default_value'] ?? null,
-            'placeholder' => $fieldData['placeholder'] ?? null,
-            'help_text' => $fieldData['help_text'] ?? null,
-            'css_class' => $fieldData['css_class'] ?? null,
+            'options' => array_merge(
+                $defaultField['options'] ?? [],
+                collect($defaultField)->except(['id', 'type', 'name', 'label', 'sort_order', 'required', 'visible', 'default_value', 'placeholder', 'help_text', 'css_class', 'options'])->all(),
+                is_array($fieldData['options'] ?? null) ? $fieldData['options'] : []
+            ),
+            'default_value' => $fieldData['default_value'] ?? $defaultField['default_value'] ?? null,
+            'placeholder' => $fieldData['placeholder'] ?? $defaultField['placeholder'] ?? null,
+            'help_text' => $fieldData['help_text'] ?? $defaultField['help_text'] ?? null,
+            'css_class' => $fieldData['css_class'] ?? $defaultField['css_class'] ?? null,
+        ];
+    }
+
+    private function formRules(?Form $form = null): array
+    {
+        $fieldTypes = collect(FieldTypeRegistry::getAll())->pluck('type')->all();
+
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:100', 'alpha_dash', Rule::unique('forms', 'slug')->ignore($form?->id)],
+            'type' => ['nullable', 'string', 'in:standard,calculator,survey,poll'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'settings' => ['nullable', 'array'],
+            'require_login' => ['nullable', 'boolean'],
+            'entry_limit' => ['nullable', 'integer', 'min:0'],
+            'daily_limit' => ['nullable', 'integer', 'min:0'],
+            'available_from' => ['nullable', 'date'],
+            'available_to' => ['nullable', 'date', 'after_or_equal:available_from'],
+            'is_active' => ['nullable', 'boolean'],
+            'sort_order' => ['nullable', 'integer'],
+            'fields' => ['nullable', 'array'],
+            'fields.*' => ['array'],
+            'fields.*.id' => ['nullable', 'integer'],
+            'fields.*.type' => ['required', 'string', Rule::in($fieldTypes)],
+            'fields.*.name' => ['required', 'string', 'max:100', 'regex:/^[a-z_][a-z0-9_]*$/i', 'distinct'],
+            'fields.*.label' => ['required', 'string', 'max:255'],
+            'fields.*.options' => ['nullable', 'array'],
+            'fields.*.sort_order' => ['nullable', 'integer', 'min:0'],
+            'fields.*.required' => ['nullable', 'boolean'],
+            'fields.*.visible' => ['nullable', 'boolean'],
         ];
     }
 }
