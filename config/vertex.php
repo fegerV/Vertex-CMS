@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'version' => env('VERTEX_VERSION', '0.1.0'),
+    'version' => env('VERTEX_VERSION', '1.0.0'),
     'installed' => (bool) env('VERTEX_INSTALLED', false),
     'install_lock_path' => storage_path('app/installed.lock'),
     'theme' => env('VERTEX_THEME', 'default'),
@@ -54,4 +54,3 @@ return [
         ],
     ],
 ];
-

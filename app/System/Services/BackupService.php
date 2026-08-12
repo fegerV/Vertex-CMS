@@ -2,27 +2,34 @@
 
 namespace App\System\Services;
 
-use Illuminate\Support\Facades\Artisan;
+use App\System\Support\BackupHookRegistry;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class BackupService
 {
     protected string $disk;
+
     protected string $backupPath;
 
-    public function __construct()
+    public function __construct(private readonly BackupHookRegistry $hooks)
     {
-        $this->disk = config('filesystems.default', 'local');
+        $this->disk = config('vertex.backup.schedule.storage', config('filesystems.default', 'local'));
         $this->backupPath = 'backups';
     }
 
     public function createDatabaseBackup(): string
     {
+        return $this->runWithHooks('database', fn (): string => $this->performDatabaseBackup());
+    }
+
+    private function performDatabaseBackup(): string
+    {
         $connection = config('database.default');
         $config = config("database.connections.{$connection}");
 
-        $filename = "db_{$connection}_" . date('Y-m-d_His') . '.sql';
+        $filename = "db_{$connection}_".date('Y-m-d_His').'.sql';
         $filepath = storage_path("app/{$this->backupPath}/{$filename}");
 
         $command = match ($config['driver']) {
@@ -70,12 +77,17 @@ class BackupService
 
     public function createFilesBackup(): string
     {
-        $filename = "files_" . date('Y-m-d_His') . '.zip';
+        return $this->runWithHooks('files', fn (): string => $this->performFilesBackup());
+    }
+
+    private function performFilesBackup(): string
+    {
+        $filename = 'files_'.date('Y-m-d_His').'.zip';
         $filepath = storage_path("app/{$this->backupPath}/{$filename}");
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         if ($zip->open($filepath, \ZipArchive::CREATE) !== true) {
-            throw new \Exception("Cannot create ZIP archive");
+            throw new \Exception('Cannot create ZIP archive');
         }
 
         $directoriesToBackup = [
@@ -103,6 +115,22 @@ class BackupService
         return $filename;
     }
 
+    private function runWithHooks(string $type, callable $operation): string
+    {
+        $context = ['disk' => $this->disk, 'started_at' => now()->toISOString()];
+        $this->hooks->before($type, $context);
+
+        try {
+            $filename = $operation();
+            $this->hooks->after($type, $filename, $context);
+
+            return $filename;
+        } catch (Throwable $exception) {
+            $this->hooks->failed($type, $exception, $context);
+            throw $exception;
+        }
+    }
+
     protected function addDirToZip(\ZipArchive $zip, string $dir, string $prefix = ''): void
     {
         $files = new \RecursiveIteratorIterator(
@@ -111,9 +139,9 @@ class BackupService
         );
 
         foreach ($files as $file) {
-            if (!$file->isDir()) {
+            if (! $file->isDir()) {
                 $filePath = $file->getRealPath();
-                $relativePath = $prefix . '/' . substr($filePath, strlen($dir) + 1);
+                $relativePath = $prefix.'/'.substr($filePath, strlen($dir) + 1);
                 $zip->addFile($filePath, $relativePath);
             }
         }

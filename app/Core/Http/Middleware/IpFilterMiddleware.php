@@ -2,6 +2,7 @@
 
 namespace App\Core\Http\Middleware;
 
+use App\Core\Services\InstallationService;
 use App\Models\IpFilter;
 use Closure;
 use Illuminate\Http\Request;
@@ -9,11 +10,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 class IpFilterMiddleware
 {
+    public function __construct(private readonly InstallationService $installation) {}
+
     public function handle(Request $request, Closure $next): Response
     {
+        if (! $this->installation->isInstalled()) {
+            return $next($request);
+        }
+
         $ip = $request->ip();
 
-        if (!$ip) {
+        if (! $ip) {
             return $next($request);
         }
 
@@ -25,7 +32,7 @@ class IpFilterMiddleware
                 return $this->ipMatches($ip, $filter->ip_address);
             });
 
-            if (!$isWhitelisted) {
+            if (! $isWhitelisted) {
                 return response()->view('errors.403', [
                     'message' => 'Доступ запрещён. Ваш IP-адрес не находится в белом списке.',
                 ], 403);
@@ -49,7 +56,8 @@ class IpFilterMiddleware
     {
         if (str_contains($filterIp, '*')) {
             $pattern = str_replace('*', '.*', preg_quote($filterIp, '/'));
-            return (bool) preg_match('/^' . $pattern . '$/', $requestIp);
+
+            return (bool) preg_match('/^'.$pattern.'$/', $requestIp);
         }
 
         return $requestIp === $filterIp;

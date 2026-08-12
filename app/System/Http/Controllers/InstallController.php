@@ -98,7 +98,6 @@ class InstallController extends Controller
             return response()->json([
                 'ok' => false,
                 'message' => 'Installation failed.',
-                'error' => $exception->getMessage(),
             ], 500);
         }
     }
