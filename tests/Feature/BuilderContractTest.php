@@ -109,6 +109,26 @@ class BuilderContractTest extends TestCase
         $this->assertDatabaseCount('page_revisions', 0);
     }
 
+    public function test_builder_validates_blocks_submitted_as_json_document(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage(['content_json' => ['version' => '1.0', 'sections' => []]]);
+
+        $response = $this->actingAs($editor)->putJson("/admin/pages/{$page->id}/builder", [
+            'content_json' => json_encode([
+                'version' => '1.0',
+                'sections' => [[
+                    'id' => 'unsafe-section',
+                    'blocks' => [['type' => 'not-registered', 'settings' => []]],
+                ]],
+            ], JSON_THROW_ON_ERROR),
+        ]);
+
+        $response->assertUnprocessable()->assertJsonPath('ok', false);
+        $this->assertStringContainsString('Unknown block type', $response->json('errors.0'));
+        $this->assertSame([], $page->fresh()->content_json['sections']);
+    }
+
     public function test_builder_preview_returns_rendered_html_without_persisting_changes(): void
     {
         $editor = $this->makeUserWithRole('editor');

@@ -2,10 +2,10 @@
 
 namespace Vertex\Forms\Services;
 
+use Illuminate\Support\Facades\DB;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormAnalytic;
 use Vertex\Forms\Models\FormSubmission;
-use Illuminate\Support\Facades\DB;
 
 class FormAnalyticsService
 {
@@ -18,30 +18,33 @@ class FormAnalyticsService
 
         // Daily submissions
         $dailySubmissions = FormSubmission::select(
-            DB::raw("DATE(created_at) as date"),
-            DB::raw("COUNT(*) as count")
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('COUNT(*) as count')
         )
-        ->where("form_id", $form->id)
-        ->where("created_at", ">=", $dateFrom)
-        ->groupBy(DB::raw("DATE(created_at)"))
-        ->orderBy("date")
-        ->get()
-        ->keyBy("date")
-        ->map(fn ($row) => $row->count)
-        ->toArray();
+            ->where('form_id', $form->id)
+            ->where('created_at', '>=', $dateFrom)
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date')
+            ->map(fn ($row) => $row->count)
+            ->toArray();
 
         // Total stats
         $totalSubmissions = $form->submissions()->count();
-        $uniqueIPs = $form->submissions()->select("ip_address")->distinct()->count();
-        
-        // Views would be logged separately (FormViewLog model in future)
-        $views = $totalSubmissions * 3; // placeholder until view logging implemented
+        $uniqueIPs = $form->submissions()->select('ip_address')->distinct()->count();
+
+        $analytics = FormAnalytic::query()
+            ->where('form_id', $form->id)
+            ->where('date', '>=', $dateFrom->toDateString());
+        $views = (int) (clone $analytics)->sum('views');
+        $uniqueVisitors = (int) (clone $analytics)->sum('unique_visitors');
 
         // Build daily time series
         $dates = [];
         $submissionsSeries = [];
         for ($d = $days - 1; $d >= 0; $d--) {
-            $date = now()->subDays($d)->format("Y-m-d");
+            $date = now()->subDays($d)->format('Y-m-d');
             $dates[] = $date;
             $submissionsSeries[] = $dailySubmissions[$date] ?? 0;
         }
@@ -49,10 +52,10 @@ class FormAnalyticsService
         // Field completion rate (percent of submissions where field is non-empty)
         $fieldsCompletion = [];
         foreach ($form->fields as $field) {
-            $filledCount = DB::table("form_submission_values")
-                ->where("field_id", $field->id)
-                ->whereNotNull("value")
-                ->where("value", "!=", "")
+            $filledCount = DB::table('form_submission_values')
+                ->where('field_id', $field->id)
+                ->whereNotNull('value')
+                ->where('value', '!=', '')
                 ->count();
             $completion = $totalSubmissions > 0 ? round(($filledCount / $totalSubmissions) * 100, 1) : 0;
             $fieldsCompletion[$field->label] = $completion;
@@ -62,16 +65,16 @@ class FormAnalyticsService
         $avgTime = 0;
 
         return [
-            "total_submissions" => $totalSubmissions,
-            "unique_visitors" => $uniqueIPs,
-            "views" => $views,
-            "conversion_rate" => $views > 0 ? round(($totalSubmissions / $views) * 100, 2) : 0,
-            "daily" => [
-                "dates" => $dates,
-                "submissions" => $submissionsSeries,
+            'total_submissions' => $totalSubmissions,
+            'unique_visitors' => $uniqueVisitors > 0 ? $uniqueVisitors : $uniqueIPs,
+            'views' => $views,
+            'conversion_rate' => $views > 0 ? round(($totalSubmissions / $views) * 100, 2) : 0,
+            'daily' => [
+                'dates' => $dates,
+                'submissions' => $submissionsSeries,
             ],
-            "fields_completion" => $fieldsCompletion,
-            "avg_time_seconds" => $avgTime,
+            'fields_completion' => $fieldsCompletion,
+            'avg_time_seconds' => $avgTime,
         ];
     }
 
@@ -81,14 +84,14 @@ class FormAnalyticsService
     public function recordView(Form $form, string $ip, ?string $userAgent = null): void
     {
         $date = now()->toDateString();
-        $analytic = FormAnalytic::firstOrNew(["form_id" => $form->id, "date" => $date]);
-        $analytic->increment("views");
+        $analytic = FormAnalytic::firstOrNew(['form_id' => $form->id, 'date' => $date]);
+        $analytic->increment('views');
 
         // Unique visitor tracking (simplified)
-        $hash = md5($ip . ($userAgent ?? ""));
-        $key = "form_view_unique:{$form->id}:{$date}:" . substr($hash, 0, 8);
-        if (!cache()->get($key)) {
-            $analytic->increment("unique_visitors");
+        $hash = md5($ip.($userAgent ?? ''));
+        $key = "form_view_unique:{$form->id}:{$date}:".substr($hash, 0, 8);
+        if (! cache()->get($key)) {
+            $analytic->increment('unique_visitors');
             cache()->put($key, true, 86400 * 7); // keep for a week
         }
     }
@@ -100,16 +103,16 @@ class FormAnalyticsService
     {
         // Regenerate daily stats from submissions
         $submissions = $form->submissions()
-            ->select(DB::raw("DATE(created_at) as date"), DB::raw("COUNT(*) as count"))
-            ->groupBy(DB::raw("DATE(created_at)"))
-            ->orderBy("date")
+            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date')
             ->get()
-            ->keyBy("date");
+            ->keyBy('date');
 
         foreach ($submissions as $date => $row) {
             FormAnalytic::updateOrCreate(
-                ["form_id" => $form->id, "date" => $date],
-                ["submissions" => $row->count]
+                ['form_id' => $form->id, 'date' => $date],
+                ['submissions' => $row->count]
             );
         }
     }

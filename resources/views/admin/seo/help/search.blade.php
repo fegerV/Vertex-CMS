@@ -19,7 +19,7 @@
                     </li>
                 </ol>
             </nav>
-            
+
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
                     <h1 class="h3 mb-1 text-gray-800">
@@ -49,9 +49,9 @@
                 <div class="card-body p-4">
                     <form action="{{ route('admin.seo.help.search') }}" method="GET" class="position-relative">
                         <div class="input-group input-group-lg">
-                            <input type="text" 
-                                   name="q" 
-                                   class="form-control" 
+                            <input type="text"
+                                   name="q"
+                                   class="form-control"
                                    placeholder="Введите запрос для поиска по справке..."
                                    value="{{ $query }}"
                                    autofocus>
@@ -72,7 +72,7 @@
         <div class="col-12">
             <div class="list-group shadow-sm border-0">
                 @foreach($results as $result)
-                <a href="{{ route('admin.seo.help.show', ['section' => $result['section']]) }}" 
+                <a href="{{ route('admin.seo.help.show', ['section' => $result['section'], 'topic' => $result['topic'] ?? null]) }}"
                    class="list-group-item list-group-item-action p-4 border-bottom-0">
                     <div class="d-flex w-100 justify-content-between align-items-start">
                         <div>
@@ -95,7 +95,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Пагинация (заглушка для будущего функционала) -->
     <div class="row mt-4">
         <div class="col-12">
@@ -123,7 +123,7 @@
                     <p class="text-muted mb-4">
                         К сожалению, по вашему запросу не найдено ни одной статьи.
                     </p>
-                    
+
                     <div class="row g-3 justify-content-center">
                         <div class="col-md-8">
                             <div class="alert alert-info text-start">
@@ -137,7 +137,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mt-4">
                         <a href="{{ route('admin.seo.help.index') }}" class="btn btn-primary me-2">
                             <i class="bi bi-book me-2"></i>
@@ -168,42 +168,42 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <a href="{{ route('admin.seo.help.show', ['section' => 'dashboard', 'topic' => 'seo-score']) }}" 
+                            <a href="{{ route('admin.seo.help.show', ['section' => 'dashboard', 'topic' => 'seo-score']) }}"
                                class="text-decoration-none d-block p-3 rounded-3 bg-light hover-bg-primary transition-all">
                                 <i class="bi bi-speedometer2 text-primary me-2"></i>
                                 Понимание SEO Score
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ route('admin.seo.help.show', ['section' => 'redirects', 'topic' => 'redirect-types']) }}" 
+                            <a href="{{ route('admin.seo.help.show', ['section' => 'redirects', 'topic' => 'redirect-types']) }}"
                                class="text-decoration-none d-block p-3 rounded-3 bg-light hover-bg-primary transition-all">
                                 <i class="bi bi-arrow-left-right text-primary me-2"></i>
                                 Типы редиректов (301 vs 302)
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ route('admin.seo.help.show', ['section' => 'social-media', 'topic' => 'what-is-og']) }}" 
+                            <a href="{{ route('admin.seo.help.show', ['section' => 'social-media', 'topic' => 'what-is-og']) }}"
                                class="text-decoration-none d-block p-3 rounded-3 bg-light hover-bg-primary transition-all">
                                 <i class="bi bi-share text-primary me-2"></i>
                                 Что такое Open Graph
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ route('admin.seo.help.show', ['section' => 'ai-assistant', 'topic' => 'ai-meta']) }}" 
+                            <a href="{{ route('admin.seo.help.show', ['section' => 'ai-assistant', 'topic' => 'ai-meta']) }}"
                                class="text-decoration-none d-block p-3 rounded-3 bg-light hover-bg-primary transition-all">
                                 <i class="bi bi-robot text-primary me-2"></i>
                                 AI генерация мета-тегов
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ route('admin.seo.help.show', ['section' => 'redirects', 'topic' => '404-monitor']) }}" 
+                            <a href="{{ route('admin.seo.help.show', ['section' => 'redirects', 'topic' => '404-monitor']) }}"
                                class="text-decoration-none d-block p-3 rounded-3 bg-light hover-bg-primary transition-all">
                                 <i class="bi bi-exclamation-triangle text-primary me-2"></i>
                                 Мониторинг 404 ошибок
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ route('admin.seo.help.show', ['section' => 'images', 'topic' => 'alt-optimization']) }}" 
+                            <a href="{{ route('admin.seo.help.show', ['section' => 'images', 'topic' => 'alt-optimization']) }}"
                                class="text-decoration-none d-block p-3 rounded-3 bg-light hover-bg-primary transition-all">
                                 <i class="bi bi-image text-primary me-2"></i>
                                 Оптимизация ALT-тегов

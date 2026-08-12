@@ -2,8 +2,8 @@
 
 namespace App\Services\Ai;
 
-use App\Models\AiKbDocument;
 use App\Models\AiKbChunk;
+use App\Models\AiKbDocument;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -31,9 +31,9 @@ class DocumentProcessorService
 
         $content = strip_tags($document->content);
         $content = preg_replace('/\s+/', ' ', $content); // Нормализация пробелов
-        
+
         $chunks = $this->splitIntoChunks($content);
-        
+
         foreach ($chunks as $index => $chunkContent) {
             AiKbChunk::create([
                 'document_id' => $document->id,
@@ -48,7 +48,7 @@ class DocumentProcessorService
 
         $document->update(['is_processed' => true]);
 
-        Log::info("Докукт '{$document->title}' обработан. Создано чанков: " . count($chunks));
+        Log::info("Докукт '{$document->title}' обработан. Создано чанков: ".count($chunks));
 
         return count($chunks);
     }
@@ -76,14 +76,14 @@ class DocumentProcessorService
             }
 
             $chunk = substr($text, $start, $end - $start);
-            
+
             if (trim($chunk)) {
                 $chunks[] = $chunk;
             }
 
             // Следующий чанк начинается с учетом перекрытия
             $start = $end - $this->chunkOverlap;
-            
+
             // Защита от бесконечного цикла
             if ($start >= $length) {
                 break;
@@ -103,7 +103,7 @@ class DocumentProcessorService
         $searchText = substr($text, $searchStart, $position - $searchStart);
 
         // Приоритеты разрыва: новая строка, точка, пробел
-        $patterns = ["\n", ". ", " "];
+        $patterns = ["\n", '. ', ' '];
 
         foreach ($patterns as $pattern) {
             $lastPos = strrpos($searchText, $pattern);
@@ -121,17 +121,17 @@ class DocumentProcessorService
     public function extractTextFromFile(string $filePath): string
     {
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        
+
         switch ($extension) {
             case 'txt':
                 return file_get_contents($filePath);
-            
+
             case 'pdf':
                 return $this->extractFromPdf($filePath);
-            
+
             case 'docx':
                 return $this->extractFromDocx($filePath);
-            
+
             default:
                 throw new \Exception("Неподдерживаемый формат файла: {$extension}");
         }
@@ -142,10 +142,22 @@ class DocumentProcessorService
      */
     private function extractFromPdf(string $filePath): string
     {
-        // В продакшене использовать shell_exec('pdftotext') или Smalot\PdfParser
-        // Для примера заглушка
-        Log::warning("Извлечение из PDF требует установки дополнительных библиотек");
-        return "Текст из PDF файла: {$filePath}";
+        if (! is_file($filePath) || ! is_readable($filePath)) {
+            throw new \RuntimeException("PDF файл недоступен: {$filePath}");
+        }
+
+        $binary = trim((string) shell_exec('command -v pdftotext 2>/dev/null'));
+        if ($binary === '') {
+            throw new \RuntimeException('Для извлечения PDF установите утилиту pdftotext.');
+        }
+
+        $command = escapeshellarg($binary).' -enc UTF-8 '.escapeshellarg($filePath).' - 2>&1';
+        exec($command, $output, $exitCode);
+        if ($exitCode !== 0) {
+            throw new \RuntimeException('Не удалось извлечь текст из PDF: '.implode("\n", $output));
+        }
+
+        return trim(implode("\n", $output));
     }
 
     /**
@@ -156,16 +168,21 @@ class DocumentProcessorService
         // В продакшене использовать PhpOffice\PhpWord
         // Для примера упрощенное извлечение (DOCX это ZIP архив)
         $content = '';
-        $zip = new \ZipArchive();
-        
+        $zip = new \ZipArchive;
+
         if ($zip->open($filePath) === true) {
             $xml = $zip->getFromName('word/document.xml');
-            if ($xml) {
-                $content = strip_tags($xml);
+            if ($xml !== false) {
+                $xml = str_replace(['</w:p>', '</w:tr>', '<w:tab/>'], ["\n", "\n", "\t"], $xml);
+                $content = html_entity_decode(strip_tags($xml), ENT_QUOTES | ENT_XML1, 'UTF-8');
             }
             $zip->close();
         }
-        
-        return $content;
+
+        if ($content === '') {
+            throw new \RuntimeException("Не удалось извлечь текст из DOCX: {$filePath}");
+        }
+
+        return trim($content);
     }
 }

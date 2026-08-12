@@ -2,18 +2,13 @@
 
 namespace App\Security\Login\Http\Middleware;
 
-use App\Security\Login\Services\TwoFactorService;
+use App\Security\Login\Support\TwoFactorSession;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class RequireTwoFactorMiddleware
 {
-    public function __construct(
-        private readonly TwoFactorService $twoFactor,
-    ) {
-    }
-
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -22,7 +17,7 @@ class RequireTwoFactorMiddleware
             return $next($request);
         }
 
-        if (! $request->session()->get('2fa:verified')) {
+        if (! $request->session()->boolean(TwoFactorSession::VERIFIED)) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'error' => '2FA verification required.',
@@ -30,7 +25,11 @@ class RequireTwoFactorMiddleware
                 ], 403);
             }
 
-            $request->session()->put('2fa:user', $user);
+            $request->session()->put(TwoFactorSession::USER_ID, $user->getKey());
+
+            if ($request->routeIs('admin.2fa.*')) {
+                return $next($request);
+            }
 
             return redirect()->route('admin.2fa.verify');
         }

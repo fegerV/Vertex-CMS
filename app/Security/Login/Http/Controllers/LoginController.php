@@ -3,8 +3,11 @@
 namespace App\Security\Login\Http\Controllers;
 
 use App\Auth\Http\Controllers\AdminAuthController;
-use App\Security\Login\Services\TwoFactorService;
 use App\Security\Login\Services\LoginAttemptService;
+use App\Security\Login\Services\TwoFactorService;
+use App\Security\Login\Support\TwoFactorSession;
+use App\System\Services\ActivityLogService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,12 +18,12 @@ class LoginController extends AdminAuthController
     public function __construct(
         private readonly TwoFactorService $twoFactor,
         private readonly LoginAttemptService $loginAttempt,
-        \App\System\Services\ActivityLogService $activityLog,
+        ActivityLogService $activityLog,
     ) {
         parent::__construct($activityLog);
     }
 
-    public function login(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function login(Request $request): RedirectResponse|JsonResponse
     {
         // Check if login is locked out
         if ($this->loginAttempt->tooManyAttempts($request)) {
@@ -67,8 +70,10 @@ class LoginController extends AdminAuthController
 
         // If 2FA is enabled, redirect to verification
         if ($user->two_factor_secret) {
-            $request->session()->put('2fa:user', $user);
-            Auth::logout();
+            $request->session()->put([
+                TwoFactorSession::USER_ID => $user->getKey(),
+                TwoFactorSession::VERIFIED => false,
+            ]);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -80,6 +85,8 @@ class LoginController extends AdminAuthController
 
             return redirect()->route('admin.2fa.verify');
         }
+
+        $request->session()->put(TwoFactorSession::VERIFIED, true);
 
         $this->activityLog->record(
             'auth.login',
