@@ -224,4 +224,41 @@ class SeoDashboardTest extends TestCase
             'hits' => 0,
         ]);
     }
+
+    public function test_bulk_editor_and_semantic_keywords_persist_through_seo_meta(): void
+    {
+        $user = $this->makeUserWithRole('admin');
+        $page = $this->createPage([
+            'title' => 'Semantic Page',
+            'slug' => 'semantic-page',
+            'uri' => '/semantic-page',
+        ]);
+
+        $this->actingAs($user)->post(route('admin.seo.bulk-update'), [
+            'updates' => [[
+                'id' => $page->id,
+                'title' => 'Semantic SEO title',
+                'description' => 'Semantic description',
+                'keywords' => 'laravel, cms',
+                'canonical' => 'https://example.test/semantic-page',
+            ]],
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('seo_meta', [
+            'entity_type' => $page::class,
+            'entity_id' => $page->id,
+            'keywords' => 'laravel, cms',
+        ]);
+
+        $this->actingAs($user)->post(route('admin.seo.keywords.add'), [
+            'page_id' => $page->id,
+            'keyword' => 'seo audit',
+        ])->assertRedirect();
+
+        $this->assertSame('laravel, cms, seo audit', $page->fresh()->seoMeta?->keywords);
+
+        $this->actingAs($user)->delete(route('admin.seo.keywords.delete', 'cms'))->assertRedirect();
+
+        $this->assertSame('laravel, seo audit', $page->fresh()->seoMeta?->keywords);
+    }
 }

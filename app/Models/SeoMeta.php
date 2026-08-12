@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Model;
 
 class SeoMeta extends Model
 {
@@ -15,6 +15,7 @@ class SeoMeta extends Model
         'entity_id',
         'title',
         'description',
+        'keywords',
         'canonical_url',
         'robots',
         'og_title',

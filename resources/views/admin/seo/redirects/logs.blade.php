@@ -11,7 +11,7 @@
                     <i class="fas fa-clipboard-list text-warning"></i>
                     Логи 404 ошибок
                 </h1>
-                <a href="{{ route('admin.seo.redirects') }}" class="btn btn-outline-primary">
+                <a href="{{ route('admin.redirects.index') }}" class="btn btn-outline-primary">
                     <i class="fas fa-arrow-left"></i> Назад к редиректам
                 </a>
             </div>
@@ -43,7 +43,7 @@
                             <td><small class="text-muted">{{ Str::limit($log->user_agent, 50) }}</small></td>
                             <td>{{ $log->created_at->format('d.m.Y H:i') }}</td>
                             <td>
-                                <a href="{{ route('admin.seo.redirects.store') }}?from_url={{ urlencode($log->url) }}" 
+                                <a href="{{ route('admin.redirects.index', ['from_url' => $log->url]) }}"
                                    class="btn btn-sm btn-primary">
                                     <i class="fas fa-plus"></i> Редирект
                                 </a>

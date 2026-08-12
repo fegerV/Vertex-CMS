@@ -149,7 +149,7 @@
                                 <p class="mb-1 text-muted">
                                     <small>Количество: {{ $error['count'] }}</small>
                                 </p>
-                                <a href="{{ route('admin.seo.redirects.store') }}?from_url={{ urlencode($error['url']) }}" 
+                                <a href="{{ route('admin.redirects.index', ['from_url' => $error['url']]) }}"
                                    class="btn btn-sm btn-outline-primary mt-1">
                                     <i class="fas fa-plus"></i> Создать редирект
                                 </a>

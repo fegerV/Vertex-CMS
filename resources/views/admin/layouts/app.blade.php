@@ -90,7 +90,7 @@
                     ['label' => 'AI-Ассистент', 'route' => 'admin.seo.ai-assistant', 'permission' => 'seo.edit'],
                     ['label' => 'Использование ИИ', 'route' => 'admin.seo.ai-usage', 'permission' => 'seo.view'],
                     ['label' => '🧠 AI База Знаний', 'route' => 'admin.seo.ai-kb.index', 'permission' => 'seo.edit', 'icon' => 'brain'],
-                    ['label' => '404 Monitor', 'route' => 'admin.seo.redirects', 'permission' => 'seo.edit'],
+                    ['label' => '404 Monitor', 'route' => 'admin.redirects.index', 'permission' => 'seo.edit'],
                     ['label' => 'Schema.org', 'route' => 'admin.seo.schema-builder', 'permission' => 'seo.edit'],
                     ['label' => 'Search Console', 'route' => 'admin.seo.search-console', 'permission' => 'seo.view'],
                     ['label' => 'Дубликаты', 'route' => 'admin.seo.duplicates', 'permission' => 'seo.view'],

@@ -46,13 +46,13 @@
             <div class="card bg-info text-white">
                 <div class="card-body">
                     <h5 class="card-title">Быстрые действия</h5>
-                    <form action="{{ route('admin.seo.redirects.import-404') }}" method="POST" class="d-inline">
+                    <form action="{{ route('admin.redirects.import-404') }}" method="POST" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-light btn-sm mb-2">
                             <i class="fas fa-download"></i> Импорт 404 в редиректы
                         </button>
                     </form>
-                    <a href="{{ route('admin.seo.redirects.logs') }}" class="btn btn-light btn-sm mb-2 d-block">
+                    <a href="{{ route('admin.redirects.logs') }}" class="btn btn-light btn-sm mb-2 d-block">
                         <i class="fas fa-list"></i> Все логи
                     </a>
                     <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#bulkImportModal">
@@ -100,7 +100,7 @@
                             </td>
                             <td>{{ $redirect->created_at->format('d.m.Y H:i') }}</td>
                             <td>
-                                <form action="{{ route('admin.seo.redirects.destroy', $redirect->id) }}" method="POST" class="d-inline">
+                                <form action="{{ route('admin.redirects.destroy', $redirect->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить редирект?')">
@@ -163,7 +163,7 @@
 <div class="modal fade" id="addRedirectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('admin.seo.redirects.store') }}" method="POST">
+            <form action="{{ route('admin.redirects.store') }}" method="POST">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Добавить редирект</h5>
@@ -199,7 +199,7 @@
     <div class="modal fade" id="bulkImportModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="{{ route('admin.seo.redirects.bulk-import') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('admin.redirects.bulk-import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Импорт редиректов из CSV</h5>
