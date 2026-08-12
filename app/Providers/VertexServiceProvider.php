@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use App\AI\Services\AiDraftService;
 use App\AI\Services\AiProviderRegistry;
+use App\AI\Services\VisualPageGenerator;
+use App\Automation\Services\AutomationEngine;
 use App\Builder\Services\PageRenderer;
+use App\Compliance\Services\ComplianceAuditService;
 use App\Content\Services\PageService;
 use App\Contracts\CacheInvalidatorContract;
 use App\Contracts\SettingsRepositoryContract;
@@ -13,14 +16,23 @@ use App\Core\Services\InstallationService;
 use App\Core\Services\SettingsService;
 use App\Core\Services\SettingsTransferService;
 use App\Core\Support\RouteRegistrar;
+use App\Ecommerce\Services\OrderService;
+use App\Integrations\Services\N8nService;
+use App\Localization\Services\ContentTranslator;
+use App\Marketplace\Services\MarketplaceCatalog;
 use App\Media\Services\MediaService;
+use App\Messaging\Services\CampaignService;
 use App\Modules\Services\ModuleManager;
+use App\Modules\Services\PlatformModuleRegistry;
 use App\Modules\Support\ModuleCatalog;
 use App\Modules\Support\ModuleManifestLoader;
+use App\Recommendations\Services\RecommendationEngine;
 use App\Seo\Services\RedirectResolver;
 use App\Seo\Services\SeoAuditService;
 use App\Seo\Services\SeoContentAnalysisService;
 use App\Seo\Services\SeoMetaService;
+use App\Services\Notifications\NotificationService;
+use App\Services\Webhooks\WebhookService;
 use App\System\Console\Commands\ProcessEmailQueue;
 use App\System\Services\ActivityLogService;
 use App\System\Services\CacheService;
@@ -52,6 +64,17 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->alias(SettingsTransferService::class, SettingsTransferContract::class);
         $this->app->singleton(AiProviderRegistry::class);
         $this->app->singleton(AiDraftService::class);
+        $this->app->singleton(VisualPageGenerator::class);
+        $this->app->singleton(MarketplaceCatalog::class);
+        $this->app->singleton(ContentTranslator::class);
+        $this->app->singleton(N8nService::class);
+        $this->app->singleton(AutomationEngine::class);
+        $this->app->singleton(RecommendationEngine::class);
+        $this->app->singleton(ComplianceAuditService::class);
+        $this->app->singleton(CampaignService::class);
+        $this->app->singleton(OrderService::class);
+        $this->app->singleton(WebhookService::class);
+        $this->app->singleton(NotificationService::class);
         $this->app->singleton(InstallationService::class);
         $this->app->singleton(DatabaseConnectionService::class);
         $this->app->singleton(EnvironmentFileService::class);
@@ -86,6 +109,7 @@ class VertexServiceProvider extends ServiceProvider
             );
         });
         $this->app->singleton(ModuleManager::class);
+        $this->app->singleton(PlatformModuleRegistry::class);
     }
 
     public function boot(RouteRegistrar $routes): void

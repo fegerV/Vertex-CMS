@@ -8,6 +8,8 @@ class CloudflareModule
 {
     public function register(Application $app): void
     {
+        $app->singleton(CloudflareService::class);
+        $app->singleton(CloudflareRequest::class);
         $app->singleton(self::class, fn () => $this);
     }
 }
