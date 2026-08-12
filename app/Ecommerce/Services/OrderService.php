@@ -7,6 +7,7 @@ use App\Ecommerce\Models\OrderItem;
 use App\Ecommerce\Models\Product;
 use App\Models\User;
 use App\System\Services\ActivityLogService;
+use App\Services\Webhooks\WebhookService;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -15,6 +16,7 @@ class OrderService
 
     public function __construct(
         private readonly ActivityLogService $activityLog,
+        private readonly WebhookService $webhooks,
     ) {}
 
     public function createFromCart(array $checkoutData, ?User $user = null, ?string $sessionId = null): Order
@@ -71,6 +73,7 @@ class OrderService
             $cartService->clearCart($sessionId);
 
             $this->activityLog->record('orders.create', 'order', $order->id, "Order #{$order->id} created.");
+            DB::afterCommit(fn () => $this->webhooks->triggerWebhook('order.created', $order->fresh('items')->toArray()));
 
             return $order;
         });
@@ -83,6 +86,8 @@ class OrderService
         }
 
         $order->update(['status' => $status]);
+
+        DB::afterCommit(fn () => $this->webhooks->triggerWebhook('order.updated', $order->fresh()->toArray()));
 
         $this->activityLog->record(
             'orders.status_change',
@@ -104,6 +109,8 @@ class OrderService
         ]);
 
         $this->activityLog->record('orders.payment', 'order', $order->id, "Order #{$order->id} payment status: {$paymentStatus}.");
+        $event = $paymentStatus === 'paid' ? 'payment.success' : 'payment.failed';
+        DB::afterCommit(fn () => $this->webhooks->triggerWebhook($event, $order->fresh()->toArray()));
 
         return $order->fresh();
     }

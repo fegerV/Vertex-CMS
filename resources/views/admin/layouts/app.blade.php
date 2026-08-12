@@ -106,6 +106,7 @@
             ['label' => 'Пользователи', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'icon' => 'users'],
             ['label' => 'Роли', 'route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.view', 'icon' => 'shield'],
             ['label' => 'Настройки', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'permission' => 'settings.view', 'icon' => 'cog'],
+            ['label' => 'Вебхуки', 'route' => 'admin.webhooks.index', 'active' => 'admin.webhooks.*', 'permission' => 'settings.view', 'icon' => 'cog'],
             [
                 'label' => 'Система',
                 'route' => 'admin.system.info',
