@@ -67,13 +67,24 @@ body {
     font-family: var(--vc-font-sans);
 }
 
+.vc-public-site {
+    background: var(--vc-site-background, #ffffff);
+    color: var(--vc-site-text, #0f172a);
+    font-family: var(--vc-font-body, var(--vc-font-sans));
+    font-size: var(--vc-font-size-base, 16px);
+}
+
+.vc-public-site :is(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--vc-font-heading, var(--vc-font-sans));
+}
+
 .vc-section {
-    padding: 64px 20px;
+    padding: var(--vc-section-padding, 64px) 20px;
 }
 
 .vc-container {
     margin: 0 auto;
-    max-width: 1200px;
+    max-width: var(--vc-container-max-width, 1200px);
 }
 
 .vc-heading {
@@ -111,10 +122,11 @@ body {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    border-radius: 6px;
+    border-radius: var(--vc-button-radius, 8px);
     padding: 10px 16px;
-    background: #020617;
+    background: var(--vc-primary, #0f766e);
     color: #ffffff;
+    font-weight: var(--vc-button-weight, 600);
     text-decoration: none;
 }
 

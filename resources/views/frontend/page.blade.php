@@ -45,8 +45,9 @@
             @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/telegram-widget.js'])
         @endif
     @endif
+    <style id="vertex-design-system">{!! app(\App\Builder\Services\DesignSystemService::class)->css() !!}</style>
 </head>
-<body class="bg-white text-slate-950">
+<body class="vc-public-site">
     <main class="vc-page">
         @if ((string) $html !== '')
             {!! $html !!}

@@ -318,3 +318,11 @@ without switching to shortcode storage or DOM-first editing.
 ## Decision
 
 Use TipTap for rich text inside the existing JSON/block-based page builder, not as a replacement for the builder architecture itself.
+# Global design system
+
+The builder contract now includes `design_system`, a normalized set of global
+color, typography, container, section-spacing and button tokens. Editors manage
+the values in **Settings → Global design**; the public page shell emits the same
+sanitized tokens as CSS custom properties. This keeps the builder preview and
+published output on one brand foundation while allowing individual blocks to
+override a token when a composition requires it.
