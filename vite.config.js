@@ -36,6 +36,7 @@ export default defineConfig({
             },
             input: {
                 // Separate entry points for admin and frontend
+                styles: resolve(__dirname, 'resources/css/app.css'),
                 app: resolve(__dirname, 'resources/js/app.js'),
                 admin: resolve(__dirname, 'resources/js/admin/app.js'),
                 builder: resolve(__dirname, 'resources/js/builder/index.js'),
@@ -53,8 +54,6 @@ export default defineConfig({
         sourcemap: false,
         // CSS code splitting
         cssCodeSplit: true,
-        // Long-term cache with manifest
-        manifest: true,
     },
     plugins: [
         laravel({

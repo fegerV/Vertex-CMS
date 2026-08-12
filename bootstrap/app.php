@@ -5,6 +5,7 @@ use App\Core\Http\Middleware\EnsureNotInstalled;
 use App\Core\Http\Middleware\GdprCookieMiddleware;
 use App\Core\Http\Middleware\IpFilterMiddleware;
 use App\Core\Http\Middleware\RequirePermission;
+use App\Security\Login\Http\Middleware\PasswordExpiryMiddleware;
 use App\Seo\Http\Middleware\ResolveSeoRedirect;
 use App\System\Http\Middleware\CheckMaintenanceMode;
 use App\Support\Api\ApiResponse;
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'vertex.not_installed' => EnsureNotInstalled::class,
             'vertex.permission' => RequirePermission::class,
             'maintenance.check' => CheckMaintenanceMode::class,
+            'login.password.expiry' => PasswordExpiryMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -90,8 +90,8 @@
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-medium text-sm text-slate-800">{{ block.name }}</div>
-                            <div class="text-xs text-slate-500 truncate">Блок {{ type }}</div>
+                            <div class="font-medium text-sm text-slate-800">@{{ block.name }}</div>
+                            <div class="text-xs text-slate-500 truncate">Блок @{{ type }}</div>
                         </div>
                         <svg class="w-4 h-4 text-slate-300 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -122,7 +122,7 @@
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2">
                     <span class="text-sm font-medium text-slate-600">Блоков:</span>
-                    <span class="px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">{{ content.length }}</span>
+                    <span class="px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">@{{ content.length }}</span>
                 </div>
                 <div class="h-4 w-px bg-slate-200"></div>
                 <div class="flex items-center gap-1">
@@ -305,7 +305,7 @@
                                     </svg>
                                     Изображение
                                 </template>
-                                <template v-else>{{ block.type }}</template>
+                                <template v-else>@{{ block.type }}</template>
                             </span>
                         </div>
 
@@ -318,14 +318,14 @@
                                     class="vc-heading font-bold"
                                     :style="headingStyle(block.settings)"
                                 >
-                                    {{ block.settings.text || 'Заголовок' }}
+                                    @{{ block.settings.text || 'Заголовок' }}
                                 </component>
                             </template>
 
                             <!-- Text Block -->
                             <template v-else-if="block.type === 'text'">
                                 <div class="vc-text prose prose-slate max-w-none" :style="textStyle(block.settings)">
-                                    {{ block.settings.text || 'Текстовый блок...' }}
+                                    @{{ block.settings.text || 'Текстовый блок...' }}
                                 </div>
                             </template>
 
@@ -342,7 +342,7 @@
                                         :target="block.settings.target || '_self'"
                                         @click.prevent
                                     >
-                                        {{ block.settings.text || 'Кнопка' }}
+                                        @{{ block.settings.text || 'Кнопка' }}
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                                         </svg>
@@ -364,12 +364,12 @@
                                         class="vc-faq-item group border border-slate-200 rounded-lg overflow-hidden"
                                     >
                                         <summary class="cursor-pointer font-medium p-4 bg-slate-50 group-hover:bg-slate-100 transition-colors flex items-center justify-between">
-                                            {{ item.question || 'Вопрос?' }}
+                                            @{{ item.question || 'Вопрос?' }}
                                             <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                             </svg>
                                         </summary>
-                                        <div class="mt-2 text-slate-600 p-4 bg-white">{{ item.answer || 'Ответ...' }}</div>
+                                        <div class="mt-2 text-slate-600 p-4 bg-white">@{{ item.answer || 'Ответ...' }}</div>
                                     </details>
                                 </div>
                             </template>
@@ -384,7 +384,7 @@
                                         <span>HTML код</span>
                                     </div>
                                     <code class="block bg-white p-3 rounded border border-slate-200 overflow-x-auto">
-                                        {{ block.settings.html || '<!-- HTML код -->' }}
+                                        @{{ block.settings.html || '<!-- HTML код -->' }}
                                     </code>
                                 </div>
                             </template>
@@ -398,7 +398,7 @@
                                         </svg>
                                     </div>
                                     <p class="text-slate-500 text-sm">Изображение</p>
-                                    <p class="text-slate-400 text-xs mt-1">ID: {{ block.settings.media_id || 'Не указан' }}</p>
+                                    <p class="text-slate-400 text-xs mt-1">ID: @{{ block.settings.media_id || 'Не указан' }}</p>
                                 </div>
                             </template>
                         </div>
@@ -412,11 +412,11 @@
             <div class="flex items-center gap-2">
                 <span :class="hasChanges ? 'text-amber-600' : 'text-emerald-600'" class="flex items-center gap-1.5">
                     <span :class="hasChanges ? 'w-2 h-2 bg-amber-500 rounded-full animate-pulse' : 'w-2 h-2 bg-emerald-500 rounded-full'"></span>
-                    {{ hasChanges ? 'Есть несохраненные изменения' : 'Все сохранено' }}
+                    @{{ hasChanges ? 'Есть несохраненные изменения' : 'Все сохранено' }}
                 </span>
             </div>
             <div class="text-slate-400">
-                Последнее сохранение: {{ lastSaved ? lastSaved.toLocaleTimeString() : 'не сохранялось' }}
+                Последнее сохранение: @{{ lastSaved ? lastSaved.toLocaleTimeString() : 'не сохранялось' }}
             </div>
         </div>
     </main>
@@ -439,7 +439,7 @@
                 <div class="pb-3 border-b border-slate-100">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Тип блока</span>
-                        <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">{{ selectedBlock.type }}</span>
+                        <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">@{{ selectedBlock.type }}</span>
                     </div>
                 </div>
 
@@ -497,7 +497,7 @@
                                     type="color"
                                     class="w-10 h-10 rounded-lg border border-slate-300 cursor-pointer"
                                 >
-                                <span class="text-xs text-slate-500 font-mono">{{ selectedBlock.settings.color || '#111827' }}</span>
+                                <span class="text-xs text-slate-500 font-mono">@{{ selectedBlock.settings.color || '#111827' }}</span>
                             </div>
                         </div>
                         
@@ -549,7 +549,7 @@
                                     type="color"
                                     class="w-10 h-10 rounded-lg border border-slate-300 cursor-pointer"
                                 >
-                                <span class="text-xs text-slate-500 font-mono">{{ selectedBlock.settings.color || '#374151' }}</span>
+                                <span class="text-xs text-slate-500 font-mono">@{{ selectedBlock.settings.color || '#374151' }}</span>
                             </div>
                         </div>
                         
@@ -636,7 +636,7 @@
                     
                     <div v-for="(item, i) in selectedBlock.settings.items || []" :key="i" class="group p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                         <div class="flex items-start justify-between gap-2">
-                            <span class="text-xs font-medium text-slate-500">Вопрос #{{ i + 1 }}</span>
+                            <span class="text-xs font-medium text-slate-500">Вопрос #@{{ i + 1 }}</span>
                             <button 
                                 @click="removeFaqItem(i)"
                                 class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -840,7 +840,7 @@
         <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
         </svg>
-        <span class="text-sm font-medium">{{ toast.message }}</span>
+        <span class="text-sm font-medium">@{{ toast.message }}</span>
         <button @click="toast.visible = false" class="ml-2 hover:opacity-80">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -901,7 +901,6 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script src="{{ mix('js/app.js') }}"></script>
 <script>
     const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
     

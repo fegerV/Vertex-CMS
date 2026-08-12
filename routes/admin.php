@@ -7,6 +7,7 @@ use App\Builder\Http\Controllers\AdvancedBuilderController;
 use App\Builder\Http\Controllers\BuilderApiController;
 use App\Builder\Http\Controllers\PageBuilderController;
 use App\Content\Http\Controllers\CustomFieldGroupController;
+use App\Content\Http\Controllers\PageController;
 use App\Core\Http\Middleware\SetAdminLocale;
 use App\Media\Http\Controllers\MediaController;
 use App\Security\Login\Http\Controllers\TwoFactorController;
@@ -79,7 +80,7 @@ Route::name("admin.")->prefix("admin")->group(function (): void {
         Route::delete('pages/{page}', [PageController::class, 'destroy'])
             ->middleware('vertex.permission:pages.delete')
             ->name('pages.destroy');
-        Route::get('pages/{page}/builder', [PageBuilderController::class, 'edit'])
+        Route::get('pages/{page}/builder', [AdvancedBuilderController::class, 'advanced'])
             ->middleware('vertex.permission:pages.edit')
             ->name('pages.builder');
         Route::put('pages/{page}/builder', [PageBuilderController::class, 'update'])

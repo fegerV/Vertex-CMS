@@ -15,13 +15,17 @@
     }
 @endphp
 
-<img 
-    src="{{ $imageUrl }}"
-    alt="{{ $alt }}"
-    class="pb-image pb-image--radius-{{ $radius }} pb-image--shadow-{{ $shadow }}"
-    style="
-        width: {{ $width }};
-        height: {{ $height }};
-    "
-    loading="lazy"
-/>
+@if($imageUrl)
+    <img
+        src="{{ $imageUrl }}"
+        alt="{{ $alt }}"
+        class="pb-image pb-image--radius-{{ $radius }} pb-image--shadow-{{ $shadow }}"
+        style="width: {{ $width }}; height: {{ $height }};"
+        loading="lazy"
+    />
+@else
+    <div class="vc-builder-renderer-fallback" role="status">
+        <strong>Image placeholder</strong>
+        <span>Изображение не выбрано. Откройте медиатеку в настройках блока.</span>
+    </div>
+@endif

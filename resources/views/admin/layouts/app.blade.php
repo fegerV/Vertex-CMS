@@ -89,8 +89,8 @@
                     ['label' => 'Внутренние ссылки', 'route' => 'admin.seo.internal-links', 'permission' => 'seo.view'],
                     ['label' => 'AI-Ассистент', 'route' => 'admin.seo.ai-assistant', 'permission' => 'seo.edit'],
                     ['label' => 'Использование ИИ', 'route' => 'admin.seo.ai-usage', 'permission' => 'seo.view'],
-                    ['label' => '🧠 AI База Знаний', 'route' => 'admin.seo.ai-kb.index', 'permission' => 'seo.edit', 'icon' => 'brain'],
-                    ['label' => '404 Monitor', 'route' => 'admin.seo.redirects', 'permission' => 'seo.edit'],
+                    ['label' => '🧠 AI База Знаний', 'route' => 'admin.ai-kb.index', 'permission' => 'seo.edit', 'icon' => 'brain'],
+                    ['label' => '404 Monitor', 'route' => 'admin.redirects.index', 'permission' => 'seo.edit'],
                     ['label' => 'Schema.org', 'route' => 'admin.seo.schema-builder', 'permission' => 'seo.edit'],
                     ['label' => 'Search Console', 'route' => 'admin.seo.search-console', 'permission' => 'seo.view'],
                     ['label' => 'Дубликаты', 'route' => 'admin.seo.duplicates', 'permission' => 'seo.view'],
@@ -215,6 +215,7 @@
                                  class="ml-4 mt-1 space-y-1 pl-3 border-l-2 border-slate-200 dark:border-slate-700">
                                 @foreach($item['children'] as $child)
                                     @continue($child['permission'] && ! $user?->hasPermission($child['permission']))
+                                    @continue(! \Illuminate\Support\Facades\Route::has($child['route']))
                                     <a
                                         href="{{ route($child['route']) }}"
                                         class="flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all {{ request()->routeIs($child['route']) ? 'bg-slate-900 dark:bg-slate-700 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white' }}"
@@ -226,6 +227,7 @@
                         </div>
                     @else
                         {{-- Regular menu item --}}
+                        @continue(! \Illuminate\Support\Facades\Route::has($item['route']))
                         <a
                             href="{{ route($item['route']) }}"
                             class="sidebar-nav-item group flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium transition-all {{ request()->routeIs($item['active']) ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white' }}"
@@ -281,10 +283,12 @@
                     <!-- Right: Search, Notifications, User menu -->
                     <div class="flex items-center gap-3">
                         <!-- Language switcher -->
-                        <div class="flex items-center gap-1 border-r border-slate-200 pr-3">
-                            <a href="{{ route('admin.locale.change', 'ru') }}" class="px-2 py-1 text-xs font-medium rounded {{ app()->getLocale() === 'ru' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">RU</a>
-                            <a href="{{ route('admin.locale.change', 'en') }}" class="px-2 py-1 text-xs font-medium rounded {{ app()->getLocale() === 'en' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">EN</a>
-                        </div>
+                        @if(\Illuminate\Support\Facades\Route::has('admin.locale.change'))
+                            <div class="flex items-center gap-1 border-r border-slate-200 pr-3">
+                                <a href="{{ route('admin.locale.change', 'ru') }}" class="px-2 py-1 text-xs font-medium rounded {{ app()->getLocale() === 'ru' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">RU</a>
+                                <a href="{{ route('admin.locale.change', 'en') }}" class="px-2 py-1 text-xs font-medium rounded {{ app()->getLocale() === 'en' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">EN</a>
+                            </div>
+                        @endif
 
                         <!-- User dropdown -->
                         <div class="relative" x-data="{ open: false }">

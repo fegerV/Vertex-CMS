@@ -10,6 +10,11 @@
     "file": "assets/vendor-vue-DSEff15L.js",
     "name": "vendor-vue"
   },
+  "resources/css/app.css": {
+    "file": "assets/styles-Btqdm72L.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
   "resources/js/admin/app.js": {
     "file": "assets/admin-BMrv3e1E.js",
     "name": "admin",
@@ -17,7 +22,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BTp962uV.js",
+    "file": "assets/app-DGK_t5oY.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -39,7 +44,7 @@
     "isEntry": true
   },
   "resources/js/telegram-widget.js": {
-    "file": "assets/telegram-widget-YjHtnlkB.js",
+    "file": "assets/telegram-widget-DWXIsQhs.js",
     "name": "telegram-widget",
     "src": "resources/js/telegram-widget.js",
     "isDynamicEntry": true,
