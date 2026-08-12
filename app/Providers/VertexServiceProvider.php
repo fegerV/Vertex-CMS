@@ -6,20 +6,25 @@ use App\AI\Services\AiDraftService;
 use App\AI\Services\AiProviderRegistry;
 use App\Builder\Services\PageRenderer;
 use App\Content\Services\PageService;
+use App\Contracts\CacheInvalidatorContract;
+use App\Contracts\SettingsRepositoryContract;
+use App\Contracts\SettingsTransferContract;
 use App\Core\Services\InstallationService;
 use App\Core\Services\SettingsService;
+use App\Core\Services\SettingsTransferService;
 use App\Core\Support\RouteRegistrar;
+use App\Media\Services\MediaService;
 use App\Modules\Services\ModuleManager;
 use App\Modules\Support\ModuleCatalog;
 use App\Modules\Support\ModuleManifestLoader;
-use App\Media\Services\MediaService;
-use App\Seo\Services\SeoContentAnalysisService;
 use App\Seo\Services\RedirectResolver;
 use App\Seo\Services\SeoAuditService;
+use App\Seo\Services\SeoContentAnalysisService;
 use App\Seo\Services\SeoMetaService;
 use App\System\Console\Commands\ProcessEmailQueue;
 use App\System\Services\ActivityLogService;
 use App\System\Services\CacheService;
+use App\System\Services\CoreCacheInvalidator;
 use App\System\Services\DatabaseConnectionService;
 use App\System\Services\EmailService;
 use App\System\Services\EnvironmentFileService;
@@ -27,6 +32,7 @@ use App\System\Services\InstallerRunner;
 use App\System\Services\MaintenanceService;
 use App\System\Services\SystemInfoService;
 use App\System\Services\TelegramWidgetService;
+use App\System\Support\BackupHookRegistry;
 use App\Theme\Services\ThemeManager;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\ServiceProvider;
@@ -37,10 +43,13 @@ class VertexServiceProvider extends ServiceProvider
     {
         // Register the 'files' binding required by Laravel core aliases
         $this->app->singleton('files', function ($app) {
-            return new Filesystem();
+            return new Filesystem;
         });
 
         $this->app->singleton(SettingsService::class);
+        $this->app->alias(SettingsService::class, SettingsRepositoryContract::class);
+        $this->app->singleton(SettingsTransferService::class);
+        $this->app->alias(SettingsTransferService::class, SettingsTransferContract::class);
         $this->app->singleton(AiProviderRegistry::class);
         $this->app->singleton(AiDraftService::class);
         $this->app->singleton(InstallationService::class);
@@ -59,6 +68,9 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(PageRenderer::class);
         $this->app->singleton(MediaService::class);
         $this->app->singleton(CacheService::class);
+        $this->app->singleton(CoreCacheInvalidator::class);
+        $this->app->alias(CoreCacheInvalidator::class, CacheInvalidatorContract::class);
+        $this->app->singleton(BackupHookRegistry::class);
         $this->app->singleton(SystemInfoService::class);
         $this->app->singleton(ThemeManager::class);
         $this->app->singleton(ModuleManifestLoader::class, function ($app) {

@@ -2,12 +2,12 @@
 
 namespace App\Core\Services;
 
+use App\Contracts\SettingsRepositoryContract;
 use App\Core\Support\SettingCatalog;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
-use Throwable;
 
-class SettingsService
+class SettingsService implements SettingsRepositoryContract
 {
     public function all(): array
     {

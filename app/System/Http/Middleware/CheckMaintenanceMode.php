@@ -12,8 +12,7 @@ class CheckMaintenanceMode
 {
     public function __construct(
         private readonly MaintenanceService $maintenance,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -22,7 +21,7 @@ class CheckMaintenanceMode
             return $next($request);
         }
 
-        if (!$this->maintenance->isEnabled()) {
+        if (! $this->maintenance->isEnabled()) {
             return $next($request);
         }
 
@@ -43,7 +42,7 @@ class CheckMaintenanceMode
     private function shouldBypass(Request $request): bool
     {
         // Bypass for admin and API routes
-        if ($request->is('admin*') || $request->is('api/*')) {
+        if ($request->is('install*') || $request->is('admin*') || $request->is('api/*')) {
             return true;
         }
 

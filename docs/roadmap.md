@@ -274,6 +274,8 @@ Acceptance criteria:
 - Установщик проходит негативные сценарии.
 - Документация покрывает установку, настройку, API и разработку модулей.
 
+Статус: `стабильный compatibility foundation реализован: опубликованы core contracts, versioned settings transfer, backup hooks, API v1 compatibility policy, негативные installer tests, release notes и upgrade/module/install документация. Перед production tag остаётся полный runtime release checklist на поддерживаемых MySQL/PHP окружениях`.
+
 ## Backlog после v1.0
 
 - Marketplace.
