@@ -115,31 +115,31 @@ Route::get('seo/ai/export', [AiUsageController::class, 'export'])
 // 404 Monitor и Редиректы (Manager)
 Route::get('seo/redirects', [RedirectController::class, 'index'])
     ->middleware('vertex.permission:seo.view')
-    ->name('seo.redirects');
+    ->name('redirects.index');
 
 Route::post('seo/redirects', [RedirectController::class, 'store'])
     ->middleware('vertex.permission:seo.edit')
-    ->name('seo.redirects.store');
+    ->name('redirects.store');
 
 Route::put('seo/redirects/{redirect}', [RedirectController::class, 'update'])
     ->middleware('vertex.permission:seo.edit')
-    ->name('seo.redirects.update');
+    ->name('redirects.update');
 
 Route::delete('seo/redirects/{redirect}', [RedirectController::class, 'destroy'])
     ->middleware('vertex.permission:seo.edit')
-    ->name('seo.redirects.destroy');
+    ->name('redirects.destroy');
 
 Route::get('seo/redirects/logs', [RedirectController::class, 'logs'])
     ->middleware('vertex.permission:seo.view')
-    ->name('seo.redirects.logs');
+    ->name('redirects.logs');
 
 Route::post('seo/redirects/import-404', [RedirectController::class, 'importFromLogs'])
     ->middleware('vertex.permission:seo.edit')
-    ->name('seo.redirects.import-404');
+    ->name('redirects.import-404');
 
 Route::post('seo/redirects/bulk-import', [RedirectController::class, 'bulkImport'])
     ->middleware('vertex.permission:seo.edit')
-    ->name('seo.redirects.bulk-import');
+    ->name('redirects.bulk-import');
 
 // Конструктор Schema.org
 Route::get('seo/schema-builder', [SchemaController::class, 'index'])

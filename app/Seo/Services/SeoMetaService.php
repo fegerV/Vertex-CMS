@@ -24,6 +24,7 @@ class SeoMetaService
             [
                 'title' => $payload['seo_title'] ?? null,
                 'description' => $payload['seo_description'] ?? null,
+                'keywords' => $payload['seo_keywords'] ?? null,
                 'canonical_url' => $payload['seo_canonical_url'] ?? null,
                 'robots' => $payload['seo_robots'] ?? 'index, follow',
                 'og_title' => $payload['seo_og_title'] ?? null,
@@ -46,4 +47,3 @@ class SeoMetaService
         return is_array($decoded) ? $decoded : null;
     }
 }
-

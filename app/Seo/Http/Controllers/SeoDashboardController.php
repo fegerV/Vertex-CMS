@@ -4,9 +4,9 @@ namespace App\Seo\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Page;
-use App\Models\Term;
 use App\Seo\Services\SeoAuditService;
 use App\Seo\Services\SeoContentAnalysisService;
+use App\Seo\Services\SeoMetaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,8 +17,8 @@ class SeoDashboardController extends Controller
     public function __construct(
         private readonly SeoAuditService $audit,
         private readonly SeoContentAnalysisService $analysis,
-    ) {
-    }
+        private readonly SeoMetaService $meta,
+    ) {}
 
     public function index(): View
     {
@@ -93,11 +93,13 @@ class SeoDashboardController extends Controller
         foreach ($request->updates as $update) {
             $page = Page::find($update['id']);
             if ($page) {
-                $page->updateSeoMeta([
-                    'title' => $update['title'] ?? null,
-                    'description' => $update['description'] ?? null,
-                    'keywords' => $update['keywords'] ?? null,
-                    'canonical_url' => $update['canonical'] ?? null,
+                $this->meta->updateFor($page, [
+                    'seo_title' => $update['title'] ?? null,
+                    'seo_description' => $update['description'] ?? null,
+                    'seo_keywords' => $update['keywords'] ?? null,
+                    'seo_canonical_url' => $update['canonical'] ?? null,
+                    'seo_robots' => $page->seoMeta?->robots ?? 'index, follow',
+                    'seo_include_in_sitemap' => $page->seoMeta?->include_in_sitemap ?? true,
                 ]);
                 $updated++;
             }
@@ -121,10 +123,10 @@ class SeoDashboardController extends Controller
     {
         // Получаем все ключевые слова из страниц
         $keywords = collect();
-        
+
         $pages = Page::query()
             ->with('seoMeta')
-            ->whereNotNull('seo_meta_keywords')
+            ->whereHas('seoMeta', fn ($query) => $query->whereNotNull('keywords'))
             ->get();
 
         foreach ($pages as $page) {
@@ -132,7 +134,7 @@ class SeoDashboardController extends Controller
                 $kwList = explode(',', $page->seoMeta->keywords);
                 foreach ($kwList as $kw) {
                     $kw = trim($kw);
-                    if (!empty($kw)) {
+                    if (! empty($kw)) {
                         $keywords->put($kw, ($keywords->get($kw) ?? 0) + 1);
                     }
                 }
@@ -151,16 +153,30 @@ class SeoDashboardController extends Controller
     {
         $request->validate([
             'keyword' => 'required|string|max:255',
-            'page_id' => 'nullable|exists:pages,id',
+            'page_id' => 'required|exists:pages,id',
         ]);
 
-        // Логика добавления ключевого слова
+        $page = Page::query()->with('seoMeta')->findOrFail($request->integer('page_id'));
+        $keywords = $this->keywords($page->seoMeta?->keywords);
+        $keywords[] = trim((string) $request->input('keyword'));
+
+        $this->meta->updateFor($page, $this->metaPayload($page, array_values(array_unique($keywords))));
+
         return redirect()->back()->with('success', 'Ключевое слово добавлено');
     }
 
     public function deleteKeyword(Request $request, string $keyword): RedirectResponse
     {
-        // Логика удаления ключевого слова
+        $needle = trim($keyword);
+        Page::query()->with('seoMeta')->whereHas('seoMeta', fn ($query) => $query->whereNotNull('keywords'))
+            ->get()->each(function (Page $page) use ($needle): void {
+                $keywords = array_values(array_filter(
+                    $this->keywords($page->seoMeta?->keywords),
+                    fn (string $value): bool => mb_strtolower($value) !== mb_strtolower($needle),
+                ));
+                $this->meta->updateFor($page, $this->metaPayload($page, $keywords));
+            });
+
         return redirect()->back()->with('success', 'Ключевое слово удалено');
     }
 
@@ -175,10 +191,10 @@ class SeoDashboardController extends Controller
         foreach ($pages as $page) {
             $content = $page->content ?? '';
             $outgoingLinks = [];
-            
+
             // Поиск ссылок в контенте
             preg_match_all('/href=["\']([^"\']+)["\']/', $content, $matches);
-            if (!empty($matches[1])) {
+            if (! empty($matches[1])) {
                 foreach ($matches[1] as $link) {
                     $targetPage = Page::where('uri', $link)->first();
                     if ($targetPage) {
@@ -234,7 +250,7 @@ class SeoDashboardController extends Controller
 
         foreach ($pages as $page) {
             $hasIncomingLink = false;
-            
+
             foreach ($pages as $otherPage) {
                 if ($otherPage->id !== $page->id) {
                     $content = $otherPage->content ?? '';
@@ -245,7 +261,7 @@ class SeoDashboardController extends Controller
                 }
             }
 
-            if (!$hasIncomingLink) {
+            if (! $hasIncomingLink) {
                 $orphanPages[] = $page;
             }
         }
@@ -277,7 +293,7 @@ class SeoDashboardController extends Controller
         ]);
 
         $page = Page::findOrFail($request->page_id);
-        
+
         // Здесь будет интеграция с AI для генерации мета-тегов
         // Пока используем базовую логику
         $title = substr($page->title, 0, 60);
@@ -316,5 +332,28 @@ class SeoDashboardController extends Controller
     {
         // Логика обновления настроек SEO
         return redirect()->back()->with('success', 'Настройки SEO обновлены');
+    }
+
+    private function keywords(?string $value): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', (string) $value))));
+    }
+
+    private function metaPayload(Page $page, array $keywords): array
+    {
+        $seo = $page->seoMeta;
+
+        return [
+            'seo_title' => $seo?->title,
+            'seo_description' => $seo?->description,
+            'seo_keywords' => implode(', ', $keywords),
+            'seo_canonical_url' => $seo?->canonical_url,
+            'seo_robots' => $seo?->robots ?? 'index, follow',
+            'seo_og_title' => $seo?->og_title,
+            'seo_og_description' => $seo?->og_description,
+            'seo_og_image' => $seo?->og_image,
+            'seo_schema_json' => $seo?->schema_json ? json_encode($seo->schema_json) : null,
+            'seo_include_in_sitemap' => $seo?->include_in_sitemap ?? true,
+        ];
     }
 }

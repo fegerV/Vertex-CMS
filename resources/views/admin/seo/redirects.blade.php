@@ -186,7 +186,9 @@
             </div>
 
             <div class="mt-5">
-                {{ $redirects->links() }}
+                @if ($redirects->hasPages())
+                    {{ $redirects->links() }}
+                @endif
             </div>
         </section>
     </div>

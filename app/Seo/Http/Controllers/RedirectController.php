@@ -4,6 +4,7 @@ namespace App\Seo\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Redirect;
+use App\Models\RedirectLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +38,7 @@ class RedirectController extends Controller
         if (! $request->wantsJson() && ! $request->expectsJson()) {
             $allRedirects = Redirect::query()->get();
 
-            return view('admin.seo.redirects.index', [
+            return view('admin.seo.redirects', [
                 'redirects' => $redirects,
                 'defaultStatusCodes' => [301, 302, 307, 308],
                 'stats' => [
@@ -45,8 +46,8 @@ class RedirectController extends Controller
                     'enabled' => $allRedirects->where('enabled', true)->count(),
                     'top_hits' => (int) $allRedirects->max('hits'),
                 ],
-                'error404Count' => 0,
-                'recent404s' => [],
+                'error404Count' => RedirectLog::query()->where('status_code', 404)->count(),
+                'recent404s' => RedirectLog::query()->where('status_code', 404)->latest()->limit(5)->get(),
             ]);
         }
 
@@ -58,7 +59,7 @@ class RedirectController extends Controller
      */
     public function logs(): View
     {
-        $logs = \App\Models\RedirectLog::where('status_code', 404)
+        $logs = RedirectLog::query()->where('status_code', 404)
             ->latest()
             ->paginate(50);
 
@@ -68,24 +69,27 @@ class RedirectController extends Controller
     /**
      * Импорт 404 ошибок в редиректы
      */
-    public function importFromLogs(Request $request): \Illuminate\Http\RedirectResponse
+    public function importFromLogs(Request $request): RedirectResponse
     {
-        $limit = $request->input('limit', 50);
-        
-        $errors = \App\Models\RedirectLog::where('status_code', 404)
+        $payload = $request->validate(['limit' => ['nullable', 'integer', 'min:1', 'max:500']]);
+        $limit = (int) ($payload['limit'] ?? 50);
+
+        $errors = RedirectLog::query()->where('status_code', 404)
             ->latest()
             ->take($limit)
             ->get();
 
         $created = 0;
         foreach ($errors as $error) {
-            \App\Models\SeoRedirect::create([
-                'from_url' => $this->normalizeUrl($error->url),
+            $redirect = Redirect::query()->firstOrCreate(['from_url' => $this->normalizeUrl($error->url)], [
                 'to_url' => '/',
-                'type' => 301,
-                'is_active' => true,
+                'status_code' => 301,
+                'enabled' => true,
+                'hits' => 0,
             ]);
-            $created++;
+            if ($redirect->wasRecentlyCreated) {
+                $created++;
+            }
         }
 
         return redirect()->back()->with('success', "Создано {$created} редиректов из логов 404!");
@@ -94,7 +98,7 @@ class RedirectController extends Controller
     /**
      * Массовый импорт из CSV
      */
-    public function bulkImport(Request $request): \Illuminate\Http\RedirectResponse
+    public function bulkImport(Request $request): RedirectResponse
     {
         $request->validate([
             'csv_file' => 'required|file|mimes:csv,txt',
@@ -102,32 +106,37 @@ class RedirectController extends Controller
 
         $file = $request->file('csv_file');
         $rows = array_map('str_getcsv', file($file->getRealPath()));
-        
+
         $created = 0;
         $skipped = 0;
-        
+
         foreach ($rows as $index => $row) {
-            if ($index === 0 || count($row) < 2) continue;
-            
+            if (count($row) < 2 || ($index === 0 && strtolower(trim((string) $row[0])) === 'from_url')) {
+                continue;
+            }
+
             $fromUrl = trim($row[0]);
             $toUrl = trim($row[1]);
-            $type = isset($row[2]) ? (int)trim($row[2]) : 301;
-            
+            $type = isset($row[2]) ? (int) trim($row[2]) : 301;
+
             if (empty($fromUrl) || empty($toUrl)) {
                 $skipped++;
+
                 continue;
             }
-            
-            if (\App\Models\SeoRedirect::where('from_url', $this->normalizeUrl($fromUrl))->exists()) {
+
+            if (Redirect::query()->where('from_url', $this->normalizeUrl($fromUrl))->exists()) {
                 $skipped++;
+
                 continue;
             }
-            
-            \App\Models\SeoRedirect::create([
+
+            Redirect::query()->create([
                 'from_url' => $this->normalizeUrl($fromUrl),
                 'to_url' => $this->normalizeUrl($toUrl),
-                'type' => in_array($type, [301, 302]) ? $type : 301,
-                'is_active' => true,
+                'status_code' => in_array($type, [301, 302, 307, 308], true) ? $type : 301,
+                'enabled' => true,
+                'hits' => 0,
             ]);
             $created++;
         }
