@@ -13,8 +13,8 @@ use App\Models\PageRevision;
 use App\System\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AdvancedBuilderController extends Controller
@@ -24,8 +24,7 @@ class AdvancedBuilderController extends Controller
         private readonly BuilderLibraryManager $library,
         private readonly BuilderContractSerializer $serializer,
         private readonly ActivityLogService $activityLog,
-    ) {
-    }
+    ) {}
 
     public function advanced(Request $request, Page $page): View
     {
@@ -109,11 +108,23 @@ class AdvancedBuilderController extends Controller
             ], 422);
         }
 
-        $this->builder->createRevision($page, $sections, 'auto-save');
+        DB::transaction(function () use ($page, $request, $sections): void {
+            $this->builder->createRevision($page, $sections, 'auto-save');
+
+            $page->forceFill([
+                'content_json' => [
+                    'version' => $page->content_json['version'] ?? '1.0',
+                    'layout' => $page->content_json['layout'] ?? 'default',
+                    'sections' => $sections,
+                ],
+                'updated_by' => $request->user()->id,
+            ])->save();
+        });
 
         return response()->json([
             'ok' => true,
             'saved_at' => now()->toIso8601String(),
+            'updated_at' => $page->fresh()->updated_at?->toIso8601String(),
         ]);
     }
 
