@@ -3,13 +3,13 @@
 use App\AI\Http\Controllers\AiController as DraftAiController;
 use App\Builder\Http\Controllers\BuilderApiController;
 use App\Content\Http\Controllers\PageApiController;
+use App\Http\Controllers\Analytics\DashboardController;
+use App\Http\Controllers\Analytics\HeatmapController;
+use App\Http\Controllers\Api\AIController as ApiAiController;
 use App\Media\Http\Controllers\MediaApiController;
 use App\Media\Http\Controllers\MediaFolderApiController;
 use App\System\Http\Controllers\SystemApiController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Analytics\DashboardController;
-use App\Http\Controllers\Analytics\HeatmapController;
-use App\Http\Controllers\Api\AIController as ApiAiController;
 
 // Public API v1 endpoints would go here (read-only, versioned contract)
 // Example: Route::prefix('v1/public')->group(function () { ... });
@@ -31,24 +31,26 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::post('/cache/clear', [SystemApiController::class, 'clearCache'])->middleware('vertex.permission:cache.clear');
 });
 
- // Media & Folders (admin panel uses session auth)
- Route::middleware(['web', 'auth'])->group(function (): void {
-     Route::get('/media', [MediaApiController::class, 'index']);
-     Route::post('/media/upload', [MediaApiController::class, 'store']);
-     Route::put('/media/{media}', [MediaApiController::class, 'update']);
-     Route::patch('/media/{media}/move', [MediaApiController::class, 'move']);
-     Route::delete('/media/{media}', [MediaApiController::class, 'destroy']);
+// Media & Folders (admin panel uses session auth)
+Route::middleware(['web', 'auth'])->group(function (): void {
+    Route::get('/media', [MediaApiController::class, 'index']);
+    Route::post('/media/upload', [MediaApiController::class, 'store']);
+    Route::put('/media/{media}', [MediaApiController::class, 'update']);
+    Route::patch('/media/{media}/move', [MediaApiController::class, 'move']);
+    Route::delete('/media/{media}', [MediaApiController::class, 'destroy']);
 
-     // Media Folders
-     Route::get('/media/folders', [MediaFolderApiController::class, 'index']);
-     Route::post('/media/folders', [MediaFolderApiController::class, 'store']);
-     Route::put('/media/folders/{folder}', [MediaFolderApiController::class, 'update']);
-     Route::delete('/media/folders/{folder}', [MediaFolderApiController::class, 'destroy']);
- });
+    // Media Folders
+    Route::get('/media/folders', [MediaFolderApiController::class, 'index']);
+    Route::post('/media/folders', [MediaFolderApiController::class, 'store']);
+    Route::put('/media/folders/{folder}', [MediaFolderApiController::class, 'update']);
+    Route::delete('/media/folders/{folder}', [MediaFolderApiController::class, 'destroy']);
+});
 
 // AI Providers & Chat (existing)
-Route::get('/ai/providers', [DraftAiController::class, 'providers']);
-Route::post('/ai/chat', [DraftAiController::class, 'chat']);
+Route::middleware('auth:sanctum')->group(function (): void {
+    Route::get('/ai/providers', [DraftAiController::class, 'providers']);
+    Route::post('/ai/chat', [DraftAiController::class, 'chat']);
+});
 
 // Site Wizard - AI-powered site creation
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -60,9 +62,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/ai/wizard/generate-image', [DraftAiController::class, 'wizardGenerateImage']);
     Route::post('/ai/wizard/save-structure', [DraftAiController::class, 'wizardSaveStructure']);
 });
-
-Route::get('/system/info', [SystemApiController::class, 'info']);
-Route::post('/cache/clear', [SystemApiController::class, 'clearCache']);
 
 if (file_exists(base_path('modules/vertex-forms/routes/api.php'))) {
     require base_path('modules/vertex-forms/routes/api.php');
@@ -87,7 +86,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('heatmaps/record', [HeatmapController::class, 'record']);
 
     // AI Services
-    Route::post('ai/chat', [ApiAiController::class, 'chat']);
+    // Keep the legacy AI service separate from the draft-first CMS endpoint.
+    Route::post('ai/legacy-chat', [ApiAiController::class, 'chat']);
     Route::post('ai/faq', [ApiAiController::class, 'faq']);
     Route::post('ai/generate', [ApiAiController::class, 'generateContent']);
     Route::post('ai/analyze-image', [ApiAiController::class, 'analyzeImage']);
