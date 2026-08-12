@@ -8,6 +8,7 @@ class WafModule
 {
     public function register(Application $app): void
     {
+        $app->singleton(WafService::class);
         $app->singleton(self::class, fn () => $this);
     }
 }

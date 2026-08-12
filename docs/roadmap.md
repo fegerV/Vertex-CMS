@@ -21,7 +21,7 @@ VertexCMS должна стать современной CMS с открытым
 6. CMS должна быть готова к headless, Git-based и collaborative workflows.
    Контент, API и деплой должны быть удобны и для редакторов, и для разработчиков, включая совместное редактирование, версионирование и автоматизацию поставки.
 
-## Текущее состояние на 2026-05-12
+## Текущее состояние на 2026-08-12
 
 - `v0.1` реализован в коде как рабочий foundation slice: installer, auth, RBAC, pages CRUD, media, SEO fields, frontend renderer, sitemap/robots, system pages и activity logs уже есть.
 - `Page Builder MVP` и advanced builder ушли заметно дальше исходного MVP: drag-and-drop, revisions, autosave, templates, presets, shared libraries, command palette, shortcuts, media picker и modern light/dark UI уже собраны. Client-side advanced builder теперь живет в Vite-модулях с раздельными слоями `canvas`, `history`, `inspector`, `templates` и `commands`, а shared media library/picker использует единый UI.
@@ -34,6 +34,7 @@ VertexCMS должна стать современной CMS с открытым
 - Основной незакрытый слой для уже написанных модулей: runtime/manual QA и прогон миграций в живой среде. Это ограничение верификации, а не отсутствие архитектуры или UI.
 - **Forms module (`vertex-forms`)** имеет существенную готовую кодовую базу (6 таблиц, 3 контроллера, 5 сервисов, 6 моделей, конфиг, маршруты, `FieldTypeRegistry` с 15 типами полей). Админский drag & drop конструктор и REST API уже работают. Открыты задачи: интеграция с Page Builder блоком (`<x-builder.form>`), условная логика на фронте (`FormRenderer.vue`/`ConditionalLogicModal.vue`), реCAPTCHA v3 score-верификация, Turnstile, автоматическая версионирование, CSV-экспорт с пагинацией и очистка аналитики по расписанию. Форма вынесена из `Backlog после v1.0` в отдельный трек разработки.
 - **Theme System (`v0.4`)** полностью реализован: глобальные CSS переменные (цвета, шрифты, типографика, отступы, радиусы, тени, breakpoints, z-index), JSON конфигурация дизайн-токенов, light/dark схемы, утилитарные классы. Файлы: `resources/css/theme.css`, `themes/default/theme.json`, `THEME_GUIDE.md`.
+- **Security optional modules (`v0.7`)** реализованы как рабочие сервисы: WAF обнаруживает path traversal, script/SQL injection, запрещённые методы и сканеры; GeoIP поддерживает локальную CIDR-базу IPv4/IPv6 и country policy; HIBP проверяет пароли через k-anonymity range API; Cloudflare предоставляет zone/cache API и принимает visitor IP headers только от явно доверенных proxy ranges. Все четыре модуля остаются выключенными по умолчанию и активируются настройками окружения.
 
 ## Версия v0.1 - MVP Foundation
 
@@ -200,6 +201,8 @@ Acceptance criteria:
 - Security dashboard с предупреждениями по конфигурации, статусами core/modules, рабочим Integrity Monitor, реактивным Alerts module и фоновым Scanner report.
 - Политики хранения данных и аудит доступа.
 - Security layer строится как hybrid architecture: встроенный `Security Core` в едином пространстве `Vertex\Security\` + опциональные toggle-модули (`waf`, `geoip`, `integrity`, `hibp`, `cloudflare`, `scanner`, `alerts`) без отдельного обязательного пакета.
+
+Статус: `security vertical slice реализован в коде: core middleware, WAF, GeoIP policy, HIBP password checks, Cloudflare cache API, Integrity Monitor, Scanner и Alerts имеют рабочие сервисы и automated coverage. Перед production-включением внешних интеграций остаются настройка credentials/data sources и runtime QA на целевой инфраструктуре`.
 
 Acceptance criteria:
 

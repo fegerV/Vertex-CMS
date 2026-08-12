@@ -63,6 +63,36 @@ return [
         'alerts' => env('SECURITY_ALERTS', true),
     ],
 
+    'waf' => [
+        'mode' => env('SECURITY_WAF_MODE', 'block'),
+        'allowed_methods' => ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        'max_query_length' => (int) env('SECURITY_WAF_MAX_QUERY_LENGTH', 4096),
+        'blocked_user_agents' => array_values(array_filter(array_map('trim', explode(',', (string) env('SECURITY_WAF_BLOCKED_USER_AGENTS', 'sqlmap,nikto,acunetix'))))),
+        'excluded_paths' => ['up'],
+    ],
+
+    'geoip' => [
+        'trusted_headers' => env('SECURITY_GEOIP_TRUSTED_HEADERS', false),
+        'allowed_countries' => array_values(array_filter(array_map('strtoupper', array_map('trim', explode(',', (string) env('SECURITY_GEOIP_ALLOWED_COUNTRIES', '')))))),
+        'blocked_countries' => array_values(array_filter(array_map('strtoupper', array_map('trim', explode(',', (string) env('SECURITY_GEOIP_BLOCKED_COUNTRIES', '')))))),
+        'local_database' => env('SECURITY_GEOIP_DATABASE', storage_path('app/security/geoip.csv')),
+    ],
+
+    'hibp' => [
+        'endpoint' => env('SECURITY_HIBP_ENDPOINT', 'https://api.pwnedpasswords.com/range'),
+        'timeout' => (int) env('SECURITY_HIBP_TIMEOUT', 5),
+        'minimum_occurrences' => (int) env('SECURITY_HIBP_MINIMUM_OCCURRENCES', 1),
+    ],
+
+    'cloudflare' => [
+        'api_token' => env('CLOUDFLARE_API_TOKEN'),
+        'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        'api_url' => env('CLOUDFLARE_API_URL', 'https://api.cloudflare.com/client/v4'),
+        'timeout' => (int) env('CLOUDFLARE_API_TIMEOUT', 10),
+        'trust_visitor_headers' => env('CLOUDFLARE_TRUST_VISITOR_HEADERS', false),
+        'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', (string) env('CLOUDFLARE_TRUSTED_PROXIES', ''))))),
+    ],
+
     'integrity' => [
         'tracked_paths' => [
             'app',

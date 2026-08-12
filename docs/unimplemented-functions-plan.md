@@ -284,7 +284,7 @@ Acceptance criteria:
 - Нет отдельного admin UI для AI-specific log review; пока используются общие system logs.
 - Automated coverage добавлено для AI settings security, provider listing, draft-only generation и stable error contract.
 - Остаётся runtime/manual QA UI-панели и живая проверка с внешним provider SDK.
-- Базовый security runtime уже переведён на hybrid core/modules слой: канонический namespace `Vertex\Security\`, auto-registered core middleware, config-driven module toggles и fallback для cache/queue драйверов собраны. Реальные optional modules уже есть: `Integrity Monitor` с baseline/report snapshot lifecycle, `Alerts` с реактивными предупреждениями по core config/system health/integrity и `Scanner` с фоновым heuristic scan report для uploads/media. Ещё впереди более тяжёлые модули (`GeoIP`, `HIBP`, `Cloudflare`).
+- Security runtime переведён на hybrid core/modules слой: канонический namespace `Vertex\Security\`, auto-registered core middleware, config-driven toggles и fallback для cache/queue драйверов собраны. Optional modules имеют рабочие реализации: `WAF`, локальный IPv4/IPv6 `GeoIP` с country policy, k-anonymity `HIBP`, zone/cache API `Cloudflare`, `Integrity Monitor`, `Alerts` и фоновый `Scanner`. Для production остаются инфраструктурная настройка источника GeoIP и Cloudflare credentials, осознанное включение модулей и runtime QA.
 
 ## Приоритет P5 - PWA, themes, taxonomy
 

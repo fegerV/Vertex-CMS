@@ -8,6 +8,7 @@ class GeoIpModule
 {
     public function register(Application $app): void
     {
+        $app->singleton(GeoIpService::class);
         $app->singleton(self::class, fn () => $this);
     }
 }
