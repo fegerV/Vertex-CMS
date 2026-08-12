@@ -4,6 +4,8 @@ namespace App\Ecommerce\Services;
 
 use App\Models\User;
 use App\System\Services\ActivityLogService;
+use App\Services\Webhooks\WebhookService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 
@@ -13,6 +15,7 @@ class ProductService
 
     public function __construct(
         private readonly ActivityLogService $activityLog,
+        private readonly WebhookService $webhooks,
     ) {
     }
 
@@ -27,6 +30,7 @@ class ProductService
         ]);
 
         $this->activityLog->record('products.create', 'product', $product->id, "Product \"{$product->name}\" created.");
+        DB::afterCommit(fn () => $this->webhooks->triggerWebhook('product.created', $product->toArray()));
 
         return $product;
     }
@@ -41,6 +45,7 @@ class ProductService
         ])->save();
 
         $this->activityLog->record('products.edit', 'product', $product->id, "Product \"{$product->name}\" updated.");
+        DB::afterCommit(fn () => $this->webhooks->triggerWebhook('product.updated', $product->fresh()->toArray()));
 
         return $product;
     }
@@ -48,7 +53,9 @@ class ProductService
     public function delete(\App\Ecommerce\Models\Product $product, User $user): void
     {
         $product->forceFill(['updated_by' => $user->id])->save();
+        $payload = $product->toArray();
         $product->delete();
+        DB::afterCommit(fn () => $this->webhooks->triggerWebhook('product.deleted', $payload));
 
         $this->activityLog->record('products.delete', 'product', $product->id, "Product \"{$product->name}\" deleted.");
     }

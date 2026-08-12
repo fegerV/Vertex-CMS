@@ -9,6 +9,7 @@ use App\Ecommerce\Http\Controllers\OrderController;
 use App\Ecommerce\Http\Controllers\ProductController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\UpdateController;
+use App\Http\Controllers\Admin\WebhookController;
 use App\Media\Http\Controllers\MediaController;
 use App\Security\Login\Http\Controllers\LoginController;
 use App\Security\Login\Http\Controllers\TwoFactorController;
@@ -53,6 +54,12 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         require __DIR__.'/admin/email.php';
         require __DIR__.'/admin/system.php';
         require __DIR__.'/admin/seo.php';
+
+        Route::get('integrations/webhooks', [WebhookController::class, 'index'])->middleware('vertex.permission:settings.view')->name('webhooks.index');
+        Route::post('integrations/webhooks', [WebhookController::class, 'store'])->middleware('vertex.permission:settings.edit')->name('webhooks.store');
+        Route::put('integrations/webhooks/{webhook}', [WebhookController::class, 'update'])->middleware('vertex.permission:settings.edit')->name('webhooks.update');
+        Route::delete('integrations/webhooks/{webhook}', [WebhookController::class, 'destroy'])->middleware('vertex.permission:settings.edit')->name('webhooks.destroy');
+        Route::post('integrations/webhooks/{webhook}/test', [WebhookController::class, 'test'])->middleware('vertex.permission:settings.edit')->name('webhooks.test');
 
         // Custom Field Groups
         Route::get('custom-field-groups', [CustomFieldGroupController::class, 'index'])->middleware('vertex.permission:pages.edit')->name('custom-field-groups.index');

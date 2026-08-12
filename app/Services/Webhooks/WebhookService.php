@@ -26,6 +26,11 @@ class WebhookService
         ]);
     }
 
+    public function triggerWebhookFor(Webhook $webhook, string $event, array $payload): void
+    {
+        dispatch(new ProcessWebhook($webhook, $event, $payload));
+    }
+
     public function triggerWebhook(string $event, array $payload)
     {
         $webhooks = Webhook::where('is_active', true)
@@ -100,6 +105,11 @@ class WebhookService
             'payment.success' => 'Оплата успешна',
             'payment.failed' => 'Оплата не удалась',
         ];
+    }
+
+    public function validateUrl(string $url): void
+    {
+        $this->assertSafeUrl($url);
     }
 
     private function assertSafeUrl(string $url): void
