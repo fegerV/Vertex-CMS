@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Page;
 use App\Models\PageRevision;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -405,6 +404,43 @@ class BuilderContractTest extends TestCase
         $response->assertStatus(422);
         $response->assertJsonPath('ok', false);
         $this->assertDatabaseCount('page_revisions', 0);
+    }
+
+    public function test_builder_autosave_persists_valid_content_and_creates_recovery_revision(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'content_json' => [
+                'version' => '1.0',
+                'layout' => 'landing',
+                'sections' => [],
+            ],
+        ]);
+
+        $response = $this->actingAs($editor)->postJson("/admin/pages/{$page->id}/builder/auto-save", [
+            'content' => [[
+                'id' => 'autosaved-section',
+                'settings' => [],
+                'blocks' => [[
+                    'id' => 'autosaved-heading',
+                    'type' => 'heading',
+                    'settings' => ['text' => 'Autosaved safely'],
+                ]],
+            ]],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonStructure(['saved_at', 'updated_at']);
+
+        $page->refresh();
+        $this->assertSame('landing', $page->content_json['layout']);
+        $this->assertSame('Autosaved safely', $page->content_json['sections'][0]['blocks'][0]['settings']['text']);
+        $this->assertSame($editor->id, $page->updated_by);
+
+        $revision = PageRevision::query()->where('page_id', $page->id)->sole();
+        $this->assertSame('auto-save', $revision->action);
+        $this->assertSame('Autosaved safely', $revision->content_json['sections'][0]['blocks'][0]['settings']['text']);
     }
 
     public function test_builder_import_returns_sections_without_persisting_page_content(): void

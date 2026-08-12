@@ -51,11 +51,11 @@ export function useBuilderPersistence({
     const autoSaveStatusText = computed(() => {
         switch (autoSaveStatus.value) {
             case 'saved':
-                return 'Р’СЃРµ РёР·РјРµРЅРµРЅРёСЏ СЃРѕС…СЂР°РЅРµРЅС‹';
+                return 'Все изменения сохранены';
             case 'saving':
-                return 'РЎРѕС…СЂР°РЅРµРЅРёРµ...';
+                return 'Сохранение...';
             case 'error':
-                return 'РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ';
+                return 'Ошибка сохранения';
             default:
                 return '';
         }
@@ -63,8 +63,8 @@ export function useBuilderPersistence({
 
     const hasPendingChanges = computed(() => JSON.stringify({ content: sections.value }) !== lastPersistedPayload);
 
-    const syncPersistedPayload = () => {
-        lastPersistedPayload = JSON.stringify({ content: sections.value });
+    const syncPersistedPayload = (payload = JSON.stringify({ content: sections.value })) => {
+        lastPersistedPayload = payload;
         lastAutoSavePayload = lastPersistedPayload;
     };
 
@@ -97,13 +97,13 @@ export function useBuilderPersistence({
                 syncPersistedPayload();
             } else {
                 autoSaveStatus.value = 'error';
-                const message = data.error || data.message || data.errors?.[0] || 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ СЃС‚СЂР°РЅРёС†Сѓ';
-                alert(`РћС€РёР±РєР°: ${message}`);
+                const message = responseErrorMessage(data, 'Не удалось сохранить страницу');
+                alert(`Ошибка: ${message}`);
             }
         } catch (error) {
             console.error('Save error:', error);
             autoSaveStatus.value = 'error';
-            alert('РЎРµС‚РµРІР°СЏ РѕС€РёР±РєР° РїСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё');
+            alert('Сетевая ошибка при сохранении');
         } finally {
             saving.value = false;
         }
@@ -185,6 +185,7 @@ export function useBuilderPersistence({
             autoSaveStatus.value = data.ok === false ? 'error' : 'saved';
             if (data.ok !== false) {
                 lastAutoSavePayload = payload;
+                syncPersistedPayload(payload);
             }
         } catch (error) {
             autoSaveStatus.value = 'error';

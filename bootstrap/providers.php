@@ -2,6 +2,7 @@
 
 use App\Providers\AppServiceProvider;
 use App\Providers\VertexServiceProvider;
+use App\Security\Login\Providers\LoginServiceProvider;
 use Illuminate\Auth\AuthServiceProvider;
 use Illuminate\Cache\CacheServiceProvider;
 use Illuminate\Cookie\CookieServiceProvider;
@@ -34,6 +35,7 @@ return [
     TranslationServiceProvider::class,
     ValidationServiceProvider::class,
     ViewServiceProvider::class,
+    LoginServiceProvider::class,
     VertexServiceProvider::class,
     VertexFormsServiceProvider::class,
 ];

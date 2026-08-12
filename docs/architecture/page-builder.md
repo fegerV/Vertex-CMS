@@ -276,6 +276,12 @@ Add optional collaboration with Yjs only after the single-user editor flow is st
 
 ## Current Repo Notes
 
+Autosave is now durable: after backend validation, the editor stores the normalized
+page content and its recovery revision in one database transaction. A successful
+autosave therefore survives a refresh or browser crash instead of existing only in
+the revision list, while invalid block contracts leave both the page and revisions
+untouched.
+
 The repository already includes:
 
 - `@tiptap/vue-3`
