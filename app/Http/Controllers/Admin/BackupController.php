@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\System\Services\BackupService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class BackupController extends Controller
 {
@@ -178,20 +181,62 @@ class BackupController extends Controller
 
     /**
      * Save backup schedule settings
+     * FIX C04: Implement actual schedule persistence to database
      */
     public function saveSchedule(Request $request)
     {
         try {
-            // In a real application, you would save this to database or config file
-            // For now, we'll just return success
+            $validated = $request->validate([
+                'database_frequency' => 'nullable|string|in:daily,weekly,monthly',
+                'files_frequency' => 'nullable|string|in:daily,weekly,monthly',
+                'retention_days' => 'nullable|integer|min:1|max:365',
+                'storage_disk' => 'nullable|string|in:local,s3,minio',
+                'enabled' => 'nullable|boolean',
+            ]);
+
+            // Save to settings table using Laravel's config repository
+            $settings = [
+                'backup.schedule.database' => $validated['database_frequency'] ?? 'daily',
+                'backup.schedule.files' => $validated['files_frequency'] ?? 'weekly',
+                'backup.schedule.retention' => $validated['retention_days'] ?? 30,
+                'backup.schedule.storage' => $validated['storage_disk'] ?? config('filesystems.default', 'local'),
+                'backup.schedule.enabled' => $validated['enabled'] ?? true,
+            ];
+
+            // Persist each setting to the database
+            foreach ($settings as $key => $value) {
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => $key],
+                    ['value' => is_bool($value) ? ($value ? 'true' : 'false') : $value]
+                );
+            }
+
+            // Clear cached settings
+            Cache::forget('settings.backup');
+
+            // Log the change
+            Log::info('Backup schedule updated', [
+                'settings' => $settings,
+                'user_id' => auth()->id(),
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Настройки сохранены'
+                'message' => 'Настройки расписания бэкапов сохранены',
+                'settings' => $settings,
             ]);
-        } catch (\Exception $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Ошибка валидации данных',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Sentry\captureException($e);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при сохранении настроек: ' . $e->getMessage(),
             ], 500);
         }
     }

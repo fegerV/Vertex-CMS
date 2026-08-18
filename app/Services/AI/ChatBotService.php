@@ -6,9 +6,13 @@ class ChatBotService
 {
     private ContentGenerationService $generationService;
 
-    public function __construct()
+    /**
+     * FIX C05: Inject dependencies via constructor instead of manual instantiation
+     * This allows for proper testing and adherence to dependency inversion principle
+     */
+    public function __construct(ContentGenerationService $generationService)
     {
-        $this->generationService = new ContentGenerationService();
+        $this->generationService = $generationService;
     }
 
     public function handle_message(string $message, array $context = []): array
@@ -46,12 +50,13 @@ class ChatBotService
 
     public function answerFAQ(string $question): array
     {
+        // FIX C03: Get contact information from configuration instead of hardcoded values
         $faqKnowledge = [
-            'доставка' => 'Мы доставляем товары курьером по городу (300 руб.) и СДЭК по России (от 500 руб.). Срок доставки 2-5 дней.',
-            'оплата' => 'Принимаем оплату картами онлайн, при получении и банковским переводом для юрлиц.',
-            'возврат' => 'Возврат возможен в течение 14 дней с момента получения товара при сохранении товарного вида.',
-            'гарантия' => 'Гарантия на все товары от 1 года. Сервисные центры в крупных городах.',
-            'контакты' => 'Телефон: 8-800-XXX-XX-XX, Email: support@example.com, Чат работает 9:00-21:00 МСК.',
+            'доставка' => config('vertex.faq.delivery', 'Мы доставляем товары курьером по городу и СДЭК по России. Срок доставки 2-5 дней.'),
+            'оплата' => config('vertex.faq.payment', 'Принимаем оплату картами онлайн, при получении и банковским переводом для юрлиц.'),
+            'возврат' => config('vertex.faq.return', 'Возврат возможен в течение 14 дней с момента получения товара при сохранении товарного вида.'),
+            'гарантия' => config('vertex.faq.warranty', 'Гарантия на все товары от 1 года. Сервисные центры в крупных городах.'),
+            'контакты' => $this->getContactInfo(),
         ];
 
         // Ищем совпадения в базе знаний
@@ -72,6 +77,24 @@ class ChatBotService
             'max_tokens' => 200,
             'temperature' => 0.5,
         ]);
+    }
+
+    /**
+     * Get contact information from configuration
+     * FIX C03: Removed hardcoded fake phone number
+     */
+    private function getContactInfo(): string
+    {
+        $phone = config('vertex.contacts.phone');
+        $email = config('vertex.contacts.email', 'support@example.com');
+        $hours = config('vertex.contacts.hours', 'Чат работает 9:00-21:00 МСК');
+        
+        if (empty($phone) || $phone === '8-800-XXX-XX-XX') {
+            // Return generic message if phone is not configured
+            return "Email: {$email}, {$hours}";
+        }
+        
+        return "Телефон: {$phone}, Email: {$email}, {$hours}";
     }
 
     public function recommendProducts(array $userPreferences, int $limit = 5): array
