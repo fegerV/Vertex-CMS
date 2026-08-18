@@ -156,6 +156,8 @@ class BackupService
         $connection = config('database.default');
         $config = config("database.connections.{$connection}");
 
+        // FIX C01: Use environment variable for password instead of command line argument
+        // to prevent shell injection attacks
         $command = match ($config['driver']) {
             'pgsql' => sprintf(
                 'PGPASSWORD=%s psql -h %s -U %s %s < %s',
@@ -165,14 +167,7 @@ class BackupService
                 escapeshellarg($config['database']),
                 escapeshellarg($tempFile)
             ),
-            'mysql' => sprintf(
-                'mysql -h %s -u %s %s %s < %s',
-                escapeshellarg($config['host'] ?? 'localhost'),
-                escapeshellarg($config['username'] ?? ''),
-                empty($config['password']) ? '' : sprintf('-p%s', escapeshellarg($config['password'])),
-                escapeshellarg($config['database']),
-                escapeshellarg($tempFile)
-            ),
+            'mysql' => $this->createMysqlRestoreCommand($config, $tempFile),
             default => throw new \Exception("Unsupported database driver: {$config['driver']}"),
         };
 
@@ -184,6 +179,49 @@ class BackupService
         }
 
         Log::info("Database restored from: {$backupFile}");
+    }
+
+    /**
+     * Create secure MySQL restore command using option file instead of command line
+     * to prevent SQL injection via password parameter
+     */
+    private function createMysqlRestoreCommand(array $config, string $tempFile): string
+    {
+        $host = escapeshellarg($config['host'] ?? 'localhost');
+        $user = escapeshellarg($config['username'] ?? '');
+        $database = escapeshellarg($config['database']);
+        $file = escapeshellarg($tempFile);
+        
+        // Create temporary option file to avoid passing password via command line
+        $optionFile = tempnam(sys_get_temp_dir(), 'mysql_option_');
+        $password = $config['password'] ?? '';
+        
+        // Write credentials to option file with restricted permissions
+        $optionContent = "[client]\n";
+        if (!empty($password)) {
+            $optionContent .= "password={$password}\n";
+        }
+        file_put_contents($optionFile, $optionContent);
+        chmod($optionFile, 0600);
+        
+        $command = sprintf(
+            'mysql --defaults-extra-file=%s -h %s -u %s %s < %s',
+            escapeshellarg($optionFile),
+            $host,
+            $user,
+            $database,
+            $file
+        );
+        
+        // Clean up option file after command execution (will be done after exec)
+        // We need to delete it manually since exec doesn't support cleanup callbacks
+        register_shutdown_function(function() use ($optionFile) {
+            if (file_exists($optionFile)) {
+                unlink($optionFile);
+            }
+        });
+        
+        return $command;
     }
 
     public function listBackups(): array
