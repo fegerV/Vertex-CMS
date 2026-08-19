@@ -54,6 +54,7 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         require __DIR__.'/admin/email.php';
         require __DIR__.'/admin/system.php';
         require __DIR__.'/admin/seo.php';
+        require __DIR__.'/admin/ai-rag.php';
 
         Route::get('integrations/webhooks', [WebhookController::class, 'index'])->middleware('vertex.permission:settings.view')->name('webhooks.index');
         Route::post('integrations/webhooks', [WebhookController::class, 'store'])->middleware('vertex.permission:settings.edit')->name('webhooks.store');
