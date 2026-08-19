@@ -29,7 +29,17 @@ class MediaApiController extends Controller
             'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
 
+        $userId = $request->user()->id;
+        
+        // Проверка на администратора - может видеть все медиа
+        $isAdmin = $request->user()->hasPermission('media.delete');
+        
         $query = Media::query()->latest();
+        
+        // Если не администратор, фильтруем только по своим файлам
+        if (!$isAdmin) {
+            $query->where('created_by', $userId);
+        }
 
         if ($request->filled('ids')) {
             $query->whereIn('id', $request->input('ids', []));
@@ -82,6 +92,13 @@ class MediaApiController extends Controller
     {
         abort_unless($request->user()?->hasPermission('media.edit'), 403);
 
+        // Проверка владения: пользователь может редактировать только свои медиа файлы
+        // Администраторы могут редактировать любые файлы
+        $ownsMedia = (int) $media->created_by === (int) $request->user()->id;
+        $isAdmin = $request->user()->hasPermission('media.delete');
+        
+        abort_unless($ownsMedia || $isAdmin, 403);
+
         $payload = $request->validate([
             'alt' => ['nullable', 'string', 'max:255'],
             'title' => ['nullable', 'string', 'max:255'],
@@ -98,6 +115,13 @@ class MediaApiController extends Controller
     {
         abort_unless(request()->user()?->hasPermission('media.delete'), 403);
 
+        // Проверка владения: пользователь может удалять только свои медиа файлы
+        // Администраторы могут удалять любые файлы
+        $ownsMedia = (int) $media->created_by === (int) request()->user()->id;
+        $isAdmin = request()->user()->hasPermission('media.delete');
+        
+        abort_unless($ownsMedia || $isAdmin, 403);
+
         $this->media->delete($media);
 
         return response()->json(['ok' => true]);
@@ -106,6 +130,12 @@ class MediaApiController extends Controller
     public function move(Request $request, Media $media): JsonResponse
     {
         abort_unless($request->user()?->hasPermission('media.edit'), 403);
+
+        // Проверка владения: пользователь может перемещать только свои медиа файлы
+        $ownsMedia = (int) $media->created_by === (int) $request->user()->id;
+        $isAdmin = $request->user()->hasPermission('media.delete');
+        
+        abort_unless($ownsMedia || $isAdmin, 403);
 
         $data = $request->validate([
             'folder_id' => ['nullable', 'exists:media_folders,id'],
@@ -131,6 +161,7 @@ class MediaApiController extends Controller
             'width' => $media->width,
             'height' => $media->height,
             'folder_id' => $media->folder_id,
+            'created_by' => $media->created_by,
             'created_at' => optional($media->created_at)?->toIso8601String(),
         ];
     }

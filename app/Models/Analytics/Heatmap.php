@@ -3,10 +3,12 @@
 namespace App\Models\Analytics;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Heatmap extends Model
 {
     protected $fillable = [
+        'user_id',
         'page_url',
         'heatmap_type', // click, move, scroll
         'data_points',
@@ -25,6 +27,11 @@ class Heatmap extends Model
         'date_range_start' => 'datetime',
         'date_range_end' => 'datetime',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 
     public function getAggregatedDataAttribute()
     {
