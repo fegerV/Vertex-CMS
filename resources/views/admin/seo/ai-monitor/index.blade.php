@@ -5,7 +5,12 @@
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">AI Мониторинг Бренда: {{ $brandName }}</h1>
+        <h1 class="h3 mb-0 text-gray-800">
+            AI Мониторинг Бренда: {{ $brandName }}
+            @if($isDemoMode ?? false)
+                <span class="badge badge-warning ml-2" title="Демо режим - данные симулированы">DEMO</span>
+            @endif
+        </h1>
         <a href="{{ route('admin.seo.ai-monitor.refresh') }}" class="btn btn-primary btn-sm">
             <i class="fas fa-sync-alt"></i> Обновить данные
         </a>
@@ -13,6 +18,15 @@
 
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if($isDemoMode ?? false)
+        <div class="alert alert-warning mb-4">
+            <strong><i class="fas fa-exclamation-triangle"></i> Демо режим:</strong> 
+            Этот экран показывает симулированные данные для демонстрации. 
+            Для получения реальных данных настройте интеграцию с AI API и установите 
+            <code>AI_FEATURE_BRAND_MONITOR=true</code> в конфигурации.
+        </div>
     @endif
 
     <!-- Карточки статистики -->
