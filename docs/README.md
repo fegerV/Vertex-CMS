@@ -9,6 +9,7 @@
 - [API v1](api/README.md) - endpoints и гарантия совместимости API v1.
 - [Upgrade guide](upgrade-guide.md) - обновление 1.x без ручного изменения БД и процедура rollback.
 - [VertexCMS 1.0.0 release notes](releases/1.0.0.md) - baseline первого стабильного релиза.
+- [Forensic structure audit 2026-08-19](forensic-structure-audit-2026-08-19.md) - аудит структурного хаоса, дублей, stale-директорий и канонических реализаций.
 - [Core Skeleton](architecture/core-skeleton.md) - базовый технический каркас проекта.
 - [Unimplemented Functions Plan](unimplemented-functions-plan.md) - карта нереализованных функций и ближайший порядок реализации.
 - [VertexCMS vs WordPress](vertexcms-vs-wordpress.md) - преимущества VertexCMS перед WordPress и честные ограничения.
