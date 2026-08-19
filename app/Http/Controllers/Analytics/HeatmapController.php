@@ -11,7 +11,8 @@ class HeatmapController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Heatmap::query();
+        $user = $request->user();
+        $query = Heatmap::query()->where('user_id', $user->id);
 
         if ($request->has('page_url')) {
             $query->where('page_url', $request->page_url);
@@ -44,13 +45,19 @@ class HeatmapController extends Controller
             'viewport_height' => 'required|integer',
         ]);
 
-        $heatmap = Heatmap::create($validated);
+        $heatmap = Heatmap::create([
+            ...$validated,
+            'user_id' => $request->user()->id,
+        ]);
 
         return response()->json($heatmap, 201);
     }
 
-    public function show(Heatmap $heatmap): JsonResponse
+    public function show(Request $request, Heatmap $heatmap): JsonResponse
     {
+        // Проверка владения: пользователь может получить только свои heatmap
+        abort_unless((int) $heatmap->user_id === (int) $request->user()->id, 403);
+        
         return response()->json($heatmap);
     }
 

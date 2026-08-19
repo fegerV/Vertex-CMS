@@ -18,6 +18,14 @@ class PageApiController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $query = Page::query()->with('seoMeta');
+        
+        // Проверка владения: обычные пользователи видят только свои страницы
+        $user = $request->user();
+        $isAdmin = $user->hasPermission('pages.delete');
+        
+        if (!$isAdmin) {
+            $query->where('created_by', $user->id);
+        }
 
         if ($request->has('status')) {
             $query->where('status', $request->input('status'));
@@ -42,13 +50,27 @@ class PageApiController extends Controller
         }
     }
 
-    public function show(Page $page): JsonResponse
+    public function show(Request $request, Page $page): JsonResponse
     {
+        // Проверка владения: пользователь может видеть только свои страницы
+        $user = $request->user();
+        $ownsPage = (int) $page->created_by === (int) $user->id;
+        $isAdmin = $user->hasPermission('pages.delete');
+        
+        abort_unless($ownsPage || $isAdmin, 403);
+        
         return response()->json(new PageResource($page->load('seoMeta')));
     }
 
     public function update(Request $request, Page $page): JsonResponse
     {
+        // Проверка владения: пользователь может редактировать только свои страницы
+        $user = $request->user();
+        $ownsPage = (int) $page->created_by === (int) $user->id;
+        $isAdmin = $user->hasPermission('pages.delete');
+        
+        abort_unless($ownsPage || $isAdmin, 403);
+        
         try {
             $page = $this->pages->update($page, $this->validated($request), $request->user());
             return response()->json(new PageResource($page));
@@ -59,6 +81,13 @@ class PageApiController extends Controller
 
     public function destroy(Request $request, Page $page): JsonResponse
     {
+        // Проверка владения: пользователь может удалять только свои страницы
+        $user = $request->user();
+        $ownsPage = (int) $page->created_by === (int) $user->id;
+        $isAdmin = $user->hasPermission('pages.delete');
+        
+        abort_unless($ownsPage || $isAdmin, 403);
+        
         $this->pages->delete($page, $request->user());
         return response()->json(['ok' => true, 'id' => $page->id]);
     }
