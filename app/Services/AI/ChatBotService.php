@@ -2,6 +2,8 @@
 
 namespace App\Services\AI;
 
+use App\Ecommerce\Models\Order;
+
 class ChatBotService
 {
     private ContentGenerationService $generationService;
@@ -130,8 +132,7 @@ class ChatBotService
 
     public function processOrderQuery(string $orderId, string $question): array
     {
-        // Здесь должна быть логика получения данных о заказе из БД
-        $order = \App\Models\Ecommerce\Order::find($orderId);
+        $order = Order::query()->find($orderId);
 
         if (!$order) {
             return [

@@ -40,8 +40,7 @@ class SupabaseVectorService
     public function generateEmbedding(string $text): array
     {
         if (empty($this->apiKey)) {
-            Log::warning('OpenAI API key не настроен. Используется демо-режим эмбеддингов.');
-            return $this->generateMockEmbedding($text);
+            throw new \RuntimeException('OpenAI API key is required to generate embeddings.');
         }
 
         try {
@@ -58,30 +57,12 @@ class SupabaseVectorService
                 return $data['data'][0]['embedding'];
             }
 
-            Log::error('Ошибка генерации эмбеддинга: ' . $response->body());
-            return $this->generateMockEmbedding($text);
+            throw new \RuntimeException('Embedding generation failed: '.$response->body());
 
         } catch (\Exception $e) {
             Log::error('Исключение при генерации эмбеддинга: ' . $e->getMessage());
-            return $this->generateMockEmbedding($text);
+            throw $e;
         }
-    }
-
-    /**
-     * Демо-эмбеддинг (псевдо-вектор на основе хэша)
-     */
-    private function generateMockEmbedding(string $text): array
-    {
-        $vector = [];
-        $hash = md5($text);
-        
-        for ($i = 0; $i < $this->embeddingDimensions; $i++) {
-            $charCode = ord($hash[$i % strlen($hash)]);
-            $value = ($charCode / 255) * 2 - 1;
-            $vector[] = round($value, 6);
-        }
-
-        return $vector;
     }
 
     /**
@@ -137,6 +118,12 @@ class SupabaseVectorService
      */
     private function findRelevantChunksFallback(string $query, int $limit): array
     {
+        if (empty($this->apiKey)) {
+            Log::warning('Embedding fallback unavailable because OPENAI_API_KEY is not configured.');
+
+            return [];
+        }
+
         $chunks = \App\Models\AiKbChunk::all();
         $queryVector = $this->generateEmbedding($query);
         $results = [];

@@ -4,12 +4,7 @@ namespace App\Http\Controllers\Admin\Seo;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-use App\Models\Page;
-use App\Models\Post;
-use App\Models\Image;
-use App\Models\User;
 
 class AiUsageController extends Controller
 {
@@ -91,12 +86,9 @@ class AiUsageController extends Controller
      */
     public function sync(Request $request)
     {
-        // Здесь должна быть логика синхронизации с внешним AI сервисом
-        // Для примера - эмуляция
-        
         Cache::put('ai_usage_last_sync', now(), 3600);
-        
-        return redirect()->back()->with('success', 'Данные об использовании ИИ успешно синхронизированы!');
+
+        return redirect()->back()->with('info', 'External AI usage synchronization is not configured yet.');
     }
 
     /**
@@ -104,99 +96,11 @@ class AiUsageController extends Controller
      */
     private function calculateUsageStats($month)
     {
-        // В реальной реализации здесь будут запросы к базе данных или API
-        // Эмулируем данные для демонстрации
-        
-        $stats = [
-            // Исследование и анализ
-            'keywords_research' => rand(50, 200),
-            'topic_research' => rand(20, 80),
-            
-            // Изображения
-            'image_alt' => rand(100, 400),
-            
-            // Написание контента
-            'content_write' => rand(5000, 20000),
-            'write_more' => rand(200, 800),
-            'article_master' => rand(5, 25),
-            'paragraph' => rand(300, 900),
-            'paragraph_rewrite' => rand(150, 500),
-            'sentence_expander' => rand(200, 600),
-            'summarizer' => rand(100, 300),
-            'analogy' => rand(50, 150),
-            'free_form' => rand(400, 1200),
-            
-            // Чат и помощь
-            'chat' => rand(100, 500),
-            'fix_ai' => rand(80, 250),
-            'grammar_fix' => rand(150, 450),
-            'ai_team' => rand(100, 400),
-            
-            // SEO мета
-            'bulk_meta' => rand(30, 150),
-            'seo_title' => rand(100, 400),
-            'seo_description' => rand(100, 400),
-            'seo_meta' => rand(150, 450),
-            'open_graph' => rand(80, 250),
-            
-            // Блоги и статьи
-            'blog_idea' => rand(50, 150),
-            'blog_plan' => rand(30, 100),
-            'blog_intro' => rand(60, 180),
-            'blog_conclusion' => rand(60, 180),
-            'post_title' => rand(80, 250),
-            
-            // Товары
-            'product_description' => rand(80, 250),
-            'product_pros_cons' => rand(50, 150),
-            'product_review' => rand(50, 150),
-            
-            // Соцсети
-            'facebook_post' => rand(50, 150),
-            'facebook_comment_reply' => rand(80, 250),
-            'tweet' => rand(80, 250),
-            'tweet_reply' => rand(80, 250),
-            'instagram_caption' => rand(80, 250),
-            
-            // Email
-            'email' => rand(50, 150),
-            'email_reply' => rand(50, 150),
-            
-            // Комментарии и отзывы
-            'comment_reply' => rand(100, 300),
-            'testimonial' => rand(30, 100),
-            
-            // Био и компания
-            'bio' => rand(20, 80),
-            'company_history' => rand(10, 40),
-            'job_description' => rand(20, 80),
-            
-            // FAQ
-            'faq' => rand(80, 250),
-            
-            // Видео и подкасты
-            'youtube_script' => rand(10, 40),
-            'youtube_description' => rand(50, 150),
-            'podcast_plan' => rand(10, 40),
-            
-            // Рецепты
-            'recipe' => rand(20, 80),
-            
-            // Специальные функции
-            'vijdh' => rand(20, 80),
-            'irss' => rand(20, 80),
-            'par' => rand(20, 80),
-            'hero' => rand(20, 80),
-            'spin' => rand(50, 150),
-            'dpm' => rand(20, 80),
-            
-            // Ссылки
-            'link_opportunities' => rand(50, 150),
-            'related_posts' => rand(50, 150),
-            'link_suggestions' => rand(80, 250),
-        ];
+        $features = array_keys(config('seo.ai_limits', []));
 
-        return $stats;
+        return collect($features)->mapWithKeys(fn (string $feature): array => [
+            $feature => 0,
+        ])->all();
     }
 
     /**
@@ -219,16 +123,14 @@ class AiUsageController extends Controller
 
     private function getFeatureUsage($feature, $period)
     {
-        // Эмуляция данных
-        return rand(50, 500);
+        return 0;
     }
 
     private function getUsageTrend($feature, $period)
     {
-        // Эмуляция тренда
         return [
-            'direction' => rand(0, 1) ? 'up' : 'down',
-            'percentage' => rand(5, 30),
+            'direction' => 'flat',
+            'percentage' => 0,
         ];
     }
 

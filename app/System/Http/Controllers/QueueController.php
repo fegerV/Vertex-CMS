@@ -5,7 +5,7 @@ namespace App\System\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Queue\Jobs\JobInterface;
+use Illuminate\Support\Facades\Redis;
 
 class QueueController extends Controller
 {
@@ -25,20 +25,17 @@ class QueueController extends Controller
 
     public function show(string $queue): View
     {
-        $connection = Queue::connection('redis');
-        $jobs = [];
+        $jobs = collect(Redis::connection()->lrange("queues:{$queue}", 0, 49))
+            ->map(function (string $rawPayload): array {
+                $payload = json_decode($rawPayload, true) ?: [];
 
-        for ($i = 0; $i < 50; $i++) {
-            $job = $connection->pop($queue);
-            if (!$job) {
-                break;
-            }
-            $jobs[] = [
-                'id' => $job->getJobId(),
-                'name' => $job->resolveName(),
-                'payload' => json_decode($job->getRawBody(), true),
-            ];
-        }
+                return [
+                    'id' => $payload['uuid'] ?? $payload['id'] ?? null,
+                    'name' => $payload['displayName'] ?? $payload['job'] ?? 'Unknown job',
+                    'payload' => $payload,
+                ];
+            })
+            ->all();
 
         return view('admin.system.queue-jobs', compact('queue', 'jobs'));
     }

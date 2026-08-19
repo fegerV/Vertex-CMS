@@ -4,6 +4,7 @@ namespace App\Ecommerce\Services;
 
 use App\Ecommerce\Models\Order;
 use App\Ecommerce\Models\OrderItem;
+use App\Ecommerce\Models\Payment;
 use App\Ecommerce\Models\Product;
 use App\Models\User;
 use App\System\Services\ActivityLogService;
@@ -102,17 +103,43 @@ class OrderService
 
     public function updatePaymentStatus(Order $order, string $paymentStatus, ?string $transactionId = null): Order
     {
-        $order->update([
-            'payment_status' => $paymentStatus,
-            'payment_transaction_id' => $transactionId,
-            'paid_at' => $paymentStatus === 'paid' ? now() : null,
-        ]);
+        if (! in_array($paymentStatus, ['pending', 'paid', 'failed', 'refunded'], true)) {
+            throw new \InvalidArgumentException("Invalid payment status: {$paymentStatus}");
+        }
 
-        $this->activityLog->record('orders.payment', 'order', $order->id, "Order #{$order->id} payment status: {$paymentStatus}.");
-        $event = $paymentStatus === 'paid' ? 'payment.success' : 'payment.failed';
-        DB::afterCommit(fn () => $this->webhooks->triggerWebhook($event, $order->fresh()->toArray()));
+        if ($paymentStatus === 'paid' && blank($transactionId)) {
+            throw new \InvalidArgumentException('Paid orders require a verified external transaction id.');
+        }
 
-        return $order->fresh();
+        return DB::transaction(function () use ($order, $paymentStatus, $transactionId) {
+            $order->update([
+                'payment_status' => $paymentStatus,
+                'payment_transaction_id' => $transactionId,
+                'paid_at' => $paymentStatus === 'paid' ? now() : null,
+            ]);
+
+            Payment::query()->create([
+                'order_id' => $order->id,
+                'provider' => $order->payment_method ?: 'manual',
+                'provider_payment_id' => $transactionId,
+                'status' => match ($paymentStatus) {
+                    'paid' => 'succeeded',
+                    'refunded' => 'refunded',
+                    'failed' => 'failed',
+                    default => 'pending',
+                },
+                'amount' => $order->total,
+                'currency' => config('vertex.ecommerce.currency', 'USD'),
+                'metadata' => ['source' => 'admin_manual_status_update'],
+                'processed_at' => now(),
+            ]);
+
+            $this->activityLog->record('orders.payment', 'order', $order->id, "Order #{$order->id} payment status manually changed to {$paymentStatus}.");
+            $event = $paymentStatus === 'paid' ? 'payment.success' : 'payment.failed';
+            DB::afterCommit(fn () => $this->webhooks->triggerWebhook($event, $order->fresh(['items', 'payments'])->toArray()));
+
+            return $order->fresh();
+        });
     }
 
     public function cancel(Order $order, ?User $user = null): Order
@@ -122,6 +149,10 @@ class OrderService
 
     public function refund(Order $order, ?User $user = null): Order
     {
+        if ($order->payment_status === 'paid') {
+            throw new \RuntimeException('Paid orders must be refunded through the payment provider before changing the order status.');
+        }
+
         return $this->updateStatus($order, 'refunded', $user);
     }
 }

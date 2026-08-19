@@ -35,19 +35,29 @@ class UpdateService
             }
         } catch (Exception $e) {
             \Log::error('Update check failed: ' . $e->getMessage());
+
+            return [
+                'available' => false,
+                'current_version' => $currentVersion,
+                'latest_version' => null,
+                'status' => 'unavailable',
+                'error' => 'Update server is unreachable.',
+            ];
         }
 
         return [
             'available' => false,
             'current_version' => $currentVersion,
-            'latest_version' => $currentVersion,
+            'latest_version' => null,
+            'status' => 'unavailable',
+            'error' => 'Update server returned an invalid response.',
         ];
     }
 
     /**
      * Загрузка обновления
      */
-    public function downloadUpdate(string $downloadUrl): string
+    public function downloadUpdate(string $downloadUrl, ?string $expectedChecksum = null): string
     {
         $tempPath = storage_path('app/updates/latest.zip');
         
@@ -60,8 +70,12 @@ class UpdateService
         File::ensureDirectoryExists(storage_path('app/updates'));
         File::put($tempPath, $response->body());
 
-        // Проверка целостности (опционально)
-        // $this->verifyChecksum($tempPath, $expectedHash);
+        $expectedChecksum = $expectedChecksum ?: config('vertex.update_checksum');
+        if (empty($expectedChecksum)) {
+            throw new Exception('Update checksum is required before applying downloaded packages');
+        }
+
+        $this->verifyChecksum($tempPath, $expectedChecksum);
 
         return $tempPath;
     }
@@ -135,20 +149,20 @@ class UpdateService
     {
         File::ensureDirectoryExists($backupPath);
         
-        // Бэкап важных директорий
-        $directoriesToBackup = [
-            base_path('config'),
-            base_path('.env'),
-        ];
+        if (File::exists(base_path('config'))) {
+            File::copyDirectory(base_path('config'), $backupPath.'/config');
+        }
 
-        foreach ($directoriesToBackup as $dir) {
-            if (File::exists($dir)) {
-                File::copyDirectory(dirname($dir), $backupPath . '/config_backup');
-                break;
+        if (File::exists(base_path('.env'))) {
+            File::copy(base_path('.env'), $backupPath.'/.env');
+        }
+
+        if (config('database.default') === 'sqlite') {
+            $database = database_path('database.sqlite');
+            if (File::exists($database)) {
+                File::copy($database, $backupPath.'/database.sqlite');
             }
         }
-        
-        // Можно добавить дамп БД через BackupService
     }
 
     /**
@@ -210,6 +224,18 @@ class UpdateService
             }
         }
         return false;
+    }
+
+    /**
+     * Проверка контрольной суммы архива обновления.
+     */
+    private function verifyChecksum(string $packagePath, string $expectedChecksum): void
+    {
+        $actualChecksum = hash_file('sha256', $packagePath);
+
+        if (! hash_equals(strtolower($expectedChecksum), strtolower($actualChecksum))) {
+            throw new Exception('Update package checksum mismatch');
+        }
     }
 
     /**
