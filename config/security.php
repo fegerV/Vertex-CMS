@@ -4,7 +4,7 @@ return [
     'core' => true,
 
     'headers' => [
-        'csp' => env('SECURITY_CSP', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;"),
+        'csp' => env('SECURITY_CSP', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;"),
         'frame_options' => env('SECURITY_FRAME_OPTIONS', 'DENY'),
         'content_type_options' => env('SECURITY_CONTENT_TYPE_OPTIONS', 'nosniff'),
         'referrer_policy' => env('SECURITY_REFERRER_POLICY', 'strict-origin-when-cross-origin'),
@@ -35,10 +35,10 @@ return [
 
     'password_policy' => [
         'min_length' => (int) env('SECURITY_PASSWORD_MIN_LENGTH', 12),
-        'require_mixed_case' => env('SECURITY_PASSWORD_REQUIRE_MIXED_CASE', false),
+        'require_mixed_case' => env('SECURITY_PASSWORD_REQUIRE_MIXED_CASE', true),
         'require_numbers' => env('SECURITY_PASSWORD_REQUIRE_NUMBERS', true),
-        'require_symbols' => env('SECURITY_PASSWORD_REQUIRE_SYMBOLS', false),
-        'uncompromised' => env('SECURITY_PASSWORD_UNCOMPROMISED', false),
+        'require_symbols' => env('SECURITY_PASSWORD_REQUIRE_SYMBOLS', true),
+        'uncompromised' => env('SECURITY_PASSWORD_UNCOMPROMISED', true),
     ],
 
     'audit' => [
