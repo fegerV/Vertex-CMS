@@ -2,7 +2,7 @@
 
 namespace App\Services\AI;
 
-use App\Models\Ecommerce\Product;
+use App\Ecommerce\Models\Product;
 use App\Models\Page;
 use Laravel\Scout\Searchable;
 
@@ -75,7 +75,7 @@ class SmartSearchService
     {
         $this->assertSearchableModel($model);
         // Используем AI для расширения запроса синонимами
-        $generationService = new ContentGenerationService;
+        $generationService = app(ContentGenerationService::class);
 
         $prompt = "Подбери 5 синонимов и связанных слов для поискового запроса: \"{$query}\". Верни только слова через запятую.";
 
@@ -140,7 +140,7 @@ class SmartSearchService
     public function suggestQueries(string $partialQuery): array
     {
         // Используем AI для генерации подсказок
-        $generationService = new ContentGenerationService;
+        $generationService = app(ContentGenerationService::class);
 
         $prompt = "Пользователь начал вводить поисковый запрос: \"{$partialQuery}\". Предложи 5 вариантов завершения запроса для интернет-магазина. Верни только варианты, каждый с новой строки.";
 

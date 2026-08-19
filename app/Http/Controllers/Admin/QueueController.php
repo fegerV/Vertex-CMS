@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class QueueController extends Controller
 {
@@ -23,8 +24,6 @@ class QueueController extends Controller
     public function apiStats()
     {
         try {
-            $queues = config('queue.connections.redis.queue', 'default');
-            
             // Get queue sizes (requires Redis connection)
             $redis = app('redis.connection');
             
@@ -41,10 +40,10 @@ class QueueController extends Controller
             }
 
             // Get failed jobs count
-            $failedCount = \DB::table('failed_jobs')->count();
+            $failedCount = DB::table('failed_jobs')->count();
             
             // Get recent failed jobs
-            $recentFailed = \DB::table('failed_jobs')
+            $recentFailed = DB::table('failed_jobs')
                 ->orderByDesc('failed_at')
                 ->limit(10)
                 ->get()
@@ -67,18 +66,15 @@ class QueueController extends Controller
                 'recent_failed' => $recentFailed
             ]);
         } catch (\Exception $e) {
-            // If Redis is not available, return mock data
+            report($e);
+
             return response()->json([
-                'success' => true,
-                'queues' => [
-                    'default' => ['name' => 'default', 'size' => 0, 'status' => 'ok'],
-                    'high' => ['name' => 'high', 'size' => 0, 'status' => 'ok'],
-                    'low' => ['name' => 'low', 'size' => 0, 'status' => 'ok']
-                ],
-                'failed_count' => 0,
+                'success' => false,
+                'queues' => [],
+                'failed_count' => null,
                 'recent_failed' => [],
-                'message' => 'Redis connection not available'
-            ]);
+                'message' => 'Queue backend is unavailable: '.$e->getMessage(),
+            ], 503);
         }
     }
 
@@ -128,7 +124,7 @@ class QueueController extends Controller
     public function apiDeleteFailed($id)
     {
         try {
-            \DB::table('failed_jobs')->where('id', $id)->delete();
+            DB::table('failed_jobs')->where('id', $id)->delete();
             
             return response()->json([
                 'success' => true,
@@ -147,15 +143,20 @@ class QueueController extends Controller
      */
     public function apiClearQueue(Request $request)
     {
-        $queue = $request->input('queue', 'default');
-        
+        $validated = $request->validate([
+            'queue' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_.:-]+$/'],
+        ]);
+        $queue = $validated['queue'] ?? 'default';
+
         try {
-            // Note: Laravel doesn't have a built-in way to clear queues
-            // This would require custom implementation or package
+            $deleted = app('redis.connection')->del("queues:{$queue}");
+
             return response()->json([
-                'success' => false,
-                'message' => 'Очистка очереди требует ручной реализации'
-            ], 400);
+                'success' => true,
+                'message' => 'Очередь очищена',
+                'queue' => $queue,
+                'deleted' => (int) $deleted,
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -169,14 +170,10 @@ class QueueController extends Controller
      */
     public function apiWorkerStatus()
     {
-        // Check if queue workers are running
-        // This is a simplified check - in production you'd use supervisorctl or similar
-        
         $workersActive = Cache::remember('queue_workers_active', 60, function () {
-            // Mock implementation - check if we can connect to Redis
             try {
                 app('redis.connection')->ping();
-                return true;
+                return Cache::has('queue_worker_heartbeat') || Cache::has('illuminate:queue:restart');
             } catch (\Exception $e) {
                 return false;
             }
@@ -186,7 +183,7 @@ class QueueController extends Controller
             'success' => true,
             'workers' => [
                 'active' => $workersActive,
-                'count' => $workersActive ? 2 : 0,
+                'count' => $workersActive ? 1 : 0,
                 'last_seen' => $workersActive ? now()->toDateTimeString() : null
             ]
         ]);
