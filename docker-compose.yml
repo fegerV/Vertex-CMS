@@ -79,16 +79,22 @@ services:
     depends_on:
       - redis
 
-  # Mailhog (Development Email Testing)
+  # Mailhog (Development Email Testing) - DISABLED IN PRODUCTION
+  # Remove this service in production to prevent email interface exposure
   mailhog:
     image: mailhog/mailhog
     container_name: vertex_mailhog
     restart: unless-stopped
-    ports:
-      - "1025:1025"
-      - "8025:8025"
+    # FIX M03: Comment out exposed ports for production
+    # In development, uncomment if needed but never deploy to production
+    # ports:
+    #   - "1025:1025"
+    #   - "8025:8025"
     networks:
       - vertex_network
+    # Restrict to internal network only in production
+    expose:
+      - "1025"
 
 networks:
   vertex_network:

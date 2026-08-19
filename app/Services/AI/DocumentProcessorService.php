@@ -63,6 +63,33 @@ class DocumentProcessorService
      */
     public function extractTextFromFile(string $filePath): string
     {
+        // Критическое исправление безопасности: проверка пути на выход за пределы разрешенной директории
+        $realPath = realpath($filePath);
+        if ($realPath === false) {
+            throw new \Exception("File not found: {$filePath}");
+        }
+        
+        // Проверяем что файл находится в разрешенной директории (storage или uploads)
+        $allowedPrefixes = [
+            realpath(storage_path()),
+            realpath(base_path('uploads')),
+            realpath(sys_get_temp_dir()),
+        ];
+        
+        $isAllowed = false;
+        foreach ($allowedPrefixes as $prefix) {
+            if ($prefix !== false && strpos($realPath, $prefix) === 0) {
+                $isAllowed = true;
+                break;
+            }
+        }
+        
+        if (!$isAllowed) {
+            throw new \Exception("Access denied: file is outside allowed directories");
+        }
+        
+        $filePath = $realPath;
+        
         if (!file_exists($filePath)) {
             throw new \Exception("File not found: {$filePath}");
         }
@@ -117,8 +144,14 @@ class DocumentProcessorService
     {
         // Проверяем наличие pdftotext
         if (exec('which pdftotext')) {
+            // Критическое исправление безопасности: экранирование аргументов командной строки
+            // Используем escapeshellarg для полной защиты от инъекций команд
+            $escapedFilePath = escapeshellarg($filePath);
             $tempFile = tempnam(sys_get_temp_dir(), 'pdf_text_');
-            exec("pdftotext {$filePath} {$tempFile}", $output, $returnCode);
+            $escapedTempFile = escapeshellarg($tempFile);
+            
+            // Выполняем команду только с экранированными аргументами
+            exec("pdftotext {$escapedFilePath} {$escapedTempFile} 2>/dev/null", $output, $returnCode);
             
             if ($returnCode === 0 && file_exists($tempFile)) {
                 $text = file_get_contents($tempFile);
@@ -128,7 +161,10 @@ class DocumentProcessorService
         }
 
         // Fallback: пробуем прочитать как бинарный и извлечь текст
-        $content = file_get_contents($filePath);
+        $content = @file_get_contents($filePath);
+        if ($content === false) {
+            throw new \Exception("Failed to read PDF file content");
+        }
         // Простая эвристика для извлечения текста из PDF
         $text = preg_replace('/[^\x20-\x7E\x0A\x0D]/u', '', $content);
         return trim($text);

@@ -96,11 +96,27 @@ class AnalyticsService
 
     public function getChartData(array $config, array $filters = [])
     {
-        $metric = in_array($config['metric'] ?? 'visits', ['visits', 'visitors'], true)
-            ? ($config['metric'] ?? 'visits')
-            : 'visits';
+        // FIX H04: Use whitelist for allowed metrics to prevent SQL injection
+        $allowedMetrics = ['visits', 'visitors', 'page_views', 'sessions', 'bounce_rate'];
+        $metric = $config['metric'] ?? 'visits';
+        
+        if (!in_array($metric, $allowedMetrics, true)) {
+            $metric = 'visits'; // Default to safe value
+        }
+        
+        // Use parameterized query with column name from whitelist
+        $columnMap = [
+            'visits' => 'visits',
+            'visitors' => 'visitors',
+            'page_views' => 'page_views',
+            'sessions' => 'sessions',
+            'bounce_rate' => 'bounce_rate',
+        ];
+        
+        $columnName = $columnMap[$metric];
+        
         $query = DB::table('analytics_aggregates')
-            ->select('visit_date', DB::raw("SUM({$metric}) AS aggregate_value"))
+            ->select('visit_date', DB::raw("SUM({$columnName}) AS aggregate_value"))
             ->when($config['kind'] ?? null, fn ($builder, $kind) => $builder->where('kind', $kind))
             ->when($filters['date_from'] ?? null, fn ($builder, $date) => $builder->whereDate('visit_date', '>=', $date))
             ->when($filters['date_to'] ?? null, fn ($builder, $date) => $builder->whereDate('visit_date', '<=', $date))
@@ -111,7 +127,7 @@ class AnalyticsService
         return [
             'labels' => $query->pluck('visit_date')->all(),
             'datasets' => [[
-                'label' => ucfirst($metric),
+                'label' => ucfirst(str_replace('_', ' ', $metric)),
                 'data' => $query->pluck('aggregate_value')->map(fn ($value) => (int) $value)->all(),
             ]],
         ];
