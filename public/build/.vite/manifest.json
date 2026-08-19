@@ -1,0 +1,55 @@
+{
+  "_vendor-tiptap-BKxE253G.js": {
+    "file": "assets/vendor-tiptap-BKxE253G.js",
+    "name": "vendor-tiptap",
+    "imports": [
+      "_vendor-vue-DSEff15L.js"
+    ]
+  },
+  "_vendor-vue-DSEff15L.js": {
+    "file": "assets/vendor-vue-DSEff15L.js",
+    "name": "vendor-vue"
+  },
+  "resources/js/admin/app.js": {
+    "file": "assets/admin-BMrv3e1E.js",
+    "name": "admin",
+    "src": "resources/js/admin/app.js",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-C9Ucu2Zh.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_vendor-vue-DSEff15L.js",
+      "resources/js/admin/app.js"
+    ],
+    "dynamicImports": [
+      "resources/js/telegram-widget.js"
+    ],
+    "css": [
+      "assets/app-Dx-ErDkv.css"
+    ]
+  },
+  "resources/js/builder/index.js": {
+    "file": "assets/builder-DiYMTqq_.js",
+    "name": "builder",
+    "src": "resources/js/builder/index.js",
+    "isEntry": true
+  },
+  "resources/js/telegram-widget.js": {
+    "file": "assets/telegram-widget-DjdichBh.js",
+    "name": "telegram-widget",
+    "src": "resources/js/telegram-widget.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-vue-DSEff15L.js",
+      "resources/js/app.js",
+      "resources/js/admin/app.js"
+    ],
+    "css": [
+      "assets/telegram-widget-DaokX1UM.css"
+    ]
+  }
+}

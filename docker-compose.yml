@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # PHP Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vertex_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./storage:/var/www/html/storage
+    networks:
+      - vertex_network
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: vertex_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/nginx/ssl
+    networks:
+      - vertex_network
+    depends_on:
+      - app
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: vertex_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-vertex}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      MYSQL_USER: ${DB_USERNAME:-vertex}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secretpassword}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - vertex_network
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: vertex_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - vertex_network
+
+  # Laravel Reverb (WebSocket Server)
+  reverb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vertex_reverb
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - vertex_network
+    depends_on:
+      - redis
+
+  # Mailhog (Development Email Testing) - DISABLED IN PRODUCTION
+  # Remove this service in production to prevent email interface exposure
+  mailhog:
+    image: mailhog/mailhog
+    container_name: vertex_mailhog
+    restart: unless-stopped
+    # FIX M03: Comment out exposed ports for production
+    # In development, uncomment if needed but never deploy to production
+    # ports:
+    #   - "1025:1025"
+    #   - "8025:8025"
+    networks:
+      - vertex_network
+    # Restrict to internal network only in production
+    expose:
+      - "1025"
+
+networks:
+  vertex_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:

@@ -1,0 +1,45 @@
+{
+  "module": {
+    "id": "vertex-security",
+    "name": "Security",
+    "tier": "builtin",
+    "activation": "admin_toggle",
+    "version": "0.1.0",
+    "description": "Unified security module for VertexCMS with pluggable submodules for login hardening, WAF, headers, audit, integrity, password policy, scanning, and API security.",
+    "icon": "shield-check",
+    "author": "VertexCMS Team",
+    "category": "system",
+    "permissions": [
+      "security.view",
+      "security.manage",
+      "security.audit.view",
+      "security.audit.export",
+      "security.waf.manage",
+      "security.headers.manage",
+      "security.integrity.run",
+      "security.scanner.run",
+      "security.api.manage",
+      "security.sessions.manage"
+    ],
+    "dependencies": {
+      "core": "^0.1"
+    },
+    "routes": {
+      "admin": "/admin/security"
+    },
+    "assets": {
+      "js": [],
+      "css": []
+    },
+    "ui": {
+      "registration": [],
+      "inertia": false
+    },
+    "providers": [
+      "Vertex\\Security\\VertexSecurityServiceProvider"
+    ],
+    "requires": [],
+    "auto_install": false,
+    "status": "planned"
+  }
+}

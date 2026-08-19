@@ -1,0 +1,468 @@
+openapi: 3.1.0
+info:
+  title: VertexCMS Public API
+  version: v1
+  description: Public API contract for mobile clients and external integrations.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+servers:
+  - url: /api/v1
+paths:
+  /auth/login:
+    post:
+      summary: Issue a Sanctum bearer token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                device_name:
+                  type: string
+      responses:
+        '200':
+          description: Authenticated session payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthLoginResponse'
+        '422':
+          description: Validation or credentials error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/logout:
+    post:
+      summary: Revoke current Sanctum bearer token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+  /auth/tokens:
+    get:
+      summary: List active Sanctum tokens for the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenListResponse'
+  /auth/tokens/{tokenId}:
+    delete:
+      summary: Revoke one Sanctum token owned by the current user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: tokenId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Token deletion response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteTokenResponse'
+  /me:
+    get:
+      summary: Get current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
+  /public/pages:
+    get:
+      summary: List published pages
+      responses:
+        '200':
+          description: Published pages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPageResponse'
+  /public/pages/by-uri:
+    get:
+      summary: Get a published page by URI
+      parameters:
+        - in: query
+          name: uri
+          required: true
+          schema:
+            type: string
+            example: /about
+      responses:
+        '200':
+          description: Published page by URI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse'
+        '404':
+          description: Page not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /public/menus/{location}:
+    get:
+      summary: Get active menu by location
+      parameters:
+        - in: path
+          name: location
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Menu payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuResponse'
+  /public/settings/site:
+    get:
+      summary: Get public site settings
+      responses:
+        '200':
+          description: Public settings payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicSettingsResponse'
+  schemas:
+    ApiMeta:
+      type: object
+      properties:
+        api_version:
+          type: string
+          example: v1
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        last_page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        count:
+          type: integer
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              slug:
+                type: string
+        permissions:
+          type: array
+          items:
+            type: string
+    AuthUserResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/AuthUser'
+            token:
+              oneOf:
+                - $ref: '#/components/schemas/AuthToken'
+                - type: 'null'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    AuthToken:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        abilities:
+          type: array
+          items:
+            type: string
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        current:
+          type: boolean
+    AuthLoginResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/AuthUser'
+            auth:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  example: bearer
+                guard:
+                  type: string
+                  example: sanctum
+                token_type:
+                  type: string
+                  example: Bearer
+                access_token:
+                  type: string
+                abilities:
+                  type: array
+                  items:
+                    type: string
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    AuthTokenListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthToken'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    LogoutResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            logged_out:
+              type: boolean
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    DeleteTokenResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            deleted:
+              type: boolean
+            token_id:
+              type: integer
+            current:
+              type: boolean
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    Page:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        slug:
+          type: string
+        uri:
+          type: string
+        status:
+          type: string
+        template:
+          type: string
+        content_json:
+          type: object
+          additionalProperties: true
+        custom_fields_json:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        custom_fields:
+          type: object
+          additionalProperties: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        seo:
+          type: object
+          nullable: true
+          additionalProperties: true
+        parent_uri:
+          type: string
+          nullable: true
+    PageResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Page'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    PaginatedPageResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Page'
+        links:
+          type: object
+          additionalProperties:
+            type: string
+            nullable: true
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/ApiMeta'
+            - type: object
+              properties:
+                pagination:
+                  $ref: '#/components/schemas/PaginationMeta'
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        url:
+          type: string
+        target:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        parent_id:
+          type: integer
+          nullable: true
+        sort_order:
+          type: integer
+        settings:
+          type: object
+          additionalProperties: true
+    Menu:
+      type: object
+      properties:
+        id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+        location:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MenuItem'
+    MenuResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Menu'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    PublicSettings:
+      type: object
+      properties:
+        site:
+          type: object
+          additionalProperties: true
+        seo:
+          type: object
+          additionalProperties: true
+        api:
+          type: object
+          additionalProperties: true
+        pwa:
+          type: object
+          additionalProperties: true
+    PublicSettingsResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/PublicSettings'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
