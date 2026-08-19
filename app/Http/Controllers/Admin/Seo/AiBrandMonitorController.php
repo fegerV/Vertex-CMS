@@ -4,95 +4,134 @@ namespace App\Http\Controllers\Admin\Seo;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * AI Brand Monitor Controller - DEMO ONLY
+ * 
+ * WARNING: This controller provides SIMULATED data for demonstration purposes.
+ * It does NOT make real API calls to SerpApi, OpenAI, Bing API, or any external service.
+ * 
+ * To enable real brand monitoring, implement actual API integrations and
+ * set AI_FEATURE_BRAND_MONITOR=true in your environment configuration.
+ * 
+ * @deprecated Demo mode only - not for production use without real API integration
+ */
 class AiBrandMonitorController extends Controller
 {
     /**
-     * Отображение дашборда AI мониторинга
+     * Display AI monitoring dashboard
+     * 
+     * NOTE: Returns simulated data when AI_FEATURE_BRAND_MONITOR is false
      */
     public function index()
     {
-        // В реальной версии здесь были бы запросы к API (SerpApi, DataForSEO, или прямые запросы к LLM)
-        // Для демонстрации генерируем реалистичные данные на основе настроек сайта
+        // Check if feature is enabled
+        $isDemoMode = !config('ai.features.brand_monitor', false);
+        
+        if ($isDemoMode) {
+            Log::info('AI Brand Monitor accessed in demo mode - returning simulated data');
+        }
         
         $brandName = config('app.name', 'Vertex CMS');
-        $competitors = ['Competitor A', 'Competitor B', 'Competitor C'];
+        $competitors = config('ai.demo.competitors', ['Competitor A', 'Competitor B', 'Competitor C']);
         
-        // Получаем данные из кэша или генерируем новые
-        $data = Cache::remember('ai_brand_monitor_data', 3600, function () use ($brandName, $competitors) {
-            return $this->generateAiAnalysisData($brandName, $competitors);
-        });
+        // Get data from cache or generate new simulated data
+        $data = Cache::remember(
+            'ai_brand_monitor_data', 
+            config('ai.fallback.cache_ttl', 3600), 
+            function () use ($brandName, $competitors) {
+                return $this->generateDemoData($brandName, $competitors);
+            }
+        );
 
-        return view('admin.seo.ai-monitor.index', compact('data', 'brandName'));
+        return view('admin.seo.ai-monitor.index', compact('data', 'brandName', 'isDemoMode'));
     }
 
     /**
-     * Принудительное обновление данных
+     * Force refresh data (clears cache)
      */
     public function refresh(Request $request)
     {
         Cache::forget('ai_brand_monitor_data');
-        return redirect()->back()->with('success', 'Данные AI мониторинга обновлены.');
+        
+        $message = config('ai.features.brand_monitor', false) 
+            ? 'Данные AI мониторинга обновлены.' 
+            : 'Демо-данные AI мониторинга сброшены. Реальные данные недоступны без настройки AI_FEATURE_BRAND_MONITOR.';
+        
+        return redirect()->back()->with('success', $message);
     }
 
     /**
-     * Детальный отчет по упоминаниям
+     * Detailed mentions report
      */
     public function mentions(Request $request)
     {
+        $isDemoMode = !config('ai.features.brand_monitor', false);
         $data = Cache::get('ai_brand_monitor_data');
         $mentions = $data['mentions'] ?? [];
         
-        // Фильтрация
+        // Filter by sentiment
         $filter = $request->get('filter', 'all'); // all, positive, negative, neutral
         if ($filter !== 'all') {
             $mentions = array_filter($mentions, fn($m) => $m['sentiment'] === $filter);
         }
 
-        return view('admin.seo.ai-monitor.mentions', compact('mentions', 'filter'));
+        return view('admin.seo.ai-monitor.mentions', compact('mentions', 'filter', 'isDemoMode'));
     }
 
     /**
-     * Анализ источников (Citation Audit)
+     * Citation Audit - Source analysis
      */
     public function sources()
     {
+        $isDemoMode = !config('ai.features.brand_monitor', false);
         $data = Cache::get('ai_brand_monitor_data');
         $sources = $data['citations'] ?? [];
-        return view('admin.seo.ai-monitor.sources', compact('sources'));
+        return view('admin.seo.ai-monitor.sources', compact('sources', 'isDemoMode'));
     }
 
     /**
-     * Сравнение с конкурентами
+     * Competitor comparison
      */
     public function competitors()
     {
+        $isDemoMode = !config('ai.features.brand_monitor', false);
         $data = Cache::get('ai_brand_monitor_data');
         $comparison = $data['competitor_analysis'] ?? [];
-        return view('admin.seo.ai-monitor.competitors', compact('comparison'));
+        return view('admin.seo.ai-monitor.competitors', compact('comparison', 'isDemoMode'));
     }
 
     /**
-     * Генерация рекомендаций (AI Opportunities)
+     * AI Opportunities - Recommendations generation
      */
     public function opportunities()
     {
+        $isDemoMode = !config('ai.features.brand_monitor', false);
         $data = Cache::get('ai_brand_monitor_data');
         $opportunities = $data['opportunities'] ?? [];
-        return view('admin.seo.ai-monitor.opportunities', compact('opportunities'));
+        return view('admin.seo.ai-monitor.opportunities', compact('opportunities', 'isDemoMode'));
     }
 
     /**
-     * Генератор тестовых данных (Симуляция работы AI API)
-     * В продакшене здесь будут вызовы к OpenAI API / SerpApi / Bing API
+     * Generate DEMO data (simulated AI API responses)
+     * 
+     * In production with real API integration, this method should:
+     * - Call SerpApi or DataForSEO for search results
+     * - Use OpenAI API for sentiment analysis
+     * - Query Bing API for web mentions
+     * - Aggregate real competitor data
+     * 
+     * @param string $brandName Brand name to monitor
+     * @param array $competitors List of competitor names
+     * @return array Simulated monitoring data
      */
-    private function generateAiAnalysisData($brandName, $competitors)
+    private function generateDemoData($brandName, $competitors)
     {
         $today = now();
         
-        // 1. Упоминания и Тональность
+        // 1. Mentions and Sentiment (SIMULATED)
         $mentions = [
             [
                 'id' => 1,
@@ -103,7 +142,8 @@ class AiBrandMonitorController extends Controller
                 'sentiment' => 'positive',
                 'url' => route('admin.dashboard'),
                 'is_source' => true,
-                'source_url' => 'https://example.com/blog/best-cms-2024'
+                'source_url' => 'https://example.com/blog/best-cms-2024',
+                'demo' => true,
             ],
             [
                 'id' => 2,
@@ -114,7 +154,8 @@ class AiBrandMonitorController extends Controller
                 'sentiment' => 'neutral',
                 'url' => route('admin.dashboard'),
                 'is_source' => false,
-                'source_url' => null
+                'source_url' => null,
+                'demo' => true,
             ],
             [
                 'id' => 3,
@@ -125,7 +166,8 @@ class AiBrandMonitorController extends Controller
                 'sentiment' => 'negative',
                 'url' => route('admin.dashboard'),
                 'is_source' => true,
-                'source_url' => 'https://security-blog.example.com/cve-2023'
+                'source_url' => 'https://security-blog.example.com/cve-2023',
+                'demo' => true,
             ],
             [
                 'id' => 4,
@@ -136,11 +178,12 @@ class AiBrandMonitorController extends Controller
                 'sentiment' => 'positive',
                 'url' => route('admin.dashboard'),
                 'is_source' => true,
-                'source_url' => 'https://ecommerce-guide.com/fast-setup'
+                'source_url' => 'https://ecommerce-guide.com/fast-setup',
+                'demo' => true,
             ],
         ];
 
-        // 2. Статистика цитирования
+        // 2. Citation Statistics (SIMULATED)
         $citations = [
             ['page_title' => 'Документация: Установка', 'url' => '/docs/install', 'mentions_count' => 45, 'authority_score' => 92],
             ['page_title' => 'Блог: Тренды E-commerce 2024', 'url' => '/blog/ecommerce-trends', 'mentions_count' => 28, 'authority_score' => 85],
@@ -148,7 +191,7 @@ class AiBrandMonitorController extends Controller
             ['page_title' => 'Кейс: Магазин одежды', 'url' => '/cases/clothing-store', 'mentions_count' => 8, 'authority_score' => 60],
         ];
 
-        // 3. Сравнение с конкурентами
+        // 3. Competitor Comparison (SIMULATED)
         $comparison = [
             ['name' => $brandName, 'visibility_score' => 78, 'mention_volume' => 120, 'sentiment_ratio' => 0.75],
             ['name' => $competitors[0], 'visibility_score' => 92, 'mention_volume' => 450, 'sentiment_ratio' => 0.65],
@@ -156,7 +199,7 @@ class AiBrandMonitorController extends Controller
             ['name' => $competitors[2], 'visibility_score' => 45, 'mention_volume' => 30, 'sentiment_ratio' => 0.50],
         ];
 
-        // 4. Возможности (Opportunities)
+        // 4. Opportunities (SIMULATED)
         $opportunities = [
             [
                 'type' => 'content_gap',
@@ -164,7 +207,7 @@ class AiBrandMonitorController extends Controller
                 'description' => 'ИИ часто рекомендуют конкурентов при запросе "миграция с WordPress", так как у нас нет гайда.',
                 'potential_traffic' => '+15%',
                 'action' => 'Создать статью "Миграция на Vertex за 1 час"',
-                'priority' => 'high'
+                'priority' => 'high',
             ],
             [
                 'type' => 'schema_missing',
@@ -172,7 +215,7 @@ class AiBrandMonitorController extends Controller
                 'description' => 'Страницы с вопросами не попадают в сниппеты AI Overviews.',
                 'potential_traffic' => '+8%',
                 'action' => 'Добавить Schema.org FAQPage на страницу поддержки',
-                'priority' => 'medium'
+                'priority' => 'medium',
             ],
             [
                 'type' => 'authority_building',
@@ -180,16 +223,17 @@ class AiBrandMonitorController extends Controller
                 'description' => 'Технические блоги конкурентов цитируются в 3 раза чаще.',
                 'potential_traffic' => '+20%',
                 'action' => 'Опубликовать исследование производительности ядра',
-                'priority' => 'high'
-            ]
+                'priority' => 'high',
+            ],
         ];
 
-        // Агрегированная статистика
+        // Aggregated stats
         $stats = [
-            'total_mentions' => count($mentions) + 115, // эмуляция большего объема
+            'total_mentions' => count($mentions) + 115, // Emulate larger volume
             'positive_percent' => round((count(array_filter($mentions, fn($m) => $m['sentiment'] === 'positive')) / count($mentions)) * 100),
             'sources_count' => count(array_filter($mentions, fn($m) => $m['is_source'])),
-            'visibility_trend' => '+12%', // рост за месяц
+            'visibility_trend' => '+12%', // Growth per month
+            'is_demo' => true,
         ];
 
         return [
@@ -198,7 +242,8 @@ class AiBrandMonitorController extends Controller
             'competitor_analysis' => $comparison,
             'opportunities' => $opportunities,
             'stats' => $stats,
-            'last_updated' => now()
+            'last_updated' => now(),
+            'is_demo_mode' => true,
         ];
     }
 }

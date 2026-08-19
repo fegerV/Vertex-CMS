@@ -1,12 +1,10 @@
 ```
 # Environment
-.env
 .env.local
-*.env.*
+.env.*
 
 # Dependencies
 vendor/
-node_modules/
 
 # Logs
 *.log
@@ -19,14 +17,9 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Build
-build/
+# Build artifacts
+node_modules/
 dist/
+build/
 target/
 ```
