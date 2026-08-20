@@ -18,6 +18,7 @@ Route::middleware(["vertex.permission:forms.view"])->prefix("forms")->name("form
     Route::delete("{form}/submissions/{submission}", [FormSubmissionController::class, "destroy"])->name("submissions.destroy");
     Route::delete("{form}/clear-submissions", [FormSubmissionController::class, "clear"])->name("submissions.clear");
     Route::post("{form}/export-submissions", [FormSubmissionController::class, "export"])->name("submissions.export");
+    Route::get("{form}/submissions/paginated", [FormSubmissionController::class, "paginated"])->name("submissions.paginated");
 
     // Analytics
     Route::get("{form}/analytics", [FormAnalyticsController::class, "show"])->name("analytics");
