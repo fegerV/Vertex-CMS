@@ -2,50 +2,82 @@
 
 namespace App\Services\AI;
 
+use App\Contracts\AI\AiProviderInterface;
+use App\Services\AI\Providers\OpenAiProvider;
+use App\Services\AI\Providers\AnthropicProvider;
+use App\Services\AI\Providers\OllamaProvider;
 use Illuminate\Support\Facades\Http;
 
 class ContentGenerationService
 {
+    protected ?AiProviderInterface $provider = null;
+
+    public function __construct()
+    {
+        $this->provider = $this->resolveProvider();
+    }
+
+    /**
+     * Resolve the AI provider based on configuration
+     */
+    protected function resolveProvider(): ?AiProviderInterface
+    {
+        $defaultProvider = config('ai.default_provider', 'openai');
+
+        return match ($defaultProvider) {
+            'anthropic' => new AnthropicProvider(),
+            'ollama' => new OllamaProvider(),
+            'openai', default => new OpenAiProvider(),
+        };
+    }
+
+    /**
+     * Set a specific provider
+     */
+    public function setProvider(AiProviderInterface $provider): self
+    {
+        $this->provider = $provider;
+        return $this;
+    }
+
+    /**
+     * Get available providers
+     */
+    public function getAvailableProviders(): array
+    {
+        $providers = [
+            new OpenAiProvider(),
+            new AnthropicProvider(),
+            new OllamaProvider(),
+        ];
+
+        return array_filter($providers, fn($p) => $p->isAvailable());
+    }
+
     public function generateText(string $prompt, array $options = []): array
     {
-        $apiKey = config('services.openai.api_key');
-        
-        if (!$apiKey) {
-            return ['success' => false, 'error' => 'OpenAI API key not configured'];
+        if (!$this->provider) {
+            return ['success' => false, 'error' => 'No AI provider configured'];
         }
 
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$apiKey}",
-                'Content-Type' => 'application/json',
-            ])->post('https://api.openai.com/v1/chat/completions', [
-                'model' => $options['model'] ?? 'gpt-3.5-turbo',
-                'messages' => [
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-                'max_tokens' => $options['max_tokens'] ?? 1000,
-                'temperature' => $options['temperature'] ?? 0.7,
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return [
-                    'success' => true,
-                    'content' => $data['choices'][0]['message']['content'] ?? '',
-                    'usage' => $data['usage'] ?? [],
-                ];
-            }
-
-            return [
-                'success' => false,
-                'error' => $response->json()['error']['message'] ?? 'Unknown error',
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-            ];
+        if (!$this->provider->isAvailable()) {
+            return ['success' => false, 'error' => 'AI provider is not available'];
         }
+
+        return $this->provider->generateText($prompt, $options);
+    }
+
+    public function chat(array $messages, array $options = []): array
+    {
+        if (!$this->provider) {
+            return ['success' => false, 'error' => 'No AI provider configured'];
+        }
+
+        if (!$this->provider->isAvailable()) {
+            return ['success' => false, 'error' => 'AI provider is not available'];
+        }
+
+        return $this->provider->chat($messages, $options);
     }
 
     public function generateProductDescription(array $productData): array
