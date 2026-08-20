@@ -48,10 +48,14 @@ class SitemapController extends Controller
             ->merge($pages->map(fn (Page $page) => [
                 'loc' => url($page->uri),
                 'lastmod' => $page->updated_at,
+                'priority' => $page->seoMeta ? $page->seoMeta->priority : 0.5,
+                'changefreq' => $page->seoMeta ? $page->seoMeta->changefreq : 'weekly',
             ]))
             ->merge($terms->map(fn (Term $term) => [
                 'loc' => route('frontend.term-archive', [$term->taxonomy?->slug, $term->slug]),
                 'lastmod' => $term->updated_at,
+                'priority' => 0.5,
+                'changefreq' => 'weekly',
             ]));
 
         return response()
