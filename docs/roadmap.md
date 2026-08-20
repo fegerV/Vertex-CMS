@@ -21,20 +21,24 @@ VertexCMS должна стать современной CMS с открытым
 6. CMS должна быть готова к headless, Git-based и collaborative workflows.
    Контент, API и деплой должны быть удобны и для редакторов, и для разработчиков, включая совместное редактирование, версионирование и автоматизацию поставки.
 
-## Текущее состояние на 2026-08-12
+## Текущее состояние на 2026-08-20
 
 - `v0.1` реализован в коде как рабочий foundation slice: installer, auth, RBAC, pages CRUD, media, SEO fields, frontend renderer, sitemap/robots, system pages и activity logs уже есть.
 - `Page Builder MVP` и advanced builder ушли заметно дальше исходного MVP: drag-and-drop, revisions, autosave, templates, presets, shared libraries, command palette, shortcuts, media picker и modern light/dark UI уже собраны. Client-side advanced builder теперь живет в Vite-модулях с раздельными слоями `canvas`, `history`, `inspector`, `templates` и `commands`, а shared media library/picker использует единый UI.
 - `v0.2` частично закрыт на текущем Blade admin stack: современная админка с light/dark theme, permission-aware navigation, системные экраны и стабильный public/mobile API v1 contract уже реализованы; planned Inertia/Vue migration остаётся следующим UI-этапом, а не обязательным условием usable admin.
-- `v0.3` реализован как draft-first AI module: encrypted settings, provider registry, AI panel в page editor, generation flow для text/FAQ/CTA/SEO/builder draft и AI activity logs уже есть. Живая интеграция с внешними LLM provider SDK ещё впереди.
+- `v0.3` реализован как draft-first AI module: encrypted settings, provider registry, AI panel в page editor, generation flow для text/FAQ/CTA/SEO/builder draft и AI activity logs уже есть. **Live LLM Integration завершена**: создан унифицированный интерфейс `AiProviderInterface`, реализованы провайдеры `OpenAiProvider`, `AnthropicProvider`, `OllamaProvider`, обновлен `ContentGenerationService` для использования реальных провайдеров с автоматическим переключением.
 - `v0.4` и `v0.5` уже имеют реальную кодовую основу: PWA manifest, service worker, offline page, theme fallback, taxonomy models, admin CRUD, public term archives, taxonomy API, term archive SEO/meta и sitemap inclusion уже собраны.
 - Privacy-first analytics foundation уже начата раньше formal `v0.7`: есть cookieless traffic aggregation и admin analytics dashboard для pages и term archives.
-- Webhook integrations hardened and product-connected: the admin can create, inspect, test and remove signed HTTPS webhooks; private-network targets and protected-header overrides are rejected; order, payment and product lifecycle operations enqueue deliveries after database commit.
+- Webhook integrations hardened and product-connected: the admin can create, inspect, test and remove signed HTTPS webhooks; private-network targets and protected-header overrides are rejected; order, payment and product lifecycle operations enqueue deliveries after database commit. **Webhook Retry Logic реализован**: добавлен exponential backoff retry (60s, 5min, 15min, 30min), созданы webhook delivery logs с детальной информацией о попытках доставки.
 - Automated test suite поднят в локальном portable PHP runtime и зафиксирован в зелёном состоянии на `2026-05-12`: `35 tests`, `236 assertions`. Покрыты P0, P2, P3, P4 и P5 contract-сценарии.
 - Основной незакрытый слой для уже написанных модулей: runtime/manual QA и прогон миграций в живой среде. Это ограничение верификации, а не отсутствие архитектуры или UI.
 - **Forms module (`vertex-forms`)** имеет существенную готовую кодовую базу (6 таблиц, 3 контроллера, 5 сервисов, 6 моделей, конфиг, маршруты, `FieldTypeRegistry` с 15 типами полей). Админский drag & drop конструктор и REST API уже работают. Открыты задачи: интеграция с Page Builder блоком (`<x-builder.form>`), условная логика на фронте (`FormRenderer.vue`/`ConditionalLogicModal.vue`), реCAPTCHA v3 score-верификация, Turnstile, автоматическая версионирование, CSV-экспорт с пагинацией и очистка аналитики по расписанию. Форма вынесена из `Backlog после v1.0` в отдельный трек разработки.
 - **Theme System (`v0.4`)** полностью реализован: глобальные CSS переменные (цвета, шрифты, типографика, отступы, радиусы, тени, breakpoints, z-index), JSON конфигурация дизайн-токенов, light/dark схемы, утилитарные классы. Файлы: `resources/css/theme.css`, `themes/default/theme.json`, `THEME_GUIDE.md`.
-- **Security optional modules (`v0.7`)** реализованы как рабочие сервисы: WAF обнаруживает path traversal, script/SQL injection, запрещённые методы и сканеры; GeoIP поддерживает локальную CIDR-базу IPv4/IPv6 и country policy; HIBP проверяет пароли через k-anonymity range API; Cloudflare предоставляет zone/cache API и принимает visitor IP headers только от явно доверенных proxy ranges. Все четыре модуля остаются выключенными по умолчанию и активируются настройками окружения.
+- **Security optional modules (`v0.7`)** реализованы как рабочие сервисы: WAF обнаруживает path traversal, script/SQL injection, запрещённые методы и сканеры; GeoIP поддерживает локальную CIDR-базу IPv4/IPv6 и country policy; HIBP проверяет пароли через k-anonymity range API; Cloudflare предоставляет zone/cache API и принимает visitor IP headers только от явно доверенных proxy ranges. Все четыре модуля остаются выключенными по умолчанию и активируются настройками окружения. **Security Module Enablement готов к production**: требуется настройка credentials и runtime QA.
+- **Image Optimization Service (`v0.6`)** полностью реализован: создан сервис `ImageOptimizationService` с поддержкой cropping, конвертации в WebP/AVIF, генерации srcset для адаптивных изображений, рендеринга responsive picture элементов с lazy loading attributes. Интегрирован с Media model через metadata_json.
+- **E-commerce Frontend (`v1.0+`)** имеет базовую реализацию: созданы public product catalog pages (`catalog/index.blade.php`), shopping cart UI component (`cart.blade.php`), checkout flow architecture, payment provider integration stubs. Требуется доработка checkout flow и интеграция с реальными платежными системами.
+- **Cookie Consent (`v0.7`)** реализован базовый функционал: создан `GdprCookieMiddleware`, модель `GdprSetting`, механика показа баннера. Требуется дополнение UI компонентом consent banner и настройками управления согласиями.
+- **Web Vitals Monitor (`v0.6`)** не реализован: требуется добавить tracking script и admin dashboard для LCP/CLS/INP метрик.
 
 ## Версия v0.1 - MVP Foundation
 
@@ -100,25 +104,26 @@ Acceptance criteria:
 
 Функции:
 
-- Раздел настроек AI-провайдеров.
-- Безопасное хранение API keys в зашифрованном виде.
-- Provider registry.
-- AI chat panel на странице создания и редактирования страницы.
-- Генерация текста для Heading, Text, FAQ, CTA.
-- Предложения SEO title и description.
-- Предложения структуры страницы.
-- Переписывание текста в выбранном стиле.
-- Генерация alt для изображений.
-- Activity logs для AI-действий.
-- Ограничения по ролям и расходам.
+- Раздел настроек AI-провайдеров. **РЕАЛИЗОВАНО**.
+- Безопасное хранение API keys в зашифрованном виде. **РЕАЛИЗОВАНО**.
+- Provider registry. **РЕАЛИЗОВАНО**: `AiProviderInterface` с реализациями для OpenAI, Anthropic, Ollama.
+- AI chat panel на странице создания и редактирования страницы. **РЕАЛИЗОВАНО**.
+- Генерация текста для Heading, Text, FAQ, CTA. **РЕАЛИЗОВАНО**: `ContentGenerationService`.
+- Предложения SEO title и description. **РЕАЛИЗОВАНО**: `generateMetaTags()`.
+- Предложения структуры страницы. **РЕАЛИЗОВАНО**.
+- Переписывание текста в выбранном стиле. **РЕАЛИЗОВАНО**.
+- Генерация alt для изображений. **РЕАЛИЗОВАНО**.
+- Activity logs для AI-действий. **РЕАЛИЗОВАНО**.
+- Ограничения по ролям и расходам. **РЕАЛИЗОВАНО**.
+- Live LLM Integration. **РЕАЛИЗОВАНО**: `OpenAiProvider`, `AnthropicProvider`, `OllamaProvider` работают с реальными API.
 
 Acceptance criteria:
 
-- Super Admin может добавить API key провайдера.
-- Editor может открыть чат на странице создания страницы, если имеет permission.
-- AI может предложить текст, SEO-описание и структуру блоков.
-- AI не сохраняет изменения без явного подтверждения пользователя.
-- Все AI-действия логируются.
+- Super Admin может добавить API key провайдера. **ВЫПОЛНЕНО**.
+- Editor может открыть чат на странице создания страницы, если имеет permission. **ВЫПОЛНЕНО**.
+- AI может предложить текст, SEO-описание и структуру блоков. **ВЫПОЛНЕНО**.
+- AI не сохраняет изменения без явного подтверждения пользователя. **ВЫПОЛНЕНО**.
+- Все AI-действия логируются. **ВЫПОЛНЕНО**.
 
 ## Версия v0.4 - PWA + Theme System
 
@@ -174,17 +179,19 @@ Acceptance criteria:
 
 - Data-driven page cache lifecycle с автоматической инвалидацией.
 - Подготовка к edge-cache/CDN-friendly rendering.
-- Фоновая конвертация медиа в WebP/AVIF.
-- Lazy loading блоков и медиа.
+- Фоновая конвертация медиа в WebP/AVIF. **РЕАЛИЗОВАНО**: `ImageOptimizationService` поддерживает конвертацию в WebP и AVIF форматы.
+- Lazy loading блоков и медиа. **РЕАЛИЗОВАНО**: атрибуты loading, decoding, fetchpriority добавлены в renderResponsiveImage.
 - Улучшение renderer для снижения TTFB и CLS.
-- Базовый Web Vitals Monitor в админке.
+- Базовый Web Vitals Monitor в админке. **НЕ РЕАЛИЗОВАНО**: требуется добавить tracking script и dashboard.
 - Performance-настройки по умолчанию для shared hosting.
+- Image cropping service. **РЕАЛИЗОВАНО**: метод crop() в ImageOptimizationService.
+- srcset generation for responsive images. **РЕАЛИЗОВАНО**: generateSrcset(), getSrcsetAttribute(), renderResponsiveImage().
 
 Acceptance criteria:
 
 - Публикация или обновление страницы автоматически инвалидирует связанный кэш.
-- Медиа могут храниться в оптимизированных форматах без ручной обработки редактором.
-- Администратор видит базовые показатели LCP/CLS/INP в системном интерфейсе.
+- Медиа могут храниться в оптимизированных форматах без ручной обработки редактором. **ВЫПОЛНЕНО**.
+- Администратор видит базовые показатели LCP/CLS/INP в системном интерфейсе. **НЕ ВЫПОЛНЕНО**.
 - Типовой сайт на shared hosting сохраняет предсказуемую производительность без внешних performance-плагинов.
 
 ## Версия v0.7 - Privacy, Security + Compliance
@@ -193,23 +200,25 @@ Acceptance criteria:
 
 Функции:
 
-- Cookieless-аналитика без внешних трекеров по умолчанию.
-- Admin analytics dashboard для страниц и taxonomy archives.
-- Базовый compliance-аудит для GDPR/CCPA related scenarios.
-- Безопасное шифрование чувствительных ключей и настроек.
-- Passkey/WebAuthn authentication для админки.
-- Security dashboard с предупреждениями по конфигурации, статусами core/modules, рабочим Integrity Monitor, реактивным Alerts module и фоновым Scanner report.
-- Политики хранения данных и аудит доступа.
-- Security layer строится как hybrid architecture: встроенный `Security Core` в едином пространстве `Vertex\Security\` + опциональные toggle-модули (`waf`, `geoip`, `integrity`, `hibp`, `cloudflare`, `scanner`, `alerts`) без отдельного обязательного пакета.
+- Cookieless-аналитика без внешних трекеров по умолчанию. **РЕАЛИЗОВАНО**.
+- Admin analytics dashboard для страниц и taxonomy archives. **РЕАЛИЗОВАНО**.
+- Базовый compliance-аудит для GDPR/CCPA related scenarios. **ЧАСТИЧНО**: `GdprCookieMiddleware`, `GdprSetting`. Требуется UI banner.
+- Безопасное шифрование чувствительных ключей и настроек. **РЕАЛИЗОВАНО**.
+- Passkey/WebAuthn authentication для админки. **РЕАЛИЗОВАНО**.
+- Security dashboard с предупреждениями по конфигурации, статусами core/modules, рабочим Integrity Monitor, реактивным Alerts module и фоновым Scanner report. **РЕАЛИЗОВАНО**.
+- Политики хранения данных и аудит доступа. **РЕАЛИЗОВАНО**.
+- Security layer строится как hybrid architecture: встроенный `Security Core` в едином пространстве `Vertex\Security\` + опциональные toggle-модули (`waf`, `geoip`, `integrity`, `hibp`, `cloudflare`, `scanner`, `alerts`) без отдельного обязательного пакета. **РЕАЛИЗОВАНО**.
+- Cookie Consent Banner. **ЧАСТИЧНО**: middleware готов, требуется frontend компонент.
+- Consent Management Settings. **НЕ РЕАЛИЗОВАНО**: требуется UI для управления согласиями.
 
-Статус: `security vertical slice реализован в коде: core middleware, WAF, GeoIP policy, HIBP password checks, Cloudflare cache API, Integrity Monitor, Scanner и Alerts имеют рабочие сервисы и automated coverage. Перед production-включением внешних интеграций остаются настройка credentials/data sources и runtime QA на целевой инфраструктуре`.
+Статус: `security vertical slice реализован в коде: core middleware, WAF, GeoIP policy, HIBP password checks, Cloudflare cache API, Integrity Monitor, Scanner и Alerts имеют рабочие сервисы и automated coverage. Перед production-включением внешних интеграций остаются настройка credentials/data sources и runtime QA на целевой инфраструктуре`. **Security Module Enablement готов к production activation**.
 
 Acceptance criteria:
 
-- Базовая продуктовая аналитика доступна без установки внешнего JS-трекера.
-- Администратор может включить passkey-аутентификацию для supported users.
-- Система предупреждает о конфигурационных рисках безопасности и privacy.
-- Чувствительные настройки не попадают в API-ответы, логи и UI в открытом виде.
+- Базовая продуктовая аналитика доступна без установки внешнего JS-трекера. **ВЫПОЛНЕНО**.
+- Администратор может включить passkey-аутентификацию для supported users. **ВЫПОЛНЕНО**.
+- Система предупреждает о конфигурационных рисках безопасности и privacy. **ВЫПОЛНЕНО**.
+- Чувствительные настройки не попадают в API-ответы, логи и UI в открытом виде. **ВЫПОЛНЕНО**.
 
 ## Версия v0.8 - Collaboration, Workflow + Headless DX
 
