@@ -5,12 +5,16 @@ namespace Vertex\Forms\Controllers;
 use App\Http\Controllers\Controller;
 use Vertex\Forms\Models\Form;
 use Vertex\Forms\Models\FormSubmission;
+use Vertex\Forms\Services\FormExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FormSubmissionController extends Controller
 {
+    public function __construct(
+        private readonly FormExportService $exportService,
+    ) {}
     /**
      * List submissions for a form.
      */
@@ -104,45 +108,61 @@ class FormSubmissionController extends Controller
     }
 
     /**
-     * Export submissions to CSV.
+     * Export submissions to CSV with pagination.
      */
     public function export(Form $form, Request $request)
     {
-        $submissions = $form->submissions()
-            ->with(["values.field"])
-            ->latest()
-            ->get();
-
-        $headers = [__("forms.csv_id"), __("forms.csv_date"), __("forms.csv_ip"), __("forms.csv_user_id"), __("forms.csv_status")];
-        foreach ($form->fields as $field) {
-            $headers[] = $field->label;
+        $page = $request->integer('page', 1);
+        $perPage = $request->integer('per_page', 100);
+        $all = $request->boolean('all', false);
+        
+        if ($all) {
+            // Export all submissions
+            $csvContent = $this->exportService->exportAllToCsv($form);
+        } else {
+            // Export paginated
+            $csvContent = $this->exportService->exportToCsv($form, $page, $perPage);
         }
-
-        $csv = "\xEF\xBB\xBF"; // UTF-8 BOM
-        $csv .= implode(",", array_map(fn ($h) => '"' . $h . '"', $headers)) . "\n";
-
-        foreach ($submissions as $sub) {
-            $row = [
-                $sub->id,
-                $sub->created_at->format("Y-m-d H:i"),
-                $sub->ip_address,
-                $sub->user_id ?? "",
-                $sub->status,
-            ];
-
-            foreach ($form->fields as $field) {
-                $val = $sub->values->firstWhere("field_id", $field->id)?->value ?? "";
-                $row[] = '"' . str_replace('"', '""', (string)$val) . '"';
-            }
-
-            $csv .= implode(",", $row) . "\n";
-        }
-
+        
         $filename = "form-{$form->slug}-" . now()->format("Y-m-d") . ".csv";
-
-        return response($csv, 200, [
+        
+        return response($csvContent, 200, [
             "Content-Type" => "text/csv; charset=UTF-8",
             "Content-Disposition" => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+    
+    /**
+     * Get paginated submissions data for frontend.
+     */
+    public function paginated(Form $form, Request $request): JsonResponse
+    {
+        $page = $request->integer('page', 1);
+        $perPage = $request->integer('per_page', 20);
+        
+        $result = $this->exportService->getPaginatedSubmissions($form, $page, $perPage);
+        
+        return response()->json([
+            'submissions' => $result['data']->map(fn ($s) => [
+                'id' => $s->id,
+                'submission_id' => $s->submission_id,
+                'ip_address' => $s->ip_address,
+                'status' => $s->status,
+                'user' => $s->user?->name,
+                'created_at' => $s->created_at?->toDateTimeString(),
+                'values' => $s->values->map(fn ($v) => [
+                    'field_name' => $v->field->name,
+                    'field_label' => $v->field->label,
+                    'value' => $v->value,
+                ]),
+                'total' => $s->meta['total'] ?? null,
+            ]),
+            'pagination' => [
+                'total' => $result['total'],
+                'per_page' => $result['per_page'],
+                'current_page' => $result['current_page'],
+                'last_page' => $result['last_page'],
+            ],
         ]);
     }
 }
