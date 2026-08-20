@@ -18,3 +18,21 @@ Route::get("system/logs", [SystemController::class, "logs"])->middleware("vertex
 Route::get("system/analytics", [SystemController::class, "analytics"])->middleware("vertex.permission:analytics.view")->name("system.analytics");
 Route::get("system/cache", [SystemController::class, "cache"])->middleware("vertex.permission:system.view")->name("system.cache");
 Route::post("system/cache/clear", [SystemController::class, "clearCache"])->middleware("vertex.permission:cache.clear")->name("system.cache.clear");
+
+// Web Vitals Monitoring
+Route::prefix('web-vitals')->name('web-vitals.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\WebVitalsController::class, 'dashboard'])
+        ->middleware('vertex.permission:system.view')
+        ->name('dashboard');
+    Route::post('/store', [\App\Http\Controllers\Admin\WebVitalsController::class, 'store'])
+        ->name('store');
+    Route::get('/chart-data', [\App\Http\Controllers\Admin\WebVitalsController::class, 'chartData'])
+        ->middleware('vertex.permission:system.view')
+        ->name('chart-data');
+    Route::get('/metrics', [\App\Http\Controllers\Admin\WebVitalsController::class, 'index'])
+        ->middleware('vertex.permission:system.view')
+        ->name('metrics.index');
+    Route::get('/export', [\App\Http\Controllers\Admin\WebVitalsController::class, 'export'])
+        ->middleware('vertex.permission:system.view')
+        ->name('export');
+});
