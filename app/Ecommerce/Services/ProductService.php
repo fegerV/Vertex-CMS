@@ -8,6 +8,8 @@ use App\Services\Webhooks\WebhookService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Collection;
+use App\Ecommerce\Models\Product;
 
 class ProductService
 {
@@ -19,11 +21,11 @@ class ProductService
     ) {
     }
 
-    public function create(array $payload, User $user): \App\Ecommerce\Models\Product
+    public function create(array $payload, User $user): Product
     {
         $payload = $this->preparePayload($payload);
 
-        $product = \App\Ecommerce\Models\Product::query()->create([
+        $product = Product::query()->create([
             ...$this->productAttributes($payload),
             'created_by' => $user->id,
             'updated_by' => $user->id,
@@ -35,7 +37,7 @@ class ProductService
         return $product;
     }
 
-    public function update(\App\Ecommerce\Models\Product $product, array $payload, User $user): \App\Ecommerce\Models\Product
+    public function update(Product $product, array $payload, User $user): Product
     {
         $payload = $this->preparePayload($payload, $product);
 
@@ -50,7 +52,7 @@ class ProductService
         return $product;
     }
 
-    public function delete(\App\Ecommerce\Models\Product $product, User $user): void
+    public function delete(Product $product, User $user): void
     {
         $product->forceFill(['updated_by' => $user->id])->save();
         $payload = $product->toArray();
@@ -60,7 +62,90 @@ class ProductService
         $this->activityLog->record('products.delete', 'product', $product->id, "Product \"{$product->name}\" deleted.");
     }
 
-    private function preparePayload(array $payload, ?\App\Ecommerce\Models\Product $product = null): array
+    /**
+     * Get public products for catalog
+     */
+    public function getPublicProducts(array $filters = []): Collection
+    {
+        $query = Product::query()
+            ->where('status', 'active')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now());
+
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('description', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+
+        if (!empty($filters['min_price'])) {
+            $query->where('price', '>=', (float) $filters['min_price']);
+        }
+
+        if (!empty($filters['max_price'])) {
+            $query->where('price', '<=', (float) $filters['max_price']);
+        }
+
+        $sortField = in_array($filters['sort'] ?? '', ['name', 'price', 'created_at']) ? $filters['sort'] : 'created_at';
+        $sortOrder = strtolower($filters['order'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+        
+        $query->orderBy($sortField, $sortOrder);
+
+        return $query->with('media')->get();
+    }
+
+    /**
+     * Get single public product by slug
+     */
+    public function getPublicProductBySlug(string $slug): ?Product
+    {
+        return Product::query()
+            ->where('status', 'active')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->where('slug', $slug)
+            ->with('media')
+            ->first();
+    }
+
+    /**
+     * Get related products
+     */
+    public function getRelatedProducts(Product $product, int $limit = 4): Collection
+    {
+        return Product::query()
+            ->where('status', 'active')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->whereKeyNot($product->id)
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Get product categories (placeholder for taxonomy integration)
+     */
+    public function getCategories(): Collection
+    {
+        // Placeholder - integrate with taxonomy system
+        return collect([]);
+    }
+
+    /**
+     * Get available filters (placeholder for dynamic filters)
+     */
+    public function getAvailableFilters(): array
+    {
+        return [
+            'price_range' => [
+                'min' => Product::query()->min('price') ?? 0,
+                'max' => Product::query()->max('price') ?? 1000,
+            ],
+        ];
+    }
+
+    private function preparePayload(array $payload, ?Product $product = null): array
     {
         $status = $payload['status'] ?? 'draft';
         $sku = trim($payload['sku'] ?? '');
@@ -91,7 +176,7 @@ class ProductService
 
     private function skuExists(string $sku, ?int $ignoreId = null): bool
     {
-        return \App\Ecommerce\Models\Product::query()
+        return Product::query()
             ->where('sku', $sku)
             ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
             ->exists();
