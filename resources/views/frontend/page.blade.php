@@ -46,8 +46,12 @@
         @endif
     @endif
     <style id="vertex-design-system">{!! app(\App\Builder\Services\DesignSystemService::class)->css() !!}</style>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="vc-public-site">
+    {{-- Cookie Consent Banner --}}
+    @include('components.cookie-consent-banner')
+
     <main class="vc-page">
         @if ((string) $html !== '')
             {!! $html !!}
@@ -139,6 +143,11 @@
                 });
             }
         </script>
+    @endif
+
+    {{-- Web Vitals Tracking --}}
+    @if (config_value('web_vitals.enabled', true))
+        @vite(['resources/js/web-vitals-tracker.js'])
     @endif
 </body>
 </html>
