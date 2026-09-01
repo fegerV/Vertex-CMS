@@ -29,7 +29,7 @@
     },
     "assets": {
       "js": [
-        "resources/js/admin/forms/FormBuilderApp.vue"
+        "resources/js/admin/forms/mountFormBuilder.js"
       ],
       "css": []
     },
