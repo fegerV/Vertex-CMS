@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -16,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerRateLimiters();
+        $this->registerValidationRules();
     }
 
     private function registerRateLimiters(): void
@@ -35,6 +37,50 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)
                 ->by((string) $request->input('email', $request->ip()));
         });
+    }
+
+    private function registerValidationRules(): void
+    {
+        // reCAPTCHA validation rule
+        Validator::extend('captcha', function ($attribute, $value, $parameters, $validator) {
+            $recaptchaResponse = request()->input('g-recaptcha-response');
+            
+            if (empty($recaptchaResponse)) {
+                return false;
+            }
+
+            $secretKey = config('services.recaptcha.secret_key');
+            if (empty($secretKey)) {
+                // Если секретный ключ не настроен, пропускаем проверку (для разработки)
+                return true;
+            }
+
+            $verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
+            $data = [
+                'secret' => $secretKey,
+                'response' => $recaptchaResponse,
+                'remoteip' => request()->ip(),
+            ];
+
+            $options = [
+                'http' => [
+                    'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                    'method' => 'POST',
+                    'content' => http_build_query($data),
+                ],
+            ];
+
+            $context = stream_context_create($options);
+            $result = file_get_contents($verifyUrl, false, $context);
+            
+            if ($result === false) {
+                return false;
+            }
+
+            $response = json_decode($result, true);
+            
+            return isset($response['success']) && $response['success'] === true;
+        }, 'The captcha verification failed.');
     }
 }
 
