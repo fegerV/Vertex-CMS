@@ -30,6 +30,12 @@ return Application::configure(basePath: dirname(__DIR__))
         then: function () {
             Route::middleware('web')
                 ->group(base_path('routes/admin.php'));
+            
+            Route::middleware('web')
+                ->group(base_path('routes/install.php'));
+            
+            Route::middleware('api')
+                ->group(base_path('routes/public_api.php'));
         },
         commands: __DIR__.'/../routes/console.php',
         health: '/up'

@@ -12,7 +12,6 @@ use App\Contracts\SettingsTransferContract;
 use App\Core\Services\InstallationService;
 use App\Core\Services\SettingsService;
 use App\Core\Services\SettingsTransferService;
-use App\Core\Support\RouteRegistrar;
 use App\Media\Services\MediaService;
 use App\Modules\Services\ModuleManager;
 use App\Modules\Support\ModuleCatalog;
@@ -88,11 +87,11 @@ class VertexServiceProvider extends ServiceProvider
         $this->app->singleton(ModuleManager::class);
     }
 
-    public function boot(RouteRegistrar $routes): void
+    public function boot(): void
     {
         require_once app_path('Builder/Config/blocks.php');
 
-        $routes->register();
+        // Routes are now registered in bootstrap/app.php to avoid duplication
 
         // Register console commands
         if ($this->app->runningInConsole()) {
