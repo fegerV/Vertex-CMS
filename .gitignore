@@ -1,39 +1,56 @@
-```
-# Laravel-specific ignores
+```gitignore
+# Compiled and binary files
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.so
+*.a
+*.dll
+*.exe
+*.out
+
+# Dependencies
 vendor/
-composer.lock
+node_modules/
+.venv/
+venv/
 .env
-.env.*
-!.env.example
+.env.local
+*.env.*
 
-# Database
-database/seeds/
-database/factories/
+# Build artifacts
+dist/
+build/
+target/
+*.class
 
-# Build/compiled files
-*.php~
-*.bak
+# Logs and temporary files
+*.log
 *.tmp
-
-# Cache and logs
-bootstrap/cache/
-storage/logs/
-storage/framework/cache/
-storage/framework/sessions/
-storage/framework/views/
-.cache/
-
-# IDE
-.vscode/
-.idea/
 *.swp
 *.swo
 
-# OS
+# Editor/IDE files
+.vscode/
+.idea/
+*.iml
+*.pyc
+*.pyo
+*.pyd
+*.jar
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# Testing
-.phpunit.result.cache
-coverage/
+# Cache directories
+.mypy_cache/
+.pytest_cache/
+.gradle/
 ```
