@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             EmailTemplatesSeeder::class,
             ModulesSeeder::class,
             TaxonomySeeder::class,
+            ChatbotSeeder::class,
         ]);
     }
 }

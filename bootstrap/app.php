@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\PageContextMiddleware;
 use App\Core\Http\Middleware\EnsureInstalled;
 use App\Core\Http\Middleware\EnsureNotInstalled;
 use App\Core\Http\Middleware\GdprCookieMiddleware;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecureHeaders::class);
         $middleware->append(SessionGuard::class);
         $middleware->append(BasicRateLimiter::class);
+        $middleware->append(PageContextMiddleware::class);
 
         $middleware->redirectGuestsTo(function (Request $request) {
             return $request->is('admin', 'admin/*') ? route('admin.login') : null;
