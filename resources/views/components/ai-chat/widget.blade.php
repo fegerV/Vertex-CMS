@@ -1,13 +1,51 @@
 @props([
-    'title' => 'Онлайн-консультант',
-    'welcomeMessage' => 'Здравствуйте! Я AI-помощник. Спросите меня о ценах, услугах или условиях работы.',
-    'position' => 'right', // left или right
-    'color' => '#4f46e5', // Основной цвет
-    'enabled' => true
+    'title' => null, // Будет взято из chatbot.name если не указано
+    'welcomeMessage' => null, // Будет взято из chatbot.ui_config.welcome_message
+    'position' => null, // Будет взято из chatbot.ui_config.position
+    'color' => null, // Будет взято из chatbot.ui_config.primary_color
+    'enabled' => true,
+    'chatbotSlug' => null, // Slug чатбота для использования (null = default bot)
+    'showAvatar' => true,
+    'avatarUrl' => null
 ])
 
+@php
+    // Загружаем чатбот если указан slug или используем дефолтный
+    $chatbot = null;
+    if ($enabled) {
+        try {
+            $chatbotClass = '\App\Models\Chatbot';
+            if (class_exists($chatbotClass)) {
+                if ($chatbotSlug) {
+                    $chatbot = $chatbotClass::where('slug', $chatbotSlug)->where('is_active', true)->first();
+                } else {
+                    $chatbot = $chatbotClass::where('is_default', true)->where('is_active', true)->first();
+                }
+                
+                // Если чатбот найден, используем его настройки
+                if ($chatbot) {
+                    $title = $title ?? $chatbot->name;
+                    $welcomeMessage = $welcomeMessage ?? ($chatbot->ui_config['welcome_message'] ?? $welcomeMessage);
+                    $position = $position ?? ($chatbot->ui_config['position'] ?? 'right');
+                    $color = $color ?? ($chatbot->ui_config['primary_color'] ?? '#4f46e5');
+                    $showAvatar = $showAvatar && ($chatbot->ui_config['show_avatar'] ?? true);
+                    $avatarUrl = $avatarUrl ?? ($chatbot->ui_config['avatar_url'] ?? null);
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Chatbot widget: Failed to load chatbot settings', ['error' => $e->getMessage()]);
+        }
+        
+        // Fallback значения если чатбот не загружен
+        $title = $title ?? 'Онлайн-консультант';
+        $welcomeMessage = $welcomeMessage ?? 'Здравствуйте! Я AI-помощник. Спросите меня о ценах, услугах или условиях работы.';
+        $position = $position ?? 'right';
+        $color = $color ?? '#4f46e5';
+    }
+@endphp
+
 @if($enabled)
-<div id="ai-chat-widget" class="ai-chat-widget" data-position="{{ $position }}">
+<div id="ai-chat-widget" class="ai-chat-widget" data-position="{{ $position }}" data-chatbot-slug="{{ $chatbot?->slug ?? 'default' }}">
     <!-- Кнопка открытия чата -->
     <button id="ai-chat-toggle" class="ai-chat-toggle" style="background-color: {{ $color }};">
         <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -24,11 +62,17 @@
         <!-- Заголовок -->
         <div class="ai-chat-header" style="background-color: {{ $color }};">
             <div class="ai-chat-title">
+                @if($showAvatar)
                 <div class="ai-avatar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1v-1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
-                    </svg>
+                    @if($avatarUrl)
+                        <img src="{{ $avatarUrl }}" alt="Avatar" class="ai-avatar-image">
+                    @else
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1v-1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                        </svg>
+                    @endif
                 </div>
+                @endif
                 <div>
                     <div class="ai-chat-name">{{ $title }}</div>
                     <div class="ai-chat-status">
