@@ -410,6 +410,72 @@
         margin: 0 20px;
     }
 }
+
+/* Стили для форм в чате */
+.ai-chat-form {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 8px 0;
+}
+
+.form-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: #374151;
+}
+
+.ai-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.form-field input,
+.form-field select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+    border-color: {{ $color }};
+}
+
+.ai-form-submit {
+    background: {{ $color }};
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-top: 4px;
+}
+
+.ai-form-submit:hover {
+    opacity: 0.9;
+}
 </style>
 
 <script>
@@ -479,15 +545,27 @@ document.addEventListener('DOMContentLoaded', function() {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         try {
+            // Собираем контекст страницы
+            const pageContext = {
+                uri: window.location.pathname,
+                title: document.title,
+                excerpt: document.querySelector('meta[name="description"]')?.content || null,
+            };
+
             const response = await fetch('/api/ai/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    'X-Page-Uri': pageContext.uri,
+                    'X-Page-Title': pageContext.title,
+                    'X-Page-Excerpt': pageContext.excerpt || '',
                 },
                 body: JSON.stringify({
                     message: message,
-                    session_id: sessionId
+                    session_id: sessionId,
+                    chatbot_slug: widget.dataset.chatbotSlug,
+                    page_context: pageContext,
                 })
             });
 
@@ -503,6 +581,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.sources && data.sources.length > 0) {
                     showSources(data.sources);
                 }
+                
+                // Если есть форма для отображения
+                if (data.form_schema) {
+                    renderForm(data.form_schema);
+                }
             } else {
                 addMessage('Извините, произошла ошибка. Попробуйте позже.', 'bot');
             }
@@ -511,6 +594,99 @@ document.addEventListener('DOMContentLoaded', function() {
             typingIndicator.style.display = 'none';
             addMessage('Ошибка соединения. Проверьте интернет.', 'bot');
         }
+    }
+
+    // Рендеринг формы в чате
+    function renderForm(formSchema) {
+        const formDiv = document.createElement('div');
+        formDiv.className = 'ai-chat-form';
+        formDiv.innerHTML = `
+            <div class="form-title">${formSchema.title || 'Заполните форму'}</div>
+            <form class="ai-form"></form>
+        `;
+        
+        const form = formDiv.querySelector('form');
+        
+        formSchema.fields?.forEach(field => {
+            const fieldWrapper = document.createElement('div');
+            fieldWrapper.className = 'form-field';
+            
+            const label = document.createElement('label');
+            label.textContent = field.label;
+            label.htmlFor = `field_${field.name}`;
+            
+            let input;
+            if (field.type === 'select') {
+                input = document.createElement('select');
+                input.id = `field_${field.name}`;
+                input.name = field.name;
+                input.required = field.required || false;
+                
+                field.options?.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option;
+                    opt.textContent = option;
+                    input.appendChild(opt);
+                });
+            } else {
+                input = document.createElement('input');
+                input.type = field.type || 'text';
+                input.id = `field_${field.name}`;
+                input.name = field.name;
+                input.required = field.required || false;
+                input.placeholder = field.placeholder || '';
+            }
+            
+            fieldWrapper.appendChild(label);
+            fieldWrapper.appendChild(input);
+            form.appendChild(fieldWrapper);
+        });
+        
+        const submitBtn = document.createElement('button');
+        submitBtn.type = 'submit';
+        submitBtn.className = 'ai-form-submit';
+        submitBtn.textContent = formSchema.submit_text || 'Отправить';
+        form.appendChild(submitBtn);
+        
+        // Обработчик отправки формы
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            addMessage(`Форма заполнена: ${JSON.stringify(data)}`, 'user');
+            typingIndicator.style.display = 'flex';
+            
+            // Отправляем данные формы через webhook
+            try {
+                const response = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    },
+                    body: JSON.stringify({
+                        message: `Заполнена форма: ${JSON.stringify(data)}`,
+                        session_id: sessionId,
+                        chatbot_slug: widget.dataset.chatbotSlug,
+                        form_data: data,
+                    })
+                });
+                
+                const result = await response.json();
+                typingIndicator.style.display = 'none';
+                
+                if (result.success && result.answer) {
+                    addMessage(result.answer, 'bot');
+                }
+            } catch (e) {
+                typingIndicator.style.display = 'none';
+                addMessage('Ошибка при отправке формы.', 'bot');
+            }
+        });
+        
+        messagesContainer.appendChild(formDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     // Добавление сообщения в чат
