@@ -52,10 +52,19 @@ return new class extends Migration
         Schema::create('ai_chat_sessions', function (Blueprint $table) {
             $table->id();
             $table->string('session_id')->unique(); // ID сессии пользователя
+            $table->foreignId('chatbot_id')->nullable()->constrained('chatbots')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->ipAddress('user_ip')->nullable();
             $table->string('user_agent')->nullable();
+            $table->string('page_uri')->nullable(); // URI страницы где начат чат
+            $table->string('page_title')->nullable(); // Заголовок страницы
+            $table->text('page_excerpt')->nullable(); // Краткое описание страницы
+            $table->json('page_metadata')->nullable(); // Дополнительные метаданные страницы
             $table->boolean('is_closed')->default(false);
             $table->timestamps();
+            
+            $table->index(['chatbot_id', 'is_closed']);
+            $table->index('session_id');
         });
 
         // Таблица сообщений чата

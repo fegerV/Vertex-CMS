@@ -1,1 +1,42 @@
-(docs/CHATBOT_IMPLEMENTATION_SUMMARY.md, docs/n8n-webhook-examples.md)
+```
+# Laravel-specific ignores
+vendor/
+composer.lock
+.env
+.env.*
+!.env.example
+
+# Database
+database/seeds/
+database/factories/
+
+# Build and cache
+bootstrap/cache/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+public/storage
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+storage/logs/
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Temporary files
+*.tmp
+*.temp
+```
