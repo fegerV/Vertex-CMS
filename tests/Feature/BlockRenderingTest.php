@@ -425,4 +425,135 @@ class BlockRenderingTest extends TestCase
         $this->assertStringContainsString('&lt;script&gt;', $escaped);
         $this->assertStringNotContainsString('<script>', $escaped);
     }
+
+    public function test_video_block_builds_provider_embeds(): void
+    {
+        $youtube = $this->renderBlock('video', [
+            'type' => 'youtube',
+            'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            'ratio' => '4:3',
+            'muted' => true,
+            'loop' => true,
+        ]);
+
+        $this->assertStringContainsString('https://www.youtube.com/embed/dQw4w9WgXcQ?mute=1', $youtube);
+        $this->assertStringContainsString('mute=1', $youtube);
+        $this->assertStringContainsString('playlist=dQw4w9WgXcQ', $youtube);
+        $this->assertStringContainsString('aspect-ratio: 4 / 3', $youtube);
+
+        $vimeo = $this->renderBlock('video', [
+            'type' => 'vimeo',
+            'url' => 'https://vimeo.com/76979871',
+            'controls' => false,
+        ]);
+
+        $this->assertStringContainsString('https://player.vimeo.com/video/76979871', $vimeo);
+        $this->assertStringContainsString('pointer-events: none', $vimeo);
+
+        $html5 = $this->renderBlock('video', [
+            'type' => 'html5',
+            'url' => '/storage/media/clip.mp4',
+            'autoplay' => true,
+            'muted' => true,
+            'controls' => true,
+        ]);
+
+        $this->assertStringContainsString('<video src="/storage/media/clip.mp4"', $html5);
+        $this->assertStringContainsString('autoplay muted', $html5);
+        $this->assertStringContainsString(' controls', $html5);
+
+        $placeholder = $this->renderBlock('video', ['type' => 'youtube', 'url' => '']);
+
+        $this->assertStringContainsString('vc-video-placeholder', $placeholder);
+        $this->assertStringNotContainsString('<iframe', $placeholder);
+    }
+
+    public function test_video_block_rejects_script_urls(): void
+    {
+        $html = $this->renderBlock('video', [
+            'type' => 'html5',
+            'url' => 'javascript:alert(1)',
+        ]);
+
+        $this->assertStringNotContainsString('<video', $html);
+        $this->assertStringNotContainsString('javascript:', $html);
+        $this->assertStringContainsString('vc-video-placeholder', $html);
+    }
+
+    public function test_divider_block_applies_style_options(): void
+    {
+        $html = $this->renderBlock('divider', [
+            'style' => 'dashed',
+            'color' => '#ff0000',
+            'thickness' => 3,
+            'width' => '50%',
+        ]);
+
+        $this->assertStringContainsString('border-top: 3px dashed #ff0000', $html);
+        $this->assertStringContainsString('width: 50%', $html);
+        $this->assertStringContainsString('vc-divider-dashed', $html);
+
+        $sanitized = $this->renderBlock('divider', [
+            'style' => 'expression(alert(1))',
+            'color' => 'red; background:url(evil)',
+            'thickness' => 999,
+            'width' => 'calc(100% - 1px)',
+        ]);
+
+        $this->assertStringContainsString('border-top: 20px solid #e2e8f0', $sanitized);
+        $this->assertStringContainsString('width: 100%', $sanitized);
+        $this->assertStringNotContainsString('url(', $sanitized);
+    }
+
+    public function test_hero_block_escapes_settings(): void
+    {
+        $html = $this->renderBlock('hero', [
+            'title' => 'Big <script>alert(1)</script>',
+            'subtitle' => 'Sub',
+            'button_text' => 'Go',
+            'button_url' => '/start',
+            'background' => 'https://cdn.example.com/bg.jpg',
+            'padding_top' => 40,
+        ]);
+
+        $this->assertStringContainsString('vc-hero-title', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
+        $this->assertStringNotContainsString('<script>alert', $html);
+        $this->assertStringContainsString('background-image', $html);
+        $this->assertStringContainsString('padding-top: 40px', $html);
+    }
+
+    public function test_columns_and_container_render_nested_blocks(): void
+    {
+        $columns = $this->renderBlock('columns', [
+            'count' => 2,
+            'columns' => [
+                ['blocks' => [['type' => 'heading', 'settings' => ['text' => 'Left']]]],
+                ['blocks' => [['type' => 'text', 'settings' => ['text' => 'Right']]]],
+            ],
+        ]);
+
+        $this->assertStringContainsString('vc-columns', $columns);
+        $this->assertStringContainsString('Left', $columns);
+        $this->assertStringContainsString('Right', $columns);
+        $this->assertSame(3, substr_count($columns, 'vc-column'));
+
+        $container = $this->renderBlock('container', [
+            'max_width' => '3xl',
+            'padding' => ['top' => 24, 'bottom' => 8, 'left' => 0, 'right' => 0],
+            'blocks' => [['type' => 'heading', 'settings' => ['text' => 'Nested']]],
+        ]);
+
+        $this->assertStringContainsString('vc-container-block', $container);
+        $this->assertStringContainsString('Nested', $container);
+        $this->assertStringContainsString('padding-top: 24px', $container);
+    }
+
+    public function test_spacer_block_uses_pixel_height(): void
+    {
+        $html = $this->renderBlock('spacer', ['height' => 120]);
+
+        $this->assertStringContainsString('vc-spacer', $html);
+        $this->assertStringContainsString('height: 120px', $html);
+    }
 }
