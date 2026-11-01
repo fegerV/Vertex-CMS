@@ -7,6 +7,7 @@ use App\Models\WebVitalMetric;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class WebVitalsController extends Controller
 {
@@ -70,39 +71,6 @@ class WebVitalsController extends Controller
     }
 
     /**
-     * Store a new Web Vital metric (API endpoint for tracking script)
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'metric_type' => 'required|string|in:LCP,FID,CLS,INP,TTFB',
-            'value' => 'required|numeric|min:0',
-            'url' => 'nullable|url',
-            'session_id' => 'nullable|string|max:255',
-            'metadata' => 'nullable|array',
-            'measured_at' => 'nullable|date',
-        ]);
-
-        $rating = WebVitalMetric::getRating($validated['metric_type'], (float) $validated['value']);
-
-        $metric = WebVitalMetric::create([
-            'session_id' => $validated['session_id'] ?? null,
-            'url' => $validated['url'] ?? null,
-            'metric_type' => $validated['metric_type'],
-            'value' => $validated['value'],
-            'rating' => $rating,
-            'metadata' => $validated['metadata'] ?? null,
-            'measured_at' => $validated['measured_at'] ?? now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'metric_id' => $metric->id,
-            'rating' => $rating,
-        ]);
-    }
-
-    /**
      * Get metrics data for charts (AJAX endpoint)
      */
     public function chartData(Request $request): JsonResponse
@@ -145,37 +113,36 @@ class WebVitalsController extends Controller
     /**
      * Export metrics to CSV
      */
-    public function export(Request $request)
+    public function export(Request $request): StreamedResponse
     {
         $query = WebVitalMetric::query()
-            ->when($request->filled('type'), fn($q) => $q->ofType($request->get('type')))
-            ->when($request->filled('rating'), fn($q) => $q->withRating($request->get('rating')))
+            ->when($request->filled('type'), fn ($q) => $q->ofType($request->get('type')))
+            ->when($request->filled('rating'), fn ($q) => $q->withRating($request->get('rating')))
             ->orderByDesc('measured_at');
 
-        $metrics = $query->get();
+        $filename = 'web-vitals-'.now()->format('Y-m-d-His').'.csv';
 
-        $filename = 'web-vitals-' . now()->format('Y-m-d-His') . '.csv';
+        return response()->streamDownload(function () use ($query): void {
+            $output = fopen('php://output', 'w');
 
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
+            fputcsv($output, ['ID', 'Session ID', 'URL', 'Metric Type', 'Value', 'Rating', 'Metadata', 'Measured At']);
 
-        $output = fopen('php://output', 'w');
-        fputcsv($output, ['ID', 'Session ID', 'URL', 'Metric Type', 'Value', 'Rating', 'Metadata', 'Measured At']);
+            $query->chunk(500, function ($metrics) use ($output): void {
+                foreach ($metrics as $metric) {
+                    fputcsv($output, [
+                        $metric->id,
+                        $metric->session_id,
+                        $metric->url,
+                        $metric->metric_type,
+                        $metric->value,
+                        $metric->rating,
+                        json_encode($metric->metadata),
+                        $metric->measured_at?->toDateTimeString(),
+                    ]);
+                }
+            });
 
-        foreach ($metrics as $metric) {
-            fputcsv($output, [
-                $metric->id,
-                $metric->session_id,
-                $metric->url,
-                $metric->metric_type,
-                $metric->value,
-                $metric->rating,
-                json_encode($metric->metadata),
-                $metric->measured_at->toDateTimeString(),
-            ]);
-        }
-
-        fclose($output);
-        exit;
+            fclose($output);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 }

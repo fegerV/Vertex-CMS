@@ -38,10 +38,10 @@ VertexCMS должна стать современной CMS с открытым
 - **Image Optimization Service (`v0.6`)** полностью реализован: создан сервис `ImageOptimizationService` с поддержкой cropping, конвертации в WebP/AVIF, генерации srcset для адаптивных изображений, рендеринга responsive picture элементов с lazy loading attributes. Интегрирован с Media model через metadata_json.
 - **E-commerce Frontend (`v1.0+`)** имеет базовую реализацию: созданы public product catalog pages (`catalog/index.blade.php`), shopping cart UI component (`cart.blade.php`), checkout flow architecture, payment provider integration stubs. Требуется доработка checkout flow и интеграция с реальными платежными системами.
 - **Cookie Consent (`v0.7`)** реализован базовый функционал: создан `GdprCookieMiddleware`, модель `GdprSetting`, механика показа баннера. Требуется дополнение UI компонентом consent banner и настройками управления согласиями.
-- **Web Vitals Monitor (`v0.6`)** не реализован: требуется добавить tracking script и admin dashboard для LCP/CLS/INP метрик.
+- **Web Vitals Monitor (`v0.6`)** реализован: публичный приём `POST /api/v1/public/web-vitals` (без сессии и CSRF, троттлинг, валидация метрик и белый список metadata, из URL вырезаются query и fragment), трекер `resources/js/web-vitals-tracker.js` (LCP/CLS/INP/FID/TTFB через `PerformanceObserver`, одна отправка финальных значений на `pagehide`/`visibilitychange`), админ-дашборд `/admin/web-vitals` с распределением рейтингов, сводным score, плохими измерениями, CSV-экспортом и графиком, ссылка в разделе «Система». Покрыто `WebVitalsTest`.
 - **Public block rendering parity (v0.6)** закрыт: `PageRenderer` теперь единственный источник публичной разметки для всех block types реестра (включая `tabs`, `accordion`, `counter`, `pricing-table`, `product-list`, `news-feed`), стили `vc-*` и интерактив в `resources/js/app.js`; 22 устаревших `pb-*` partial больше не перекрывают рендерер.
 - **Admin routing/API восстановлены**: публичный catch-all переведён на `Route::fallback`, поэтому `/admin`, `/install` и `/api` больше не перехватываются страницей; возвращены используемые UI endpoints `/admin/api/{ai,forms,media,dashboard}`; в каталог permissions добавлены `system.edit` и `seo.settings`.
-- **Automated suite**: `141 tests`, `3185 assertions` в зелёном состоянии на локальном PHP runtime; `vite build` требует переустановки `node_modules` (отсутствует Rollup native binary).
+- **Automated suite**: `147 tests`, `3208 assertions` в зелёном состоянии на локальном PHP runtime; `vite build` требует переустановки `node_modules` (отсутствует Rollup native binary).
 
 ## Версия v0.1 - MVP Foundation
 
@@ -185,7 +185,7 @@ Acceptance criteria:
 - Фоновая конвертация медиа в WebP/AVIF. **РЕАЛИЗОВАНО**: `ImageOptimizationService` поддерживает конвертацию в WebP и AVIF форматы.
 - Lazy loading блоков и медиа. **РЕАЛИЗОВАНО**: атрибуты loading, decoding, fetchpriority добавлены в renderResponsiveImage.
 - Улучшение renderer для снижения TTFB и CLS.
-- Базовый Web Vitals Monitor в админке. **НЕ РЕАЛИЗОВАНО**: требуется добавить tracking script и dashboard.
+- Базовый Web Vitals Monitor в админке: трекер на публичных страницах и дашборд с LCP/CLS/INP/TTFB, CSV-экспортом и графиком.
 - Performance-настройки по умолчанию для shared hosting.
 - Image cropping service. **РЕАЛИЗОВАНО**: метод crop() в ImageOptimizationService.
 - srcset generation for responsive images. **РЕАЛИЗОВАНО**: generateSrcset(), getSrcsetAttribute(), renderResponsiveImage().

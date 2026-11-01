@@ -6,6 +6,7 @@ use App\Seo\Http\Controllers\RobotsController;
 use App\Seo\Http\Controllers\SitemapController;
 use App\System\Http\Controllers\PublicSettingsApiController;
 use App\Taxonomy\Http\Controllers\PublicTaxonomyApiController;
+use App\Http\Controllers\WebVitalController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api/v1/public')->middleware('throttle:api-public')->group(function (): void {
@@ -20,6 +21,9 @@ Route::prefix('api/v1/public')->middleware('throttle:api-public')->group(functio
     
     // Settings
     Route::get('/settings/site', [PublicSettingsApiController::class, 'site']);
+
+    // Core Web Vitals beacons from anonymous visitors (no session, no CSRF).
+    Route::post('/web-vitals', [WebVitalController::class, 'store']);
 
     // Taxonomy
     Route::get('/taxonomies', [PublicTaxonomyApiController::class, 'index']);

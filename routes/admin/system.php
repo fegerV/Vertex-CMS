@@ -24,8 +24,6 @@ Route::prefix('web-vitals')->name('web-vitals.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\WebVitalsController::class, 'dashboard'])
         ->middleware('vertex.permission:system.view')
         ->name('dashboard');
-    Route::post('/store', [\App\Http\Controllers\Admin\WebVitalsController::class, 'store'])
-        ->name('store');
     Route::get('/chart-data', [\App\Http\Controllers\Admin\WebVitalsController::class, 'chartData'])
         ->middleware('vertex.permission:system.view')
         ->name('chart-data');

@@ -59,6 +59,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/admin/app.js',
                 'resources/js/builder/index.js',
+                'resources/js/web-vitals-tracker.js',
             ],
             refresh: true,
         }),

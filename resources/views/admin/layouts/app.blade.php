@@ -117,6 +117,7 @@
                     ['label' => 'Информация', 'route' => 'admin.system.info', 'permission' => 'system.view'],
                     ['label' => 'Кеш', 'route' => 'admin.system.cache', 'permission' => 'system.view'],
                     ['label' => 'Логи', 'route' => 'admin.system.logs', 'permission' => 'system.view'],
+                    ['label' => 'Web Vitals', 'route' => 'admin.web-vitals.dashboard', 'permission' => 'system.view'],
                 ],
             ],
         ];

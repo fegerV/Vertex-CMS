@@ -19,6 +19,13 @@ Last updated: `2026-11-01`
 
 ### Core product slices already in code
 
+### Performance monitoring
+
+- public pages report Core Web Vitals to `POST /api/v1/public/web-vitals`; the endpoint is unauthenticated by design (anonymous visitors), runs on the API middleware group so no CSRF token is needed for `sendBeacon`, validates metric names and value bounds, and keeps only allow-listed metadata keys
+- stored URLs are stripped of query strings and fragments, and the ingest respects the `web_vitals.enabled` setting
+- the tracker reports each metric once on `pagehide`/`visibilitychange` instead of on every `PerformanceObserver` callback, so a page view produces a small fixed number of rows
+- `/admin/web-vitals` renders per-metric averages and rating distributions, the worst recent measurements, a daily chart and a streamed CSV export, and is linked from the «Система» section for users with `system.view`
+
 - installer flow foundation
 - admin auth and RBAC
 - pages CRUD
@@ -240,8 +247,8 @@ As documented in project docs before this update:
 - form field registry API test was added in:
   - `tests/Feature/FormFieldRegistryApiTest.php`
 - full suite re-verified green after the routing/API/renderer pass:
-  - `141 tests`
-  - `3185 assertions`
+  - `147 tests`
+  - `3208 assertions`
   - `node --check` on `resources/js/app.js` and `php artisan view:cache`
   - `vite build` could not run locally: the installed `node_modules` is missing the Rollup native binary
 
