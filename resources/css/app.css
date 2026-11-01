@@ -466,6 +466,29 @@ body {
     border: 0;
 }
 
+.vc-video video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.vc-divider-wrap {
+    margin: 1.5rem 0;
+}
+
+.vc-divider-dashed {
+    border-top-style: dashed;
+}
+
+.vc-divider-dotted {
+    border-top-style: dotted;
+}
+
+.vc-divider-double {
+    border-top-style: double;
+}
+
+
 .vc-hero {
     position: relative;
     overflow: hidden;

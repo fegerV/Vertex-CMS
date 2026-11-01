@@ -82,7 +82,7 @@ class PageRenderer
                  'heading' => $this->heading($settings),
                  'text' => $this->text($settings),
                  'button' => $this->button($settings),
-                 'divider' => '<hr class="vc-divider">',
+                 'divider' => $this->divider($settings),
                  'faq' => $this->faq($settings),
                  'list' => $this->list($settings),
                  'image' => $this->image($settings),
@@ -129,9 +129,8 @@ class PageRenderer
 
     private function heading(array $settings): string
     {
-        $level = in_array($settings['level'] ?? 'h2', ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true)
-            ? $settings['level']
-            : 'h2';
+        $level = (string) ($settings['level'] ?? 'h2');
+        $level = in_array($level, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true) ? $level : 'h2';
 
         return sprintf(
             '<%1$s class="vc-heading" style="%2$s">%3$s</%1$s>',
@@ -227,13 +226,84 @@ class PageRenderer
 
     private function video(array $settings): string
     {
-        $url = $settings['url'] ?? '';
+        $type = (string) ($settings['type'] ?? 'youtube');
+        $url = trim((string) ($settings['url'] ?? ''));
+        $ratio = (string) ($settings['ratio'] ?? '16:9');
+        $ratio = preg_match('/^\d{1,2}:\d{1,2}$/', $ratio) === 1 ? str_replace(':', ' / ', $ratio) : '16 / 9';
+        $style = $this->inlineStyle(['aspect-ratio' => $ratio]);
+        $autoplay = filter_var($settings['autoplay'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $loop = filter_var($settings['loop'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $muted = filter_var($settings['muted'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $controls = filter_var($settings['controls'] ?? true, FILTER_VALIDATE_BOOLEAN);
 
-        if ($url === '') {
-            return '<div class="vc-media-placeholder vc-video-placeholder">Video placeholder</div>';
+        $videoId = match ($type) {
+            'youtube' => $this->youtubeId($url),
+            'vimeo' => $this->vimeoId($url),
+            default => null,
+        };
+
+        if ($videoId !== null) {
+            $host = $type === 'vimeo' ? 'https://player.vimeo.com/video/' : 'https://www.youtube.com/embed/';
+            $params = array_filter([
+                'autoplay' => $autoplay ? '1' : null,
+                ($type === 'vimeo' ? 'muted' : 'mute') => $muted ? '1' : null,
+                'loop' => $loop ? '1' : null,
+                'playlist' => $loop && $type === 'youtube' ? $videoId : null,
+                'rel' => '0',
+            ], static fn ($value) => $value !== null);
+            $query = $params === [] ? '' : '?'.http_build_query($params);
+            $pointer = $controls ? '' : ' style="pointer-events: none;"';
+
+            return '<div class="vc-video vc-video-'.$type.'" style="'.e($style).'"><iframe src="'.e($host.$videoId.$query)
+                .'" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen'.$pointer.'></iframe></div>';
         }
 
-        return '<div class="vc-video"><iframe src="'.e($url).'" loading="lazy" allowfullscreen></iframe></div>';
+        if ($type === 'html5' && $this->isSafeMediaUrl($url)) {
+            $attributes = $autoplay ? ' autoplay'.($muted ? ' muted' : '') : ($muted ? ' muted' : '');
+            $attributes .= $loop ? ' loop' : '';
+            $attributes .= $controls ? ' controls' : '';
+
+            return '<div class="vc-video vc-video-html5" style="'.e($style).'"><video src="'.e($url).'" playsinline preload="metadata"'.$attributes.'></video></div>';
+        }
+
+        return '<div class="vc-media-placeholder vc-video-placeholder">Video placeholder</div>';
+    }
+
+    private function divider(array $settings): string
+    {
+        $style = (string) ($settings['style'] ?? 'solid');
+        $style = in_array($style, ['solid', 'dashed', 'dotted', 'double'], true) ? $style : 'solid';
+        $color = (string) ($settings['color'] ?? '#e2e8f0');
+        $color = preg_match('/^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i', $color) === 1 ? $color : '#e2e8f0';
+        $thickness = max(1, min(20, (int) ($settings['thickness'] ?? 1)));
+        $width = (string) ($settings['width'] ?? '100%');
+        $width = preg_match('/^\d{1,3}(?:\.\d{1,2})?(?:px|%)$/', $width) === 1 ? $width : '100%';
+        $declarations = "border: 0; border-top: {$thickness}px {$style} {$color}; width: {$width};";
+
+        return '<div class="vc-divider-wrap"><hr class="vc-divider vc-divider-'.$style.'" style="'.e($declarations).'"></div>';
+    }
+
+    private function youtubeId(string $url): ?string
+    {
+        if (preg_match('~(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{6,})~', $url, $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[1];
+    }
+
+    private function vimeoId(string $url): ?string
+    {
+        if (preg_match('~vimeo\.com/(?:video/)?(\d{4,})~', $url, $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[1];
+    }
+
+    private function isSafeMediaUrl(string $url): bool
+    {
+        return preg_match('~^(https?:)?//~i', $url) === 1 || str_starts_with($url, '/');
     }
 
     private function html(array $settings): string

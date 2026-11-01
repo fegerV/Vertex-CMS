@@ -136,7 +136,14 @@ while keeping `content_json` unchanged.
 - `resources/js/app.js` ships `mountFrontendBlocks()` for tabs, single-open accordions, dismissible alerts, native `<dialog>` modals and animated counters
 - the HTML block sanitizer now drops `script`/`style`/`iframe`/`object`/`embed`/`noscript` containers with their contents instead of leaking script bodies as text
 
-Theme overrides keep working: `themes/{theme}/blocks/{type}` and `themes.default.blocks.{type}` are checked before the renderer. Types that keep a Blade partial are `hero`, `video`, `divider`, `spacer`, `columns`, `container`, `form`, `gallery` and `cart`.
+Theme overrides keep working: `themes/{theme}/blocks/{type}` and `themes.default.blocks.{type}` are checked before the renderer. The only bundled partials left are the ones with real presentation logic of their own: `gallery`, `cart` and `form` (module view).
+
+The last six shadowing partials (`hero`, `video`, `divider`, `spacer`, `columns`, `container`) are gone as well:
+
+- `video` parses YouTube and Vimeo URLs into embeds, honours `ratio`, `autoplay`, `loop`, `muted` and `controls`, supports HTML5 sources and rejects non-http(s) URLs
+- `divider` honours `style`, `color`, `thickness` and `width` with sanitized CSS values
+- `hero`, `columns`, `container` and `spacer` moved fully into the renderer with escaped settings and nested block rendering
+- a `heading` without an explicit `level` used to raise `Undefined array key "level"` inside nested columns; the renderer now falls back to `h2`
 
 ### SEO module stage
 
@@ -233,8 +240,8 @@ As documented in project docs before this update:
 - form field registry API test was added in:
   - `tests/Feature/FormFieldRegistryApiTest.php`
 - full suite re-verified green after the routing/API/renderer pass:
-  - `135 tests`
-  - `3151 assertions`
+  - `141 tests`
+  - `3185 assertions`
   - `node --check` on `resources/js/app.js` and `php artisan view:cache`
   - `vite build` could not run locally: the installed `node_modules` is missing the Rollup native binary
 
@@ -345,5 +352,5 @@ These remain experimental and are not backend-registry-first block types.
 1. Finish module bootstrap cleanup so all builtin modules resolve cleanly at runtime.
 2. Consolidate the legacy builder screens behind the new schema-driven runtime.
 3. Continue browser/manual QA for builder, Design Library, media picker and form-builder workflows.
-4. Port the remaining `pb-*` partials (`video`, `divider`, `spacer`, `columns`, `container`) onto the renderer once their style options are covered by tests.
+4. Port the remaining `pb-*` partials (`video`, `divider`, `spacer`, `columns`, `container`) onto the renderer once their style options are covered by tests — done, `hero` included; covered by `BlockRenderingTest`.
 5. Run `npm install` in a clean environment and execute `npm run build` before the next release tag.
