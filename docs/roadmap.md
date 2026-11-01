@@ -42,6 +42,7 @@ VertexCMS должна стать современной CMS с открытым
 - **Public block rendering parity (v0.6)** закрыт: `PageRenderer` теперь единственный источник публичной разметки для всех block types реестра (включая `tabs`, `accordion`, `counter`, `pricing-table`, `product-list`, `news-feed`), стили `vc-*` и интерактив в `resources/js/app.js`; 22 устаревших `pb-*` partial больше не перекрывают рендерер.
 - **Admin routing/API восстановлены**: публичный catch-all переведён на `Route::fallback`, поэтому `/admin`, `/install` и `/api` больше не перехватываются страницей; возвращены используемые UI endpoints `/admin/api/{ai,forms,media,dashboard}`; в каталог permissions добавлены `system.edit` и `seo.settings`.
 - **Automated suite**: `147 tests`, `3208 assertions` в зелёном состоянии на локальном PHP runtime. `npm run build` снова работает: `node_modules` был установлен с Linux-платформы (в нём лежали только `@rollup/rollup-linux-*`), чистый `npm ci` на Windows поставил `@rollup/rollup-win32-x64-msvc`, и Vite собирает `public/build` вместе с `resources/js/web-vitals-tracker.js`.
+- **Repo hygiene**: `node_modules` (12 406 файлов), `public/build` и сгенерированные `storage/framework/{cache,sessions,views}` сняты с отслеживания и приведены в соответствие с `.gitignore`; `vendor/` остаётся отслеживаемым, потому что содержит правки автозагрузчика для `Database\Factories`. Ассеты теперь собираются через `npm ci && npm run build` (см. README).
 
 ## Версия v0.1 - MVP Foundation
 

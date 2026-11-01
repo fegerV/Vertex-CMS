@@ -8,6 +8,12 @@ Last updated: `2026-11-01`
 
 ### Routing and admin API surface
 
+### Repository hygiene
+
+- `node_modules`, `public/build` and generated `storage/framework/{cache,sessions,views}` are no longer tracked, matching what `.gitignore` already declared; `npm ci && npm run build` produces the assets a checkout needs
+- `vendor/` stays tracked on purpose: it carries the autoloader entries `Database\Factories` and `Database\Seeders` need
+
+
 - the public page catch-all is now a true fallback route, so `/admin`, `/install` and `/api` routes always win over `GET /{uri}`
 - the admin JSON endpoints the UI already consumed are registered again under `/admin/api/*`:
   - `ai/providers`, `ai/chat`, `ai/edit`
