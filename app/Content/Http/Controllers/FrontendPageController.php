@@ -39,8 +39,10 @@ class FrontendPageController extends Controller
         ]);
     }
 
-    public function show(Request $request, string $uri): View
+    public function show(Request $request, ?string $uri = null): View
     {
+        $uri = trim($uri ?? $request->path(), '/');
+
         $page = Page::query()
             ->with('seoMeta.ogImage')
             ->where('uri', '/'.$uri)

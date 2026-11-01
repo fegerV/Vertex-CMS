@@ -1,6 +1,7 @@
 <?php
 
 use App\Admin\Http\Controllers\DashboardController;
+use App\AI\Http\Controllers\AiController as DraftAiController;
 use App\Admin\Http\Controllers\SettingsController;
 use App\Builder\Http\Controllers\BuilderApiController;
 use App\Content\Http\Controllers\CustomFieldGroupController;
@@ -11,12 +12,16 @@ use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Admin\WebhookController;
 use App\Media\Http\Controllers\MediaController;
+use App\Media\Http\Controllers\MediaApiController;
+use App\Media\Http\Controllers\MediaFolderApiController;
 use App\Security\Login\Http\Controllers\LoginController;
 use App\Security\Login\Http\Controllers\TwoFactorController;
 use App\System\Http\Controllers\QueueController;
 use App\System\Http\Controllers\SecurityController;
 use App\System\Http\Controllers\SystemController;
+use App\System\Http\Controllers\DashboardStatsController;
 use Illuminate\Support\Facades\Route;
+use Vertex\Forms\Controllers\FormApiController;
 
 Route::name('admin.')->prefix('admin')->group(function (): void {
     Route::middleware('guest')->group(function (): void {
@@ -84,6 +89,57 @@ Route::name('admin.')->prefix('admin')->group(function (): void {
         Route::post('api/builder/render-preview', [BuilderApiController::class, 'renderPreview'])
             ->middleware('vertex.permission:pages.edit')
             ->name('api.builder.render-preview');
+
+        // JSON endpoints consumed by the admin UI (session authenticated).
+        Route::prefix('api')->name('api.')->group(function (): void {
+            Route::get('dashboard/stats', [DashboardStatsController::class, 'index'])
+                ->name('dashboard.stats');
+
+            // Media library + folders bridge used by the builder and media manager.
+            Route::get('media', [MediaApiController::class, 'index'])->name('media.index');
+            Route::post('media/upload', [MediaApiController::class, 'store'])->name('media.store');
+            Route::put('media/{media}', [MediaApiController::class, 'update'])->name('media.update');
+            Route::patch('media/{media}/move', [MediaApiController::class, 'move'])->name('media.move');
+            Route::delete('media/{media}', [MediaApiController::class, 'destroy'])->name('media.destroy');
+            Route::get('media/folders', [MediaFolderApiController::class, 'index'])->name('media.folders.index');
+            Route::post('media/folders', [MediaFolderApiController::class, 'store'])->name('media.folders.store');
+            Route::put('media/folders/{folder}', [MediaFolderApiController::class, 'update'])->name('media.folders.update');
+            Route::delete('media/folders/{folder}', [MediaFolderApiController::class, 'destroy'])->name('media.folders.destroy');
+
+            // AI draft assistant panel endpoints.
+            Route::get('ai/providers', [DraftAiController::class, 'providers'])->name('ai.providers');
+            Route::post('ai/chat', [DraftAiController::class, 'chat'])->name('ai.chat');
+            Route::post('ai/edit', [DraftAiController::class, 'chat'])->name('ai.edit');
+
+            // Forms builder API (vertex-forms).
+            Route::get('forms/field-registry', [FormApiController::class, 'fieldRegistry'])
+                ->middleware('vertex.permission:forms.view')
+                ->name('forms.field-registry');
+            Route::get('forms', [FormApiController::class, 'index'])
+                ->middleware('vertex.permission:forms.view')
+                ->name('forms.index');
+            Route::post('forms', [FormApiController::class, 'store'])
+                ->middleware('vertex.permission:forms.create')
+                ->name('forms.store');
+            Route::get('forms/{form}', [FormApiController::class, 'show'])
+                ->middleware('vertex.permission:forms.view')
+                ->name('forms.show');
+            Route::put('forms/{form}', [FormApiController::class, 'update'])
+                ->middleware('vertex.permission:forms.edit')
+                ->name('forms.update');
+            Route::delete('forms/{form}', [FormApiController::class, 'destroy'])
+                ->middleware('vertex.permission:forms.delete')
+                ->name('forms.destroy');
+            Route::post('forms/{form}/duplicate', [FormApiController::class, 'duplicate'])
+                ->middleware('vertex.permission:forms.edit')
+                ->name('forms.duplicate');
+            Route::get('forms/{form}/export-json', [FormApiController::class, 'exportJson'])
+                ->middleware('vertex.permission:forms.import_export')
+                ->name('forms.export-json');
+            Route::post('forms/{form}/import-json', [FormApiController::class, 'importJson'])
+                ->middleware('vertex.permission:forms.import_export')
+                ->name('forms.import-json');
+        });
 
         Route::get('custom-field-groups', [CustomFieldGroupController::class, 'index'])
             ->middleware('vertex.permission:pages.edit')

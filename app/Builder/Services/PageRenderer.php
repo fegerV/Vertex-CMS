@@ -4,6 +4,7 @@ namespace App\Builder\Services;
 
 use Vertex\Forms\Services\FormService;
 use Vertex\Forms\Models\Form;
+use App\Models\Page;
 use App\Theme\Services\ThemeManager;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
@@ -93,6 +94,22 @@ class PageRenderer
                  'columns' => $this->columns($settings, $editor, $depth + 1),
                  'container' => $this->container($settings, $editor, $depth + 1),
                  'cart' => $this->cart($settings),
+                 'icon' => $this->icon($settings),
+                 'counter' => $this->counter($settings),
+                 'progress-bar' => $this->progressBar($settings),
+                 'alert' => $this->alert($settings),
+                 'breadcrumbs' => $this->breadcrumbs($settings),
+                 'accordion' => $this->accordion($settings),
+                 'tabs' => $this->tabs($settings),
+                 'collapse' => $this->collapse($settings),
+                 'modal' => $this->modal($settings),
+                 'tooltip' => $this->tooltip($settings),
+                 'testimonials' => $this->testimonials($settings),
+                 'pricing-table' => $this->pricingTable($settings),
+                 'product-card' => $this->productCard($settings),
+                 'product-list' => $this->productList($settings),
+                 'news-feed' => $this->newsFeed($settings),
+                 'seo-meta' => $this->seoMeta($settings),
                  'breakdance-rich-text' => $this->text($settings),
                  'breakdance-icon-list' => $this->iconList($settings),
                  'breakdance-social-icons' => $this->socialIcons($settings),
@@ -221,10 +238,15 @@ class PageRenderer
 
     private function html(array $settings): string
     {
-        $html = strip_tags((string) ($settings['html'] ?? ''), '<p><br><strong><b><em><i><ul><ol><li><a><span><div>');
+        $html = (string) ($settings['html'] ?? '');
+
+        // Drop raw execution containers together with their contents so script
+        // and style bodies never leak into the rendered markup as text.
+        $html = preg_replace('#<\s*(script|style|iframe|object|embed|noscript)[^>]*>.*?<\s*/\s*\1\s*>#is', '', $html) ?? $html;
+        $html = strip_tags($html, '<p><br><strong><b><em><i><ul><ol><li><a><span><div>');
         $html = preg_replace('/\son\w+=(["\']).*?\1/i', '', $html) ?? $html;
 
-        return str_ireplace(['javascript:', 'data:'], '', $html);
+        return str_ireplace(['javascript:', 'data:', 'srcdoc='], '', $html);
     }
 
      /**
@@ -439,6 +461,468 @@ HTML;
         }
 
         return $html;
+    }
+
+    private function iconSvg(string $name): string
+    {
+        $icons = [
+            'star' => '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+            'heart' => '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>',
+            'check' => '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>',
+            'x' => '<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>',
+            'arrow' => '<path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>',
+            'dots' => '<circle cx="12" cy="12" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="12" cy="19" r="2"/>',
+        ];
+
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+            .($icons[$name] ?? $icons['star']).'</svg>';
+    }
+
+    private function icon(array $settings): string
+    {
+        $name = in_array($settings['icon'] ?? 'star', ['star', 'heart', 'check', 'x', 'arrow', 'dots'], true)
+            ? $settings['icon']
+            : 'star';
+        $size = in_array($settings['size'] ?? 'md', ['sm', 'md', 'lg', 'xl'], true) ? $settings['size'] : 'md';
+        $radius = in_array($settings['radius'] ?? 'none', ['none', 'sm', 'md', 'lg', 'full'], true)
+            ? $settings['radius']
+            : 'none';
+        $style = $this->inlineStyle([
+            'color' => $settings['color'] ?? null,
+            'background-color' => $settings['background'] ?? null,
+        ]);
+
+        return '<span class="vc-icon vc-icon-'.$size.' vc-icon-radius-'.$radius.'" style="'.e($style).'">'
+            .$this->iconSvg((string) $name).'</span>';
+    }
+
+    private function counter(array $settings): string
+    {
+        $raw = $settings['value'] ?? 0;
+        $value = is_numeric($raw) ? (float) $raw : 0.0;
+        $display = floor($value) === $value ? (string) (int) $value : rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+        $duration = max(0, min(5000, (int) ($settings['duration'] ?? 2000)));
+        $label = (string) ($settings['label'] ?? '');
+
+        $html = '<div class="vc-counter" data-vc-counter data-value="'.e($display).'" data-duration="'.e((string) $duration).'">'
+            .'<span class="vc-counter-prefix">'.e((string) ($settings['prefix'] ?? '')).'</span>'
+            .'<span class="vc-counter-value" data-vc-counter-value>'.e($display).'</span>'
+            .'<span class="vc-counter-suffix">'.e((string) ($settings['suffix'] ?? '')).'</span>'
+            .'</div>';
+
+        if ($label !== '') {
+            $html .= '<div class="vc-counter-label">'.e($label).'</div>';
+        }
+
+        return $html;
+    }
+
+    private function progressBar(array $settings): string
+    {
+        $value = is_numeric($settings['value'] ?? null) ? (float) $settings['value'] : 0.0;
+        $max = is_numeric($settings['max'] ?? null) ? (float) $settings['max'] : 100.0;
+        $max = $max > 0 ? $max : 100.0;
+        $percentage = min(100, max(0, ($value / $max) * 100));
+        $height = max(2, min(50, (int) ($settings['height'] ?? 8)));
+        $color = (string) ($settings['color'] ?? '#3b82f6');
+        $showLabel = filter_var($settings['show_label'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+
+        $html = '<div class="vc-progress-bar">';
+
+        if ($showLabel) {
+            $html .= '<div class="vc-progress-meta"><span>'.e(number_format($value)).' / '.e(number_format($max))
+                .'</span><span>'.e(number_format($percentage, 1)).'%</span></div>';
+        }
+
+        $html .= '<div class="vc-progress-track" style="height: '.e((string) $height).'px;" role="progressbar"'
+            .' aria-valuenow="'.e((string) round($percentage, 1)).'" aria-valuemin="0" aria-valuemax="100">'
+            .'<div class="vc-progress-fill" style="width: '.e((string) round($percentage, 2)).'%; background-color: '.e($color).';"></div>'
+            .'</div></div>';
+
+        return $html;
+    }
+
+    private function alert(array $settings): string
+    {
+        $type = in_array($settings['type'] ?? 'info', ['info', 'success', 'warning', 'error'], true)
+            ? $settings['type']
+            : 'info';
+        $closable = filter_var($settings['closable'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+        $title = (string) ($settings['title'] ?? '');
+
+        $html = '<div class="vc-alert vc-alert-'.$type.'" role="alert" data-vc-alert>';
+
+        if ($title !== '') {
+            $html .= '<strong class="vc-alert-title">'.e($title).'</strong>';
+        }
+
+        $html .= '<span class="vc-alert-content">'.nl2br(e((string) ($settings['content'] ?? ''))).'</span>';
+
+        if ($closable) {
+            $html .= '<button class="vc-alert-close" type="button" data-vc-alert-close aria-label="'.e('Close').'">&times;</button>';
+        }
+
+        return $html.'</div>';
+    }
+
+    private function breadcrumbs(array $settings): string
+    {
+        $items = is_array($settings['items'] ?? null) ? $settings['items'] : [];
+        $separator = (string) ($settings['separator'] ?? '/');
+        $items = array_values(array_filter($items, fn ($item) => is_array($item) && filled($item['title'] ?? null)));
+
+        if ($items === []) {
+            return '';
+        }
+
+        $last = count($items) - 1;
+        $html = '';
+
+        foreach ($items as $index => $item) {
+            $title = e((string) ($item['title'] ?? ''));
+            $url = $item['url'] ?? null;
+            $isLast = $index === $last;
+
+            $content = (! $isLast && filled($url))
+                ? '<a href="'.e((string) $url).'">'.$title.'</a>'
+                : '<span aria-current="'.($isLast ? 'page' : 'false').'">'.$title.'</span>';
+
+            if ($index > 0) {
+                $html .= '<span class="vc-breadcrumbs-separator" aria-hidden="true">'.e($separator).'</span>';
+            }
+
+            $html .= $content;
+        }
+
+        return '<nav class="vc-breadcrumbs" aria-label="'.e('Breadcrumb').'">'.$html.'</nav>';
+    }
+
+    private function accordion(array $settings): string
+    {
+        $items = is_array($settings['items'] ?? null) ? $settings['items'] : [];
+        $allowMultiple = filter_var($settings['allow_multiple'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+        $html = '';
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $open = filter_var($item['open'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+
+            $html .= '<details class="vc-accordion-item"'.($open ? ' open' : '').'>'
+                .'<summary>'.e((string) ($item['title'] ?? '')).'</summary>'
+                .'<div class="vc-accordion-body">'.nl2br(e((string) ($item['content'] ?? ''))).'</div>'
+                .'</details>';
+        }
+
+        return $html === '' ? '' : '<div class="vc-accordion" data-vc-accordion data-allow-multiple="'.($allowMultiple ? 'true' : 'false').'">'.$html.'</div>';
+    }
+
+    private function tabs(array $settings): string
+    {
+        $tabs = is_array($settings['tabs'] ?? null) ? array_values(array_filter($settings['tabs'], 'is_array')) : [];
+
+        if ($tabs === []) {
+            return '';
+        }
+
+        $style = (string) ($settings['style'] ?? 'line');
+        $style = in_array($style, ['primary', 'secondary', 'outline', 'ghost', 'solid', 'dashed', 'dotted', 'double', 'line', 'boxed', 'pill'], true)
+            ? $style
+            : 'line';
+        $alignment = (string) ($settings['alignment'] ?? 'left');
+        $alignment = in_array($alignment, ['left', 'center', 'right'], true)
+            ? $alignment
+            : 'left';
+        $nav = '';
+        $panels = '';
+
+        foreach ($tabs as $index => $tab) {
+            $nav .= '<button class="vc-tab'.($index === 0 ? ' is-active' : '').'" type="button" role="tab"'
+                .' data-vc-tab="'.$index.'" aria-selected="'.($index === 0 ? 'true' : 'false').'">'
+                .e((string) ($tab['title'] ?? '')).'</button>';
+            $panels .= '<div class="vc-tab-panel'.($index === 0 ? ' is-active' : '').'" role="tabpanel"'
+                .' data-vc-tab-panel="'.$index.'">'.nl2br(e((string) ($tab['content'] ?? ''))).'</div>';
+        }
+
+        return '<div class="vc-tabs vc-tabs-'.$style.' vc-tabs-'.$alignment.'" data-vc-tabs>'
+            .'<div class="vc-tabs-nav" role="tablist">'.$nav.'</div>'
+            .'<div class="vc-tabs-panels">'.$panels.'</div></div>';
+    }
+
+    private function collapse(array $settings): string
+    {
+        $open = filter_var($settings['open'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+
+        return '<details class="vc-collapse"'.($open ? ' open' : '').'>'
+            .'<summary>'.e((string) ($settings['title'] ?? '')).'</summary>'
+            .'<div class="vc-collapse-body">'.nl2br(e((string) ($settings['content'] ?? ''))).'</div>'
+            .'</details>';
+    }
+
+    private function modal(array $settings): string
+    {
+        $size = in_array($settings['size'] ?? 'md', ['sm', 'md', 'lg', 'xl'], true) ? $settings['size'] : 'md';
+        $modalId = 'vc-modal-'.Str::random(8);
+        $title = (string) ($settings['title'] ?? '');
+
+        $html = '<div class="vc-modal-block">'
+            .'<button class="vc-button vc-button-primary" type="button" data-vc-modal-open="'.e($modalId).'">'
+            .e((string) ($settings['trigger_text'] ?? 'Open modal')).'</button>'
+            .'<dialog class="vc-modal vc-modal-'.$size.'" id="'.e($modalId).'" data-vc-modal>'
+            .'<div class="vc-modal-header">';
+
+        if ($title !== '') {
+            $html .= '<h3 class="vc-modal-title">'.e($title).'</h3>';
+        }
+
+        $html .= '<button class="vc-modal-close" type="button" data-vc-modal-close aria-label="'.e('Close').'">&times;</button>'
+            .'</div><div class="vc-modal-body">'.nl2br(e((string) ($settings['content'] ?? ''))).'</div></dialog></div>';
+
+        return $html;
+    }
+
+    private function tooltip(array $settings): string
+    {
+        $position = (string) ($settings['position'] ?? 'top');
+        $position = in_array($position, ['top', 'bottom', 'left', 'right'], true) ? $position : 'top';
+
+        return '<span class="vc-tooltip" tabindex="0">'.e((string) ($settings['text'] ?? ''))
+            .'<span class="vc-tooltip-bubble vc-tooltip-'.$position.'" role="tooltip">'
+            .e((string) ($settings['content'] ?? '')).'</span></span>';
+    }
+
+    private function testimonials(array $settings): string
+    {
+        $items = is_array($settings['testimonials'] ?? null) ? $settings['testimonials'] : [];
+        $showRating = filter_var($settings['show_rating'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $layout = (string) ($settings['layout'] ?? 'grid');
+        $layout = in_array($layout, ['grid', 'cards', 'minimal', 'list'], true) ? $layout : 'grid';
+        $html = '';
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $rating = min(5, max(0, (int) round((float) ($item['rating'] ?? 0))));
+            $avatar = $this->mediaUrl($item['avatar'] ?? null);
+            $stars = '';
+
+            if ($showRating && $rating > 0) {
+                $stars = '<div class="vc-testimonial-rating" aria-label="'.e($rating.'/5').'">'
+                    .str_repeat('<span class="vc-star is-active">&#9733;</span>', $rating)
+                    .str_repeat('<span class="vc-star">&#9733;</span>', 5 - $rating).'</div>';
+            }
+
+            $html .= '<figure class="vc-testimonial">'
+                .($avatar !== '' ? '<img class="vc-testimonial-avatar" src="'.e($avatar).'" alt="'.e((string) ($item['author'] ?? '')).'" loading="lazy">' : '')
+                .$stars
+                .'<blockquote class="vc-testimonial-text">'.e((string) ($item['text'] ?? '')).'</blockquote>'
+                .'<figcaption class="vc-testimonial-author"><cite>'.e((string) ($item['author'] ?? '')).'</cite>'
+                .(filled($item['role'] ?? null) ? '<span class="vc-testimonial-role">'.e((string) $item['role']).'</span>' : '')
+                .'</figcaption></figure>';
+        }
+
+        return $html === '' ? '' : '<div class="vc-testimonials vc-testimonials-'.$layout.'">'.$html.'</div>';
+    }
+
+    private function pricingTable(array $settings): string
+    {
+        $plans = is_array($settings['plans'] ?? null) ? $settings['plans'] : [];
+        $columns = max(1, min(6, (int) ($settings['columns'] ?? 3)));
+        $html = '';
+
+        foreach ($plans as $plan) {
+            if (! is_array($plan)) {
+                continue;
+            }
+
+            $features = is_array($plan['features'] ?? null) ? $plan['features'] : [];
+            $highlighted = filter_var($plan['highlighted'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+
+            $html .= '<div class="vc-pricing-plan'.($highlighted ? ' is-highlighted' : '').'">';
+
+            if ($highlighted) {
+                $html .= '<span class="vc-pricing-badge">'.e((string) ($plan['badge'] ?? 'Popular')).'</span>';
+            }
+
+            $html .= '<h3 class="vc-pricing-name">'.e((string) ($plan['name'] ?? '')).'</h3>'
+                .'<div class="vc-pricing-price"><span class="vc-pricing-currency">'.e((string) ($plan['currency'] ?? '$')).'</span>'
+                .'<span class="vc-pricing-amount">'.e((string) ($plan['price'] ?? '0')).'</span>';
+
+            if (filled($plan['period'] ?? null)) {
+                $html .= '<span class="vc-pricing-period">/'.e((string) $plan['period']).'</span>';
+            }
+
+            $html .= '</div>';
+
+            if ($features !== []) {
+                $html .= '<ul class="vc-pricing-features">';
+
+                foreach ($features as $feature) {
+                    $html .= '<li>'.e((string) $feature).'</li>';
+                }
+
+                $html .= '</ul>';
+            }
+
+            $html .= '<a class="vc-button vc-button-primary vc-pricing-button" href="'.e((string) ($plan['button_url'] ?? '#')).'">'
+                .e((string) ($plan['button_text'] ?? 'Choose plan')).'</a></div>';
+        }
+
+        return $html === '' ? '' : '<div class="vc-pricing" style="--vc-pricing-columns: '.$columns.';">'.$html.'</div>';
+    }
+
+    private function productCard(array $settings): string
+    {
+        $title = (string) ($settings['title'] ?? '');
+        $image = $this->mediaUrl($settings['image'] ?? $settings['image_url'] ?? null);
+        $currency = (string) ($settings['currency'] ?? '$');
+        $price = is_numeric($settings['price'] ?? null) ? (float) $settings['price'] : 0.0;
+        $oldPrice = is_numeric($settings['old_price'] ?? null) ? (float) $settings['old_price'] : null;
+        $rating = min(5, max(0, (int) round((float) ($settings['rating'] ?? 0))));
+        $reviewsCount = (int) ($settings['reviews_count'] ?? 0);
+
+        $html = '<article class="vc-product-card">';
+
+        if ($image !== '') {
+            $html .= '<div class="vc-product-media"><img src="'.e($image).'" alt="'.e($title).'" loading="lazy"></div>';
+        }
+
+        $html .= '<div class="vc-product-body"><h3 class="vc-product-title">'.e($title).'</h3>';
+
+        if (filled($settings['description'] ?? null)) {
+            $html .= '<p class="vc-product-description">'.e(Str::limit((string) $settings['description'], 140)).'</p>';
+        }
+
+        if ($rating > 0) {
+            $html .= '<div class="vc-product-rating">'.str_repeat('<span class="vc-star is-active">&#9733;</span>', $rating)
+                .str_repeat('<span class="vc-star">&#9733;</span>', 5 - $rating)
+                .($reviewsCount > 0 ? '<span class="vc-product-reviews">('.e((string) $reviewsCount).')</span>' : '').'</div>';
+        }
+
+        $html .= '<div class="vc-product-price">';
+
+        if ($oldPrice !== null && $oldPrice > $price) {
+            $html .= '<s class="vc-product-old-price">'.e(number_format($oldPrice, 2)).' '.e($currency).'</s>';
+        }
+
+        $html .= '<span class="vc-product-current-price">'.e(number_format($price, 2)).' '.e($currency).'</span></div>'
+            .'<button class="vc-button vc-button-primary vc-product-button" type="button">'
+            .e((string) ($settings['button_text'] ?? 'Add to cart')).'</button></div></article>';
+
+        return $html;
+    }
+
+    private function productList(array $settings): string
+    {
+        $products = is_array($settings['products'] ?? null) ? $settings['products'] : [];
+        $columns = max(1, min(6, (int) ($settings['columns'] ?? 4)));
+        $layout = (string) ($settings['layout'] ?? 'grid');
+        $layout = in_array($layout, ['grid', 'list', 'minimal'], true) ? $layout : 'grid';
+        $showPrice = filter_var($settings['show_price'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $showRating = filter_var($settings['show_rating'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $html = '';
+
+        foreach ($products as $product) {
+            if (! is_array($product)) {
+                continue;
+            }
+
+            $image = $this->mediaUrl($product['image'] ?? null);
+            $rating = min(5, max(0, (int) round((float) ($product['rating'] ?? 0))));
+
+            $html .= '<article class="vc-product-card">';
+
+            if ($image !== '') {
+                $html .= '<div class="vc-product-media"><img src="'.e($image).'" alt="'.e((string) ($product['title'] ?? '')).'" loading="lazy"></div>';
+            }
+
+            $html .= '<div class="vc-product-body"><h3 class="vc-product-title">'.e((string) ($product['title'] ?? '')).'</h3>';
+
+            if ($showRating && $rating > 0) {
+                $html .= '<div class="vc-product-rating">'.str_repeat('<span class="vc-star is-active">&#9733;</span>', $rating)
+                    .str_repeat('<span class="vc-star">&#9733;</span>', 5 - $rating).'</div>';
+            }
+
+            if ($showPrice && is_numeric($product['price'] ?? null)) {
+                $html .= '<div class="vc-product-price"><span class="vc-product-current-price">'
+                    .e(number_format((float) $product['price'], 2)).'</span></div>';
+            }
+
+            $html .= '</div></article>';
+        }
+
+        return $html === '' ? '' : '<div class="vc-product-list vc-product-list-'.$layout.'" data-vc-product-list'
+            .' style="--vc-product-columns: '.$columns.';">'.$html.'</div>';
+    }
+
+    private function newsFeed(array $settings): string
+    {
+        $limit = max(1, min(50, (int) ($settings['count'] ?? 3)));
+        $columns = max(1, min(6, (int) ($settings['columns'] ?? 3)));
+        $layout = (string) ($settings['layout'] ?? 'grid');
+        $layout = in_array($layout, ['grid', 'list', 'minimal'], true) ? $layout : 'grid';
+        $category = (string) ($settings['category'] ?? 'all');
+        $showDate = filter_var($settings['show_date'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $showExcerpt = filter_var($settings['show_excerpt'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+
+        $query = Page::query()
+            ->with('seoMeta')
+            ->where('status', 'published')
+            ->where(fn ($builder) => $builder->whereNull('published_at')->orWhere('published_at', '<=', now()))
+            ->latest('published_at');
+
+        if ($category !== '' && $category !== 'all') {
+            $query->whereHas('terms', fn ($terms) => $terms->where('terms.slug', $category));
+        }
+
+        $pages = $query->limit($limit)->get();
+        $html = '';
+
+        foreach ($pages as $page) {
+            $url = $page->getPublicUrl() ?? '#';
+            $description = (string) ($page->seoMeta->description ?? '');
+
+            $html .= '<article class="vc-news-item">';
+
+            if ($showDate && $page->published_at) {
+                $html .= '<time class="vc-news-date" datetime="'.e($page->published_at->toIso8601String()).'">'
+                    .e($page->published_at->format('d.m.Y')).'</time>';
+            }
+
+            $html .= '<h3 class="vc-news-title"><a href="'.e($url).'">'.e((string) $page->title).'</a></h3>';
+
+            if ($showExcerpt && $description !== '') {
+                $html .= '<p class="vc-news-excerpt">'.e(Str::limit($description, 160)).'</p>';
+            }
+
+            $html .= '</article>';
+        }
+
+        return $html === '' ? '' : '<div class="vc-news-feed vc-news-feed-'.$layout.'" style="--vc-news-columns: '.$columns.';">'.$html.'</div>';
+    }
+
+    private function seoMeta(array $settings): string
+    {
+        // Page level SEO is rendered by the public layout head, so the block
+        // intentionally renders nothing on the frontend.
+        return '';
+    }
+
+    private function mediaUrl(mixed $value): string
+    {
+        if (is_array($value)) {
+            $value = $value['url'] ?? $value['id'] ?? null;
+        }
+
+        if (! filled($value)) {
+            return '';
+        }
+
+        return is_numeric($value) ? '/api/media/'.(int) $value : (string) $value;
     }
 
     private function style(array $values): string

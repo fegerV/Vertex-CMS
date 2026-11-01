@@ -15,6 +15,16 @@ abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Rendered Blade layouts reference Vite assets, and the build output is
+        // not part of the test environment. Disable the asset lookups so tests
+        // exercise the application, not the presence of a compiled bundle.
+        $this->withoutVite();
+    }
+
     protected function seedCore(): void
     {
         $this->seed(RolesAndPermissionsSeeder::class);

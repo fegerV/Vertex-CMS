@@ -45,8 +45,8 @@ Route::prefix('forms')->name('public.forms.')->group(function () {
     require base_path('modules/vertex-forms/routes/web.php');
 });
 
-// Catch-all page route (must be last)
-Route::get('/{uri}', [FrontendPageController::class, 'show'])
-    ->where('uri', '.*')
-    ->name('frontend.page');
+// Catch-all page route (must be last).
+// Registered as a fallback route so admin, installer, API and module routes
+// always take precedence regardless of the order route files are loaded in.
+Route::fallback([FrontendPageController::class, 'show'])->name('frontend.page');
 

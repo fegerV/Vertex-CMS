@@ -39,6 +39,9 @@ VertexCMS должна стать современной CMS с открытым
 - **E-commerce Frontend (`v1.0+`)** имеет базовую реализацию: созданы public product catalog pages (`catalog/index.blade.php`), shopping cart UI component (`cart.blade.php`), checkout flow architecture, payment provider integration stubs. Требуется доработка checkout flow и интеграция с реальными платежными системами.
 - **Cookie Consent (`v0.7`)** реализован базовый функционал: создан `GdprCookieMiddleware`, модель `GdprSetting`, механика показа баннера. Требуется дополнение UI компонентом consent banner и настройками управления согласиями.
 - **Web Vitals Monitor (`v0.6`)** не реализован: требуется добавить tracking script и admin dashboard для LCP/CLS/INP метрик.
+- **Public block rendering parity (v0.6)** закрыт: `PageRenderer` теперь единственный источник публичной разметки для всех block types реестра (включая `tabs`, `accordion`, `counter`, `pricing-table`, `product-list`, `news-feed`), стили `vc-*` и интерактив в `resources/js/app.js`; 22 устаревших `pb-*` partial больше не перекрывают рендерер.
+- **Admin routing/API восстановлены**: публичный catch-all переведён на `Route::fallback`, поэтому `/admin`, `/install` и `/api` больше не перехватываются страницей; возвращены используемые UI endpoints `/admin/api/{ai,forms,media,dashboard}`; в каталог permissions добавлены `system.edit` и `seo.settings`.
+- **Automated suite**: `135 tests`, `3151 assertions` в зелёном состоянии на локальном PHP runtime; `vite build` требует переустановки `node_modules` (отсутствует Rollup native binary).
 
 ## Версия v0.1 - MVP Foundation
 

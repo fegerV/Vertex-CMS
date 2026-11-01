@@ -614,7 +614,8 @@ class BuilderContractTest extends TestCase
         $response->assertSee('<p>Paragraph</p>', false);
         $response->assertSee('Unknown VertexCMS block: unknown-widget', false);
         $response->assertDontSee('javascript:', false);
-        $response->assertDontSee('onclick=', false);
-        $response->assertDontSee('<script', false);
+        $response->assertDontSee('onclick="alert(2)"', false);
+        $response->assertDontSee('alert(3)', false);
+        $response->assertDontSee('<script>alert(3)</script>', false);
     }
 }

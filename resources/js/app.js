@@ -147,6 +147,123 @@ function mountFrontendLightbox(root = document) {
     });
 }
 
+function mountFrontendBlocks(root = document) {
+    // Tabs
+    [...root.querySelectorAll('[data-vc-tabs]')].forEach((tabs) => {
+        if (tabs.dataset.vcTabsMounted === 'true') return;
+        tabs.dataset.vcTabsMounted = 'true';
+
+        const buttons = [...tabs.querySelectorAll('[data-vc-tab]')];
+        const panels = [...tabs.querySelectorAll('[data-vc-tab-panel]')];
+
+        const activate = (index) => {
+            buttons.forEach((button) => {
+                const isActive = Number(button.dataset.vcTab) === index;
+                button.classList.toggle('is-active', isActive);
+                button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+            panels.forEach((panel) => {
+                panel.classList.toggle('is-active', Number(panel.dataset.vcTabPanel) === index);
+            });
+        };
+
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => activate(Number(button.dataset.vcTab || 0)));
+        });
+
+        activate(0);
+    });
+
+    // Accordions that only allow one open panel at a time
+    [...root.querySelectorAll('[data-vc-accordion]')].forEach((accordion) => {
+        if (accordion.dataset.vcAccordionMounted === 'true') return;
+        accordion.dataset.vcAccordionMounted = 'true';
+
+        if (accordion.dataset.allowMultiple === 'true') return;
+
+        const items = [...accordion.querySelectorAll('details')];
+        items.forEach((item) => {
+            item.addEventListener('toggle', () => {
+                if (!item.open) return;
+                items.forEach((other) => {
+                    if (other !== item) other.open = false;
+                });
+            });
+        });
+    });
+
+    // Dismissible alerts
+    [...root.querySelectorAll('[data-vc-alert]')].forEach((alert) => {
+        if (alert.dataset.vcAlertMounted === 'true') return;
+        alert.dataset.vcAlertMounted = 'true';
+
+        alert.querySelector('[data-vc-alert-close]')?.addEventListener('click', () => alert.remove());
+    });
+
+    // Native modal dialogs
+    [...root.querySelectorAll('[data-vc-modal]')].forEach((modal) => {
+        if (modal.dataset.vcModalMounted === 'true') return;
+        modal.dataset.vcModalMounted = 'true';
+
+        const opener = root.querySelector(`[data-vc-modal-open="${modal.id}"]`);
+        opener?.addEventListener('click', () => {
+            if (typeof modal.showModal === 'function') modal.showModal();
+            else modal.setAttribute('open', '');
+        });
+
+        modal.querySelector('[data-vc-modal-close]')?.addEventListener('click', () => modal.close());
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) modal.close();
+        });
+    });
+
+    // Animated counters
+    const counters = [...root.querySelectorAll('[data-vc-counter]')].filter(
+        (counter) => counter.dataset.vcCounterMounted !== 'true'
+    );
+
+    if (!counters.length) return;
+
+    const animate = (counter) => {
+        const target = Number(counter.dataset.value || 0);
+        const duration = Number(counter.dataset.duration || 0);
+        const output = counter.querySelector('[data-vc-counter-value]');
+
+        if (!output || !target || duration <= 0) return;
+
+        const decimals = Number.isInteger(target) ? 0 : 2;
+        const start = performance.now();
+
+        const step = (now) => {
+            const progress = Math.min(1, (now - start) / duration);
+            output.textContent = (target * progress).toFixed(decimals);
+            if (progress < 1) window.requestAnimationFrame(step);
+            else output.textContent = target.toFixed(decimals);
+        };
+
+        window.requestAnimationFrame(step);
+    };
+
+    counters.forEach((counter) => {
+        counter.dataset.vcCounterMounted = 'true';
+
+        if (typeof IntersectionObserver !== 'function') {
+            animate(counter);
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                animate(counter);
+                observer.disconnect();
+            });
+        }, { threshold: 0.4 });
+
+        observer.observe(counter);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     mountBuilderPrototype();
     mountAdvancedBuilder();
@@ -155,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mountMediaManager();
     mountFrontendGalleries();
     mountFrontendLightbox();
+    mountFrontendBlocks();
 });
 
 // Telegram Widget — lazy load only on frontend when element exists

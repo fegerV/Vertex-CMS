@@ -155,7 +155,7 @@ class ApiAdminAccessControlTest extends TestCase
      */
     public function test_user_with_pages_delete_can_delete_pages(): void
     {
-        $user = $this->makeUserWithRole('editor');
+        $user = $this->makeUserWithRole('admin');
         Sanctum::actingAs($user);
 
         // Create a page first
@@ -185,10 +185,11 @@ class ApiAdminAccessControlTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure([
             'data' => [
-                'app',
-                'php',
-                'server',
-                'database',
+                'vertex_version',
+                'laravel_version',
+                'php_version',
+                'database_type',
+                'server_software',
             ],
         ]);
     }

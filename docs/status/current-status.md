@@ -2,9 +2,20 @@
 
 ## Updated
 
-Last updated: `2026-06-18`
+Last updated: `2026-11-01`
 
 ## What Is Implemented
+
+### Routing and admin API surface
+
+- the public page catch-all is now a true fallback route, so `/admin`, `/install` and `/api` routes always win over `GET /{uri}`
+- the admin JSON endpoints the UI already consumed are registered again under `/admin/api/*`:
+  - `ai/providers`, `ai/chat`, `ai/edit`
+  - `forms` CRUD, `forms/field-registry`, import/export
+  - `media`, `media/upload`, `media/folders`
+  - `dashboard/stats`
+- the permission catalog now defines `system.edit` and `seo.settings`, which routes required but the seeder never created
+- backup pipeline fixes: the local backup directory is created on demand, and `BackupController` imports the `Storage` facade
 
 ### Core product slices already in code
 
@@ -113,6 +124,20 @@ The current product-facing builder pass is focused on:
 
 while keeping `content_json` unchanged.
 
+### Public block renderer parity
+
+`App\Builder\Services\PageRenderer` is now the single source of truth for public block markup:
+
+- the `22` block types that used to be shadowed by unstyled `pb-*` Blade partials are rendered by the PHP renderer
+- every registry block type now has first-class public output: heading, text, list, faq, button, image, icon, counter, progress-bar, alert, breadcrumbs, accordion, tabs, collapse, modal, tooltip, testimonials, pricing-table, product-card, product-list, news-feed, seo-meta
+- `news-feed` renders published pages (it previously referenced a non-existent `App\Models\Post` and crashed)
+- `seo-meta` renders nothing publicly because page SEO is emitted by the public layout
+- `resources/css/app.css` ships `vc-*` styles for all of the above
+- `resources/js/app.js` ships `mountFrontendBlocks()` for tabs, single-open accordions, dismissible alerts, native `<dialog>` modals and animated counters
+- the HTML block sanitizer now drops `script`/`style`/`iframe`/`object`/`embed`/`noscript` containers with their contents instead of leaking script bodies as text
+
+Theme overrides keep working: `themes/{theme}/blocks/{type}` and `themes.default.blocks.{type}` are checked before the renderer. Types that keep a Blade partial are `hero`, `video`, `divider`, `spacer`, `columns`, `container`, `form`, `gallery` and `cart`.
+
 ### SEO module stage
 
 The SEO layer is now beyond a pure metadata foundation:
@@ -207,6 +232,11 @@ As documented in project docs before this update:
   - `tests/Feature/BuilderRegistryApiTest.php`
 - form field registry API test was added in:
   - `tests/Feature/FormFieldRegistryApiTest.php`
+- full suite re-verified green after the routing/API/renderer pass:
+  - `135 tests`
+  - `3151 assertions`
+  - `node --check` on `resources/js/app.js` and `php artisan view:cache`
+  - `vite build` could not run locally: the installed `node_modules` is missing the Rollup native binary
 
 ## Page Builder Block Inventory
 
@@ -314,6 +344,6 @@ These remain experimental and are not backend-registry-first block types.
 
 1. Finish module bootstrap cleanup so all builtin modules resolve cleanly at runtime.
 2. Consolidate the legacy builder screens behind the new schema-driven runtime.
-3. Expand frontend rendering parity so more backend-defined block types have first-class public renderers, not only editor schemas.
-4. Replace the current `vertex-forms` Alpine builder with the Forminator-style Vue app defined in the new architecture spec.
-5. Continue browser/manual QA for builder, Design Library, media picker and form-builder workflows.
+3. Continue browser/manual QA for builder, Design Library, media picker and form-builder workflows.
+4. Port the remaining `pb-*` partials (`video`, `divider`, `spacer`, `columns`, `container`) onto the renderer once their style options are covered by tests.
+5. Run `npm install` in a clean environment and execute `npm run build` before the next release tag.

@@ -17,60 +17,77 @@ class BackupTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
-        $this->adminUser = User::factory()->create(['role' => 'admin']);
-        
-        Storage::fake('backups');
+
+        $this->seedCore();
+        $this->markApplicationAsInstalled();
+
+        // system.edit/system.view permissions live on the super-admin role.
+        $this->adminUser = $this->makeUserWithRole('super-admin');
+        Storage::fake('local');
     }
 
     public function test_admin_can_create_backup(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->postJson('/admin/api/backups/create');
+            ->postJson('/admin/api/backups/create', ['type' => 'files']);
 
-        $response->assertStatus(200);
-        
-        $this->assertDatabaseHas('backups', [
-            'status' => 'completed'
-        ]);
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+
+        $filename = $response->json('backup');
+
+        $this->assertIsString($filename);
+        $this->assertStringStartsWith('files_', $filename);
+        Storage::disk('local')->assertExists('backups/'.$filename);
     }
 
     public function test_backup_command_runs_successfully(): void
     {
-        Artisan::call('backup:create');
-        
+        $exitCode = Artisan::call('backup:create', ['--files' => true]);
         $output = Artisan::output();
-        
-        $this->assertStringContainsString('Backup completed', $output);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('Резервное копирование завершено успешно', $output);
+        $this->assertNotEmpty(Storage::disk('local')->files('backups'));
+    }
+
+    public function test_backup_listing_is_available_to_admins_only(): void
+    {
+        Storage::disk('local')->put('backups/db_sqlite_existing.sql', 'dump');
+
+        $this->actingAs($this->adminUser)
+            ->getJson('/admin/api/backups')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $editor = $this->makeUserWithRole('editor', ['email' => 'editor-backup@example.com']);
+
+        $this->actingAs($editor)
+            ->getJson('/admin/api/backups')
+            ->assertForbidden();
     }
 
     public function test_non_admin_cannot_create_backup(): void
     {
-        $regularUser = User::factory()->create(['role' => 'user']);
+        $editor = $this->makeUserWithRole('editor', ['email' => 'editor-backup-2@example.com']);
 
-        $response = $this->actingAs($regularUser)
-            ->postJson('/admin/api/backups/create');
+        $this->actingAs($editor)
+            ->postJson('/admin/api/backups/create', ['type' => 'files'])
+            ->assertForbidden();
 
-        $response->assertStatus(403);
+        $this->assertEmpty(Storage::disk('local')->files('backups'));
     }
 
     public function test_admin_can_delete_backup(): void
     {
-        // Create a backup record first
-        $backup = \App\Modules\System\Models\Backup::create([
-            'filename' => 'test-backup.sql',
-            'size' => 1024,
-            'status' => 'completed',
-            'type' => 'database'
-        ]);
+        Storage::disk('local')->put('backups/db_sqlite_test.sql', 'dump');
 
         $response = $this->actingAs($this->adminUser)
-            ->deleteJson("/admin/api/backups/{$backup->id}");
+            ->deleteJson('/admin/api/backups/db_sqlite_test.sql');
 
-        $response->assertStatus(200);
-        
-        $this->assertDatabaseMissing('backups', [
-            'id' => $backup->id
-        ]);
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+
+        Storage::disk('local')->assertMissing('backups/db_sqlite_test.sql');
     }
 }

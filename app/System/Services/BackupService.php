@@ -32,6 +32,8 @@ class BackupService
         $filename = "db_{$connection}_".date('Y-m-d_His').'.sql';
         $filepath = storage_path("app/{$this->backupPath}/{$filename}");
 
+        $this->ensureLocalBackupDirectory();
+
         $command = match ($config['driver']) {
             'pgsql' => sprintf(
                 'PGPASSWORD=%s pg_dump -h %s -U %s %s > %s',
@@ -85,6 +87,8 @@ class BackupService
         $filename = 'files_'.date('Y-m-d_His').'.zip';
         $filepath = storage_path("app/{$this->backupPath}/{$filename}");
 
+        $this->ensureLocalBackupDirectory();
+
         $zip = new \ZipArchive;
         if ($zip->open($filepath, \ZipArchive::CREATE) !== true) {
             throw new \Exception('Cannot create ZIP archive');
@@ -117,6 +121,8 @@ class BackupService
 
     private function runWithHooks(string $type, callable $operation): string
     {
+        $this->ensureLocalBackupDirectory();
+
         $context = ['disk' => $this->disk, 'started_at' => now()->toISOString()];
         $this->hooks->before($type, $context);
 
@@ -128,6 +134,15 @@ class BackupService
         } catch (Throwable $exception) {
             $this->hooks->failed($type, $exception, $context);
             throw $exception;
+        }
+    }
+
+    private function ensureLocalBackupDirectory(): void
+    {
+        $directory = storage_path("app/{$this->backupPath}");
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0775, true);
         }
     }
 

@@ -40,17 +40,17 @@ class PageApiController extends Controller
         return PageResource::collection($items);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse|PageResource
     {
         try {
             $page = $this->pages->create($this->validated($request), $request->user());
-            return response()->json(new PageResource($page), 201);
+            return (new PageResource($page))->response()->setStatusCode(201);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         }
     }
 
-    public function show(Request $request, Page $page): JsonResponse
+    public function show(Request $request, Page $page): PageResource
     {
         // Проверка владения: пользователь может видеть только свои страницы
         $user = $request->user();
@@ -59,10 +59,10 @@ class PageApiController extends Controller
         
         abort_unless($ownsPage || $isAdmin, 403);
         
-        return response()->json(new PageResource($page->load('seoMeta')));
+        return new PageResource($page->load('seoMeta'));
     }
 
-    public function update(Request $request, Page $page): JsonResponse
+    public function update(Request $request, Page $page): JsonResponse|PageResource
     {
         // Проверка владения: пользователь может редактировать только свои страницы
         $user = $request->user();
@@ -73,7 +73,7 @@ class PageApiController extends Controller
         
         try {
             $page = $this->pages->update($page, $this->validated($request), $request->user());
-            return response()->json(new PageResource($page));
+            return new PageResource($page);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         }
