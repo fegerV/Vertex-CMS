@@ -250,7 +250,7 @@ As documented in project docs before this update:
   - `147 tests`
   - `3208 assertions`
   - `node --check` on `resources/js/app.js` and `php artisan view:cache`
-  - `vite build` could not run locally: the installed `node_modules` is missing the Rollup native binary
+  - `node_modules` in this checkout had been installed on Linux (only `@rollup/rollup-linux-*` was present), so Rollup had no native binary on Windows; a clean `npm ci` installs `@rollup/rollup-win32-x64-msvc` and `npm run build` now succeeds
 
 ## Page Builder Block Inventory
 
@@ -360,4 +360,4 @@ These remain experimental and are not backend-registry-first block types.
 2. Consolidate the legacy builder screens behind the new schema-driven runtime.
 3. Continue browser/manual QA for builder, Design Library, media picker and form-builder workflows.
 4. Port the remaining `pb-*` partials (`video`, `divider`, `spacer`, `columns`, `container`) onto the renderer once their style options are covered by tests — done, `hero` included; covered by `BlockRenderingTest`.
-5. Run `npm install` in a clean environment and execute `npm run build` before the next release tag.
+5. `npm ci` + `npm run build` were run on this checkout and produce `public/build/manifest.json` with all entries; repeat them in CI before a release tag.
