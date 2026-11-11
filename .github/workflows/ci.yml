@@ -26,7 +26,7 @@ jobs:
         with:
           php-version: '8.4'
           extensions: mbstring, xml, ctype, tokenizer, fileinfo, bcmath, zip, gd, sqlite3, pdo_sqlite, curl, openssl
-          coverage: pcov
+          coverage: xdebug
 
       - name: Cache Composer packages
         uses: actions/cache@v4
@@ -59,20 +59,30 @@ jobs:
       # `artisan test` cannot emit a clover report, so a second PHPUnit pass
       # produces the artifact that the threshold check and the upload consume.
       - name: Collect coverage
-        run: vendor/bin/phpunit --coverage-clover=coverage.xml
+        run: |
+          vendor/bin/phpunit --coverage-clover=coverage.xml
+          test -s coverage.xml || {
+            echo "::error title=Coverage::coverage.xml was not produced, so the coverage driver is unavailable"
+            exit 1
+          }
+        env:
+          XDEBUG_MODE: coverage
 
       - name: Enforce coverage threshold
         id: coverage
         run: |
-          php scripts/ci/coverage-check.php coverage.xml "$COVERAGE_MIN" > coverage-summary.txt
-          head -1 coverage-summary.txt
+          set +e
+          php scripts/ci/coverage-check.php coverage.xml "$COVERAGE_MIN" > coverage-summary.txt 2>&1
+          status=$?
+          cat coverage-summary.txt
           echo "pct=$(tail -1 coverage-summary.txt)" >> "$GITHUB_OUTPUT"
           {
             echo "### Code coverage"
             echo '```'
-            head -1 coverage-summary.txt
+            cat coverage-summary.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
         env:
           COVERAGE_MIN: '0'
 
@@ -82,7 +92,7 @@ jobs:
         with:
           name: coverage-${{ steps.coverage.outputs.pct }}
           path: coverage.xml
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 7
 
   frontend-build:
