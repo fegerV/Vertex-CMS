@@ -26,7 +26,7 @@ jobs:
         with:
           php-version: '8.4'
           extensions: mbstring, xml, ctype, tokenizer, fileinfo, bcmath, zip, gd, sqlite3, pdo_sqlite, curl, openssl
-          coverage: none
+          coverage: pcov
 
       - name: Cache Composer packages
         uses: actions/cache@v4
@@ -55,6 +55,35 @@ jobs:
       # sync queue and VERTEX_INSTALLED=true, so no database service is needed.
       - name: Run tests
         run: php artisan test
+
+      # `artisan test` cannot emit a clover report, so a second PHPUnit pass
+      # produces the artifact that the threshold check and the upload consume.
+      - name: Collect coverage
+        run: vendor/bin/phpunit --coverage-clover=coverage.xml
+
+      - name: Enforce coverage threshold
+        id: coverage
+        run: |
+          php scripts/ci/coverage-check.php coverage.xml "$COVERAGE_MIN" > coverage-summary.txt
+          head -1 coverage-summary.txt
+          echo "pct=$(tail -1 coverage-summary.txt)" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Code coverage"
+            echo '```'
+            head -1 coverage-summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          COVERAGE_MIN: '0'
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ steps.coverage.outputs.pct }}
+          path: coverage.xml
+          if-no-files-found: warn
+          retention-days: 7
 
   frontend-build:
     name: npm run build
