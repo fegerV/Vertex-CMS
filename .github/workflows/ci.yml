@@ -35,6 +35,14 @@ jobs:
           key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
           restore-keys: composer-${{ runner.os }}-
 
+      # These directories are gitignored, so a fresh checkout lacks them and
+      # composer's post-autoload-dump (`artisan package:discover`) would abort
+      # with "Please provide a valid cache path."
+      - name: Create writable directories
+        run: |
+          mkdir -p bootstrap/cache storage/app storage/framework/cache/data \
+            storage/framework/sessions storage/framework/views storage/logs
+
       - name: Install PHP dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
@@ -42,7 +50,6 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-          mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 
       # phpunit.xml drives the test environment: sqlite :memory:, array cache/sessions,
       # sync queue and VERTEX_INSTALLED=true, so no database service is needed.
