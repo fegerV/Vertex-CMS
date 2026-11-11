@@ -53,70 +53,34 @@ jobs:
 
       # phpunit.xml drives the test environment: sqlite :memory:, array cache/sessions,
       # sync queue and VERTEX_INSTALLED=true, so no database service is needed.
-      - name: Run tests
-        run: php artisan test
-
-      # `artisan test` cannot emit a clover report, so a second PHPUnit pass
-      # produces the artifact that the threshold check and the upload consume.
-      - name: Collect coverage
-        id: collect
+      #
+      # Coverage runs in the same pass: Laravel enforces --min itself, the text
+      # report becomes the artifact, and the measured percentage is published in
+      # the job summary.
+      - name: Run tests with coverage
         run: |
           set +e
-          {
-            php -r 'echo "driver=".(extension_loaded("xdebug") ? "xdebug" : (extension_loaded("pcov") ? "pcov" : "none"))." xdebug.mode=".ini_get("xdebug.mode").PHP_EOL;'
-            php vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
-          } > coverage-run.txt 2>&1
-          status=$?
-          tail -8 coverage-run.txt
-          msg=$(tail -4 coverage-run.txt | tr -d '\r' | tr '\n' ' ' | cut -c1-170 | tr -c 'A-Za-z0-9 ._-' '_')
-          {
-            echo "status=$status"
-            echo "msg=${msg:-none}"
-          } >> "$GITHUB_OUTPUT"
-          if [ ! -s coverage.xml ]; then
-            echo "::error title=Coverage::phpunit exited $status without writing coverage.xml: ${msg:-no diagnostic line}"
-          fi
-          exit $status
-        env:
-          XDEBUG_MODE: coverage
-
-      # Keeps the phpunit output readable through the artifact name when job logs
-      # are not available to the caller.
-      - name: Upload coverage diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: diag-${{ steps.collect.outputs.status }}-${{ steps.collect.outputs.msg }}
-          path: coverage-run.txt
-          if-no-files-found: warn
-          retention-days: 3
-
-      - name: Enforce coverage threshold
-        id: coverage
-        run: |
-          set +e
-          php scripts/ci/coverage-check.php coverage.xml "$COVERAGE_MIN" > coverage-summary.txt 2>&1
-          status=$?
-          cat coverage-summary.txt
-          echo "pct=$(tail -1 coverage-summary.txt)" >> "$GITHUB_OUTPUT"
+          php artisan test --coverage --min="$COVERAGE_MIN" 2>&1 | tee coverage.txt
+          status=${PIPESTATUS[0]}
+          pct=$(grep -oE '[0-9]+([.][0-9]+)?%' coverage.txt | tail -1)
           {
             echo "### Code coverage"
-            echo '```'
-            cat coverage-summary.txt
-            echo '```'
+            echo ""
+            echo "Measured: ${pct:-unknown}, minimum: ${COVERAGE_MIN}%"
           } >> "$GITHUB_STEP_SUMMARY"
           exit $status
         env:
           COVERAGE_MIN: '0'
+          XDEBUG_MODE: coverage
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ steps.coverage.outputs.pct }}
-          path: coverage.xml
+          name: coverage-report
+          path: coverage.txt
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
 
   frontend-build:
     name: npm run build

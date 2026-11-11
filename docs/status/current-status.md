@@ -203,7 +203,8 @@ The agreed target direction is now:
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request:
 
-- `php-tests` — PHP 8.4 with the extensions the app needs, `composer install`, then `php artisan test`; the test environment comes from `phpunit.xml` (SQLite `:memory:`, array cache and sessions, `VERTEX_INSTALLED=true`), so no MySQL or Redis service is required
+- `php-tests` — PHP 8.4 with the extensions the app needs, `composer install`, then `php artisan test --coverage --min=<threshold>`; the test environment comes from `phpunit.xml` (SQLite `:memory:`, array cache and sessions, `VERTEX_INSTALLED=true`), so no MySQL or Redis service is required
+- the coverage text report is uploaded as the `coverage-report` artifact and the measured percentage is written into the job summary; the threshold lives in one place (`COVERAGE_MIN` in the workflow) and a run below it fails
 - `frontend-build` — Node 22, `npm ci`, `npm run build`
 
 The previous workflow was a placeholder pipeline (PHP 8.2, MySQL/Redis services, `npm install`, xdebug coverage upload, a `docker-compose` build and an `echo` deploy step) and did not reflect how the project actually boots or tests; those jobs were removed.
