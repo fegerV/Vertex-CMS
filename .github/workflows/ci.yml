@@ -1,117 +1,69 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  tests:
+  php-tests:
+    name: artisan test
     runs-on: ubuntu-latest
-    
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: vertex_test
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-      
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
 
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup PHP
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, mysql, gd, zip
-          coverage: xdebug
-      
-      - name: Install Dependencies
+          php-version: '8.4'
+          extensions: mbstring, xml, ctype, tokenizer, fileinfo, bcmath, zip, gd, sqlite3, pdo_sqlite, curl, openssl
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Prepare application
         run: |
-          composer install --no-progress --prefer-dist --optimize-autoloader
-          npm install
-          npm run build
-      
-      - name: Copy Environment File
-        run: cp .env.example .env
-      
-      - name: Generate Application Key
-        run: php artisan key:generate
-      
-      - name: Run Migrations
-        run: php artisan migrate --force
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: vertex_test
-          DB_USERNAME: root
-          DB_PASSWORD: password
-      
-      - name: Run Tests
-        run: php artisan test --coverage-clover=coverage.xml
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: vertex_test
-          DB_USERNAME: root
-          DB_PASSWORD: password
-          REDIS_HOST: 127.0.0.1
-      
-      - name: Upload Coverage
-        uses: codecov/codecov-action@v3
+          cp .env.example .env
+          php artisan key:generate
+          mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+
+      # phpunit.xml drives the test environment: sqlite :memory:, array cache/sessions,
+      # sync queue and VERTEX_INSTALLED=true, so no database service is needed.
+      - name: Run tests
+        run: php artisan test
+
+  frontend-build:
+    name: npm run build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          file: ./coverage.xml
+          node-version: '22'
+          cache: npm
 
-  static-analysis:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          tools: phpstan, pint
-      
-      - name: Install Dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
-      
-      - name: Run PHPStan
-        run: phpstan analyse --memory-limit=1G
-      
-      - name: Run Pint (Code Style)
-        run: pint --test
+      - name: Install Node dependencies
+        run: npm ci
 
-  docker-build:
-    runs-on: ubuntu-latest
-    needs: [tests, static-analysis]
-    
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Build Docker Image
-        run: docker-compose build app
-      
-      - name: Run Security Scan
-        run: echo "Security scan would run here"
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [docker-build]
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Deploy to Production
-        run: echo "Deployment would happen here"
+      - name: Build assets
+        run: npm run build

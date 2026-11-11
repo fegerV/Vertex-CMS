@@ -199,6 +199,15 @@ The agreed target direction is now:
 
 ## Tests And Verification
 
+### CI
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request:
+
+- `php-tests` — PHP 8.4 with the extensions the app needs, `composer install`, then `php artisan test`; the test environment comes from `phpunit.xml` (SQLite `:memory:`, array cache and sessions, `VERTEX_INSTALLED=true`), so no MySQL or Redis service is required
+- `frontend-build` — Node 22, `npm ci`, `npm run build`
+
+The previous workflow was a placeholder pipeline (PHP 8.2, MySQL/Redis services, `npm install`, xdebug coverage upload, a `docker-compose` build and an `echo` deploy step) and did not reflect how the project actually boots or tests; those jobs were removed.
+
 ### Previously documented green suite
 
 As documented in project docs before this update:
