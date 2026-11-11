@@ -59,14 +59,34 @@ jobs:
       # `artisan test` cannot emit a clover report, so a second PHPUnit pass
       # produces the artifact that the threshold check and the upload consume.
       - name: Collect coverage
+        id: collect
         run: |
-          vendor/bin/phpunit --coverage-clover=coverage.xml
-          test -s coverage.xml || {
-            echo "::error title=Coverage::coverage.xml was not produced, so the coverage driver is unavailable"
-            exit 1
-          }
+          set +e
+          php vendor/bin/phpunit --coverage-clover=coverage.xml > coverage-run.txt 2>&1
+          status=$?
+          tail -5 coverage-run.txt
+          msg=$(grep -m1 -iE "error|warning|exception|driver|permission|fatal|failed|not found" coverage-run.txt | tr -d '\r' | cut -c1-90 | tr -c 'A-Za-z0-9 ._-' '_')
+          {
+            echo "status=$status"
+            echo "msg=${msg:-none}"
+          } >> "$GITHUB_OUTPUT"
+          if [ ! -s coverage.xml ]; then
+            echo "::error title=Coverage::phpunit exited $status without writing coverage.xml: ${msg:-no diagnostic line}"
+          fi
+          exit $status
         env:
           XDEBUG_MODE: coverage
+
+      # Keeps the phpunit output readable through the artifact name when job logs
+      # are not available to the caller.
+      - name: Upload coverage diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diag-${{ steps.collect.outputs.status }}-${{ steps.collect.outputs.msg }}
+          path: coverage-run.txt
+          if-no-files-found: warn
+          retention-days: 3
 
       - name: Enforce coverage threshold
         id: coverage
