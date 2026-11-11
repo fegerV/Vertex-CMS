@@ -62,10 +62,13 @@ jobs:
         id: collect
         run: |
           set +e
-          php vendor/bin/phpunit --coverage-clover=coverage.xml > coverage-run.txt 2>&1
+          {
+            php -r 'echo "driver=".(extension_loaded("xdebug") ? "xdebug" : (extension_loaded("pcov") ? "pcov" : "none"))." xdebug.mode=".ini_get("xdebug.mode").PHP_EOL;'
+            php vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
+          } > coverage-run.txt 2>&1
           status=$?
-          tail -5 coverage-run.txt
-          msg=$(grep -m1 -iE "error|warning|exception|driver|permission|fatal|failed|not found" coverage-run.txt | tr -d '\r' | cut -c1-90 | tr -c 'A-Za-z0-9 ._-' '_')
+          tail -8 coverage-run.txt
+          msg=$(tail -4 coverage-run.txt | tr -d '\r' | tr '\n' ' ' | cut -c1-170 | tr -c 'A-Za-z0-9 ._-' '_')
           {
             echo "status=$status"
             echo "msg=${msg:-none}"
