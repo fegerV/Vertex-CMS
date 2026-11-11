@@ -26,7 +26,7 @@ jobs:
         with:
           php-version: '8.4'
           extensions: mbstring, xml, ctype, tokenizer, fileinfo, bcmath, zip, gd, sqlite3, pdo_sqlite, curl, openssl
-          coverage: xdebug
+          coverage: none
 
       - name: Cache Composer packages
         uses: actions/cache@v4
@@ -54,44 +54,12 @@ jobs:
       # phpunit.xml drives the test environment: sqlite :memory:, array cache/sessions,
       # sync queue and VERTEX_INSTALLED=true, so no database service is needed.
       #
-      # Coverage runs in the same pass: Laravel enforces --min itself, the text
-      # report becomes the artifact, and the measured percentage is published in
-      # the job summary.
-      - name: Run tests with coverage
-        id: coverage
-        run: |
-          set +e
-          driver=$(php -r 'echo "xdebug=".(extension_loaded("xdebug") ? "yes" : "no").",mode=".ini_get("xdebug.mode").",pcov=".(extension_loaded("pcov") ? "yes" : "no");')
-          echo "coverage driver: $driver" | tee coverage.txt
-          php -d memory_limit=-1 -d xdebug.mode=coverage artisan test --coverage --min="$COVERAGE_MIN" 2>&1 | tee -a coverage.txt
-          status=${PIPESTATUS[0]}
-          pct=$(grep -oE '[0-9]+([.][0-9]+)?%' coverage.txt | tail -1)
-          {
-            echo "### Code coverage"
-            echo ""
-            echo "Measured: ${pct:-unknown}, minimum: ${COVERAGE_MIN}%"
-            echo ""
-            echo "Driver: ${driver}"
-          } >> "$GITHUB_STEP_SUMMARY"
-          tag=$(printf '%s %s %s' "$driver" "$pct" "$status" | tr -c 'A-Za-z0-9.,=_-' '_' | cut -c1-150)
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          if [ $status -ne 0 ]; then
-            reason=$(grep -m1 -iE 'error|exception|fatal|failed' coverage.txt | tr -d '\r' | cut -c1-300)
-            echo "::error title=Coverage run failed::${reason:-no diagnostic line}"
-          fi
-          exit $status
-        env:
-          COVERAGE_MIN: '0'
-          XDEBUG_MODE: coverage
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ steps.coverage.outputs.tag }}
-          path: coverage.txt
-          if-no-files-found: error
-          retention-days: 14
+      # Coverage is deliberately not collected here yet: on the runner PHPUnit's
+      # report generation crashes inside Runner\CodeCoverage::generateReports()
+      # (exit 255, clover writer reports "failed"), so enabling it turns every run
+      # red. phpunit.xml already declares the <source> block it needs.
+      - name: Run tests
+        run: php artisan test
 
   frontend-build:
     name: npm run build
