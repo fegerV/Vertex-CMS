@@ -113,8 +113,10 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
             'Psr\\Container\\' => 14,
             'Psr\\Clock\\' => 10,
             'Psr\\Cache\\' => 10,
+            'PragmaRX\\Google2FA\\' => 19,
             'PhpParser\\' => 10,
             'PhpOption\\' => 10,
+            'ParagonIE\\ConstantTime\\' => 23,
             'PHPStan\\PhpDocParser\\' => 21,
         ),
         'O' =>
@@ -381,6 +383,10 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
         array (
             0 => __DIR__ . '/..' . '/psr/cache/src',
         ),
+        'PragmaRX\\Google2FA\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/pragmarx/google2fa/src',
+        ),
         'PhpParser\\' =>
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
@@ -388,6 +394,10 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
         'PhpOption\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
+        ),
+        'ParagonIE\\ConstantTime\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src',
         ),
         'PHPStan\\PhpDocParser\\' =>
         array (
@@ -655,6 +665,7 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
         'App\\Http\\Controllers\\Api\\AIController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AIController.php',
         'App\\Http\\Controllers\\Api\\AiChatApiController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AiChatApiController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
+        'App\\Http\\Controllers\\WebVitalController' => __DIR__ . '/../..' . '/app/Http/Controllers/WebVitalController.php',
         'App\\Http\\Controllers\\Webhooks\\StripeWebhookController' => __DIR__ . '/../..' . '/app/Http/Controllers/Webhooks/StripeWebhookController.php',
         'App\\Http\\Middleware\\GdprMiddleware' => __DIR__ . '/../..' . '/app/Http/Middleware/GdprMiddleware.php',
         'App\\Http\\Middleware\\IpFilterMiddleware' => __DIR__ . '/../..' . '/app/Http/Middleware/IpFilterMiddleware.php',
@@ -771,6 +782,7 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
         'App\\Services\\Webhooks\\WebhookService' => __DIR__ . '/../..' . '/app/Services/Webhooks/WebhookService.php',
         'App\\Support\\Api\\ApiResponse' => __DIR__ . '/../..' . '/app/Support/Api/ApiResponse.php',
         'App\\System\\Console\\Commands\\ProcessEmailQueue' => __DIR__ . '/../..' . '/app/System/Console/Commands/ProcessEmailQueue.php',
+        'App\\System\\Http\\Controllers\\DashboardStatsController' => __DIR__ . '/../..' . '/app/System/Http/Controllers/DashboardStatsController.php',
         'App\\System\\Http\\Controllers\\EmailLogController' => __DIR__ . '/../..' . '/app/System/Http/Controllers/EmailLogController.php',
         'App\\System\\Http\\Controllers\\EmailTemplateController' => __DIR__ . '/../..' . '/app/System/Http/Controllers/EmailTemplateController.php',
         'App\\System\\Http\\Controllers\\InstallController' => __DIR__ . '/../..' . '/app/System/Http/Controllers/InstallController.php',
@@ -5444,6 +5456,17 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
         'PHPUnit\\Util\\Xml' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Xml/Xml.php',
         'PHPUnit\\Util\\Xml\\Loader' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Xml/Loader.php',
         'PHPUnit\\Util\\Xml\\XmlException' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Exception/XmlException.php',
+        'ParagonIE\\ConstantTime\\Base32' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base32.php',
+        'ParagonIE\\ConstantTime\\Base32Hex' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base32Hex.php',
+        'ParagonIE\\ConstantTime\\Base64' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base64.php',
+        'ParagonIE\\ConstantTime\\Base64DotSlash' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base64DotSlash.php',
+        'ParagonIE\\ConstantTime\\Base64DotSlashOrdered' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base64DotSlashOrdered.php',
+        'ParagonIE\\ConstantTime\\Base64UrlSafe' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base64UrlSafe.php',
+        'ParagonIE\\ConstantTime\\Binary' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Binary.php',
+        'ParagonIE\\ConstantTime\\EncoderInterface' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/EncoderInterface.php',
+        'ParagonIE\\ConstantTime\\Encoding' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Encoding.php',
+        'ParagonIE\\ConstantTime\\Hex' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Hex.php',
+        'ParagonIE\\ConstantTime\\RFC4648' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/RFC4648.php',
         'Pdo\\Dblib' => __DIR__ . '/..' . '/symfony/polyfill-php84/Resources/stubs/Pdo/Dblib.php',
         'Pdo\\Firebird' => __DIR__ . '/..' . '/symfony/polyfill-php84/Resources/stubs/Pdo/Firebird.php',
         'Pdo\\Mysql' => __DIR__ . '/..' . '/symfony/polyfill-php84/Resources/stubs/Pdo/Mysql.php',
@@ -5796,6 +5819,20 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
         'PhpParser\\PrettyPrinter\\Standard' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php',
         'PhpParser\\Token' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Token.php',
         'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
+        'PragmaRX\\Google2FA\\Exceptions\\Contracts\\Google2FA' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/Contracts/Google2FA.php',
+        'PragmaRX\\Google2FA\\Exceptions\\Contracts\\IncompatibleWithGoogleAuthenticator' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/Contracts/IncompatibleWithGoogleAuthenticator.php',
+        'PragmaRX\\Google2FA\\Exceptions\\Contracts\\InvalidAlgorithm' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/Contracts/InvalidAlgorithm.php',
+        'PragmaRX\\Google2FA\\Exceptions\\Contracts\\InvalidCharacters' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/Contracts/InvalidCharacters.php',
+        'PragmaRX\\Google2FA\\Exceptions\\Contracts\\SecretKeyTooShort' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/Contracts/SecretKeyTooShort.php',
+        'PragmaRX\\Google2FA\\Exceptions\\Google2FAException' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/Google2FAException.php',
+        'PragmaRX\\Google2FA\\Exceptions\\IncompatibleWithGoogleAuthenticatorException' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/IncompatibleWithGoogleAuthenticatorException.php',
+        'PragmaRX\\Google2FA\\Exceptions\\InvalidAlgorithmException' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/InvalidAlgorithmException.php',
+        'PragmaRX\\Google2FA\\Exceptions\\InvalidCharactersException' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/InvalidCharactersException.php',
+        'PragmaRX\\Google2FA\\Exceptions\\SecretKeyTooShortException' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Exceptions/SecretKeyTooShortException.php',
+        'PragmaRX\\Google2FA\\Google2FA' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Google2FA.php',
+        'PragmaRX\\Google2FA\\Support\\Base32' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Support/Base32.php',
+        'PragmaRX\\Google2FA\\Support\\Constants' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Support/Constants.php',
+        'PragmaRX\\Google2FA\\Support\\QRCode' => __DIR__ . '/..' . '/pragmarx/google2fa/src/Support/QRCode.php',
         'Psr\\Cache\\CacheException' => __DIR__ . '/..' . '/psr/cache/src/CacheException.php',
         'Psr\\Cache\\CacheItemInterface' => __DIR__ . '/..' . '/psr/cache/src/CacheItemInterface.php',
         'Psr\\Cache\\CacheItemPoolInterface' => __DIR__ . '/..' . '/psr/cache/src/CacheItemPoolInterface.php',
@@ -7258,6 +7295,7 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
         'Tests\\Feature\\BuilderLibraryManagerTest' => __DIR__ . '/../..' . '/tests/Feature/BuilderLibraryManagerTest.php',
         'Tests\\Feature\\BuilderRegistryApiTest' => __DIR__ . '/../..' . '/tests/Feature/BuilderRegistryApiTest.php',
         'Tests\\Feature\\BuilderSectionRegistryTest' => __DIR__ . '/../..' . '/tests/Feature/BuilderSectionRegistryTest.php',
+        'Tests\\Feature\\ChatbotSeedingTest' => __DIR__ . '/../..' . '/tests/Feature/ChatbotSeedingTest.php',
         'Tests\\Feature\\Ecommerce\\CartTest' => __DIR__ . '/../..' . '/tests/Feature/Ecommerce/CartTest.php',
         'Tests\\Feature\\FormConditionEngineTest' => __DIR__ . '/../..' . '/tests/Feature/FormConditionEngineTest.php',
         'Tests\\Feature\\FormFieldRegistryApiTest' => __DIR__ . '/../..' . '/tests/Feature/FormFieldRegistryApiTest.php',
@@ -7273,6 +7311,7 @@ class ComposerStaticInit48509eee4a2738990ca01e34082e9e1b
         'Tests\\Feature\\SeoDashboardTest' => __DIR__ . '/../..' . '/tests/Feature/SeoDashboardTest.php',
         'Tests\\Feature\\StableCoreContractsTest' => __DIR__ . '/../..' . '/tests/Feature/StableCoreContractsTest.php',
         'Tests\\Feature\\TaxonomyPwaTest' => __DIR__ . '/../..' . '/tests/Feature/TaxonomyPwaTest.php',
+        'Tests\\Feature\\WebVitalsTest' => __DIR__ . '/../..' . '/tests/Feature/WebVitalsTest.php',
         'Tests\\TestCase' => __DIR__ . '/../..' . '/tests/TestCase.php',
         'TheSeer\\Tokenizer\\Exception' => __DIR__ . '/..' . '/theseer/tokenizer/src/Exception.php',
         'TheSeer\\Tokenizer\\NamespaceUri' => __DIR__ . '/..' . '/theseer/tokenizer/src/NamespaceUri.php',

@@ -2,9 +2,19 @@
 
 ## Updated
 
-Last updated: `2026-11-01`
+Last updated: `2026-11-11`
 
 ## What Is Implemented
+
+### Local environment boot fixes
+
+- `config/database.php` declares a `sqlite` connection again, so `DB_CONNECTION=sqlite` no longer fails with `Database connection [sqlite] not configured`
+- the local checkout runs on a freshly migrated SQLite database (`php artisan migrate --seed`); contents are disposable
+- each checkout needs its own `APP_KEY` (`php artisan key:generate`), otherwise every page answers 500 with `MissingAppKeyException`
+- `composer install` restored the locked `pragmarx/google2fa` and `paragonie/constant_time_encoding` packages that were missing from the tracked `vendor/`; without them `LoginServiceProvider` crashed while rendering the admin login page
+- `config/app.php` merges `Facade::defaultAliases()` with the package aliases again; the previous override dropped the framework aliases, so `Route` was undefined inside `admin/auth/login.blade.php`
+- `App\Models\Chatbot` now matches the `chatbots` table (`llm_provider`, `llm_model`, `temperature`, `max_tokens`, `config`, `rate_limits`) and casts the JSON columns, which unblocked `ChatbotSeeder`
+- local `database/*.sqlite` files are ignored and no longer tracked
 
 ### Routing and admin API surface
 

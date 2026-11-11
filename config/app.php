@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Facade;
+
 return [
     'name' => env('APP_NAME', 'VertexCMS'),
     'env' => env('APP_ENV', 'production'),
@@ -27,8 +29,11 @@ return [
 
     /*
      * Class Aliases
+     *
+     * Package aliases are merged on top of Laravel's defaults so that
+     * framework facades such as Route, DB and Cache stay available.
      */
-    'aliases' => [
+    'aliases' => Facade::defaultAliases()->merge([
         'L5Swagger' => L5Swagger\Facades\L5Swagger::class,
-    ],
+    ])->toArray(),
 ];

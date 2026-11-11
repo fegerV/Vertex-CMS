@@ -97,10 +97,10 @@ class ModularChatbotService
 
         // 6. Получить релевантные чанки из базы знаний (если включено)
         $relevantChunks = [];
-        if ($chatbot->use_knowledge_base) {
+        if ($chatbot->config['use_knowledge_base'] ?? false) {
             $relevantChunks = $this->embeddingService->findRelevantChunks(
                 $message,
-                $chatbot->max_context_chunks
+                (int) ($chatbot->config['max_context_chunks'] ?? 5)
             );
         }
 
@@ -230,7 +230,7 @@ class ModularChatbotService
             ->where('created_at', '>=', $minuteAgo)
             ->count();
 
-        if ($messagesLastMinute >= $chatbot->rate_limit_per_minute) {
+        if ($messagesLastMinute >= ($chatbot->rate_limits['messages_per_minute'] ?? 10)) {
             return false;
         }
 
@@ -239,7 +239,7 @@ class ModularChatbotService
             ->where('created_at', '>=', $hourAgo)
             ->count();
 
-        if ($messagesLastHour >= $chatbot->rate_limit_per_hour) {
+        if ($messagesLastHour >= ($chatbot->rate_limits['messages_per_hour'] ?? 100)) {
             return false;
         }
 
@@ -294,17 +294,17 @@ class ModularChatbotService
         );
 
         // Получить API ключ из конфигурации провайдера
-        $apiKey = $this->getProviderApiKey($chatbot->provider);
-        $apiUrl = $this->getProviderApiUrl($chatbot->provider);
+        $apiKey = $this->getProviderApiKey($chatbot->llm_provider ?? 'openai');
+        $apiUrl = $this->getProviderApiUrl($chatbot->llm_provider ?? 'openai');
 
         $response = Http::withHeaders([
             'Authorization' => "Bearer {$apiKey}",
             'Content-Type' => 'application/json',
         ])->post($apiUrl, [
-            'model' => $chatbot->model,
+            'model' => $chatbot->llm_model,
             'messages' => $messages,
-            'max_tokens' => $chatbot->max_tokens_per_message,
-            'temperature' => 0.7,
+            'max_tokens' => $chatbot->max_tokens,
+            'temperature' => (float) ($chatbot->temperature ?? 0.7),
         ]);
 
         if ($response->successful()) {

@@ -17,45 +17,33 @@ class Chatbot extends Model
         'name',
         'slug',
         'description',
-        'provider',
-        'model',
-        'provider_config',
+        'llm_provider',
+        'llm_model',
+        'temperature',
+        'max_tokens',
         'system_prompt',
-        'use_page_context',
-        'use_knowledge_base',
-        'knowledge_bases',
-        'max_context_chunks',
-        'max_tokens_per_message',
-        'rate_limit_per_minute',
-        'rate_limit_per_hour',
-        'max_session_messages',
+        'config',
+        'rate_limits',
         'ui_config',
-        'is_active',
-        'page_restrictions',
-        'role_restrictions',
-        'enable_web_search',
-        'enable_image_generation',
-        'enable_voice_input',
-        'enable_file_upload',
-        'max_file_size_mb',
         'webhook_url',
-        'webhook_triggers',
+        'webhook_events',
+        'page_ids',
+        'allowed_roles',
+        'is_active',
+        'is_default',
     ];
 
     protected $casts = [
-        'provider_config' => 'array',
-        'knowledge_bases' => 'array',
+        'temperature' => 'float',
+        'max_tokens' => 'integer',
+        'config' => 'array',
+        'rate_limits' => 'array',
         'ui_config' => 'array',
-        'page_restrictions' => 'array',
-        'role_restrictions' => 'array',
-        'webhook_triggers' => 'array',
-        'use_page_context' => 'boolean',
-        'use_knowledge_base' => 'boolean',
+        'webhook_events' => 'array',
+        'page_ids' => 'array',
+        'allowed_roles' => 'array',
         'is_active' => 'boolean',
-        'enable_web_search' => 'boolean',
-        'enable_image_generation' => 'boolean',
-        'enable_voice_input' => 'boolean',
-        'enable_file_upload' => 'boolean',
+        'is_default' => 'boolean',
     ];
 
     /**
@@ -89,7 +77,7 @@ class Chatbot extends Model
     {
         $basePrompt = $this->system_prompt ?? 'Ты полезный ассистент. Отвечай кратко и по делу.';
         
-        if ($this->use_page_context && ($pageTitle || $pageExcerpt)) {
+        if (($this->config['use_page_context'] ?? false) && ($pageTitle || $pageExcerpt)) {
             $contextParts = [];
             
             if ($pageTitle) {
@@ -114,7 +102,7 @@ class Chatbot extends Model
      */
     public function canWebSearch(): bool
     {
-        return $this->enable_web_search;
+        return (bool) ($this->config['enable_web_search'] ?? false);
     }
 
     /**
@@ -122,7 +110,7 @@ class Chatbot extends Model
      */
     public function canUploadFiles(): bool
     {
-        return $this->enable_file_upload;
+        return (bool) ($this->config['enable_file_upload'] ?? false);
     }
 
     /**
@@ -130,7 +118,7 @@ class Chatbot extends Model
      */
     public function getMaxFileSizeBytes(): int
     {
-        return $this->max_file_size_mb * 1024 * 1024;
+        return (int) ($this->config['max_file_size_mb'] ?? 0) * 1024 * 1024;
     }
 
     /**
@@ -138,11 +126,13 @@ class Chatbot extends Model
      */
     public function shouldAppearOnPage(string $uri): bool
     {
-        if (empty($this->page_restrictions)) {
+        $patterns = $this->config['page_restrictions'] ?? [];
+
+        if (empty($patterns)) {
             return true; // Нет ограничений, показывать везде
         }
 
-        foreach ($this->page_restrictions as $pattern) {
+        foreach ($patterns as $pattern) {
             if ($this->matchesPattern($uri, $pattern)) {
                 return true;
             }
