@@ -16,7 +16,8 @@ Last updated: `2026-11-11`
 - `App\Models\Chatbot` now matches the `chatbots` table (`llm_provider`, `llm_model`, `temperature`, `max_tokens`, `config`, `rate_limits`) and casts the JSON columns, which unblocked `ChatbotSeeder`
 - local `database/*.sqlite` files are ignored and no longer tracked
 - the admin sign-in flow is verified end to end against a running server (`POST /admin/login` → `/admin` → `POST /admin/logout` → back to login) and pinned by `AdminLoginFlowTest`
-- current suite: `153 tests`, `3240 assertions`
+- `BootstrapSmokeTest` keeps the bootstrap honest: `/up`, the locked `/install` page, `GET /api/v1/public/pages`, the frontend home page, `/admin/login` and the guest redirect from `/admin` all have to answer without a 500
+- current suite: `159 tests`, `3249 assertions`
 
 ### Routing and admin API surface
 
