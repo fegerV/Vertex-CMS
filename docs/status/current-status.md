@@ -15,6 +15,8 @@ Last updated: `2026-11-11`
 - `config/app.php` merges `Facade::defaultAliases()` with the package aliases again; the previous override dropped the framework aliases, so `Route` was undefined inside `admin/auth/login.blade.php`
 - `App\Models\Chatbot` now matches the `chatbots` table (`llm_provider`, `llm_model`, `temperature`, `max_tokens`, `config`, `rate_limits`) and casts the JSON columns, which unblocked `ChatbotSeeder`
 - local `database/*.sqlite` files are ignored and no longer tracked
+- the admin sign-in flow is verified end to end against a running server (`POST /admin/login` → `/admin` → `POST /admin/logout` → back to login) and pinned by `AdminLoginFlowTest`
+- current suite: `153 tests`, `3240 assertions`
 
 ### Routing and admin API surface
 
