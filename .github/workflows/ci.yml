@@ -63,7 +63,7 @@ jobs:
           set +e
           driver=$(php -r 'echo "xdebug=".(extension_loaded("xdebug") ? "yes" : "no").",mode=".ini_get("xdebug.mode").",pcov=".(extension_loaded("pcov") ? "yes" : "no");')
           echo "coverage driver: $driver" | tee coverage.txt
-          php artisan test --coverage --min="$COVERAGE_MIN" 2>&1 | tee -a coverage.txt
+          php -d memory_limit=-1 -d xdebug.mode=coverage artisan test --coverage --min="$COVERAGE_MIN" 2>&1 | tee -a coverage.txt
           status=${PIPESTATUS[0]}
           pct=$(grep -oE '[0-9]+([.][0-9]+)?%' coverage.txt | tail -1)
           {
@@ -76,8 +76,8 @@ jobs:
           tag=$(printf '%s %s %s' "$driver" "$pct" "$status" | tr -c 'A-Za-z0-9.,=_-' '_' | cut -c1-150)
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           if [ $status -ne 0 ]; then
-            tail=$(tail -4 coverage.txt | tr -d '\r' | tr '\n' ' ' | tr -c 'A-Za-z0-9.,=_-' '_' | cut -c1-120)
-            echo "::error title=Coverage run failed::$tail"
+            reason=$(grep -m1 -iE 'error|exception|fatal|failed' coverage.txt | tr -d '\r' | cut -c1-300)
+            echo "::error title=Coverage run failed::${reason:-no diagnostic line}"
           fi
           exit $status
         env:
