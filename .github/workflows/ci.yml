@@ -72,7 +72,7 @@ jobs:
           php -d memory_limit=-1 -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text > coverage.txt 2>&1
           status=$?
           pct=$(grep -oE '[0-9]+([.][0-9]+)?%' coverage.txt | tail -1)
-          msg=$(grep -iE 'error|exception|fatal|failed|warning' coverage.txt | tail -2 | tr -d '\r' | tr '\n' '|' | tr -c 'A-Za-z0-9.,=_-|' '_' | cut -c1-150)
+          msg=$(grep -iE 'error|exception|fatal|failed|warning' coverage.txt | tail -2 | tr -d '\r' | tr '\n' ' ' | tr -c 'A-Za-z0-9.,=_-' '_' | cut -c1-150)
           echo "status=$status pct=${pct:-none}"
           tail -5 coverage.txt
           {
