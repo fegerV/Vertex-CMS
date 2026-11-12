@@ -62,34 +62,33 @@ jobs:
       - name: Run tests
         run: php artisan test
 
-      # Experimental: collects a text coverage report and encodes the outcome in the
-      # artifact name so the result is readable from the API without job logs.
-      - name: Coverage diagnostics
+      # `artisan test` cannot emit clover, so coverage is collected in a second pass.
+      - name: Collect coverage
         id: cov
         continue-on-error: true
         run: |
           set +e
-          php -d memory_limit=-1 -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text > coverage.txt 2>&1
+          php -d memory_limit=-1 -d xdebug.mode=coverage vendor/bin/phpunit --coverage-clover=coverage.xml > coverage.txt 2>&1
           status=$?
-          pct=$(grep -oE '[0-9]+([.][0-9]+)?%' coverage.txt | tail -1)
-          msg=$(grep -iE 'error|exception|fatal|failed|warning' coverage.txt | tail -2 | tr -d '\r' | tr '\n' ' ' | tr -c 'A-Za-z0-9.,=_-' '_' | cut -c1-150)
-          echo "status=$status pct=${pct:-none}"
           tail -5 coverage.txt
+          pct=$(php scripts/ci/coverage-check.php coverage.xml 0 | tail -1)
           {
-            echo "pct=$status-${pct:-none}-${msg:-none}"
+            echo "pct=${status}-${pct:-none}"
           } >> "$GITHUB_OUTPUT"
           exit 0
         env:
           XDEBUG_MODE: coverage
 
-      - name: Upload coverage diagnostics
+      - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cov-${{ steps.cov.outputs.pct }}
-          path: coverage.txt
+          path: |
+            coverage.xml
+            coverage.txt
           if-no-files-found: warn
-          retention-days: 3
+          retention-days: 7
 
   frontend-build:
     name: npm run build
