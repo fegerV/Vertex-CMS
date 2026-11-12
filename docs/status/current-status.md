@@ -204,7 +204,8 @@ The agreed target direction is now:
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request:
 
 - `php-tests` — PHP 8.4 with the extensions the app needs, `composer install`, then `php artisan test`; the test environment comes from `phpunit.xml` (SQLite `:memory:`, array cache and sessions, `VERTEX_INSTALLED=true`), so no MySQL or Redis service is required
-- coverage output, the artifact upload and the enforced threshold are **not enabled yet**: on the runner the report generation itself crashes — PHPUnit exits with code `255` inside `PHPUnit\Runner\CodeCoverage::generateReports()` and the clover writer reports `... failed` while the driver is present (`xdebug=yes, mode=coverage`); `phpunit.xml` already declares the `<source>` block, so re-enabling is a matter of fixing that crash and restoring `--coverage --min=`
+- coverage is **opt-in** through `workflow_dispatch` (`coverage: true`) instead of running on every push: on the runner PHPUnit's report generation crashes — exit `255` inside `PHPUnit\Runner\CodeCoverage::generateReports()` — even with a working driver (`xdebug=yes, mode=coverage`), so an unconditional coverage step turns every push red
+- the dispatch path already carries the full contract: `artisan test --coverage --min=<threshold>` with `memory_limit=-1`, the `coverage-report` artifact upload and the measured percentage in the job summary; `COVERAGE_MIN` is `0` until a successful run reports the real number, and `phpunit.xml` already declares the `<source>` block coverage needs
 - `frontend-build` — Node 22, `npm ci`, `npm run build`
 
 The previous workflow was a placeholder pipeline (PHP 8.2, MySQL/Redis services, `npm install`, xdebug coverage upload, a `docker-compose` build and an `echo` deploy step) and did not reflect how the project actually boots or tests; those jobs were removed.
