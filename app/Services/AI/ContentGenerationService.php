@@ -27,7 +27,8 @@ class ContentGenerationService
         return match ($defaultProvider) {
             'anthropic' => new AnthropicProvider(),
             'ollama' => new OllamaProvider(),
-            'openai', default => new OpenAiProvider(),
+            'openai' => new OpenAiProvider(),
+            default => new OpenAiProvider(),
         };
     }
 
