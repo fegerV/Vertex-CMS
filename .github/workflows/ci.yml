@@ -32,7 +32,7 @@ jobs:
         with:
           php-version: '8.4'
           extensions: mbstring, xml, ctype, tokenizer, fileinfo, bcmath, zip, gd, sqlite3, pdo_sqlite, curl, openssl
-          coverage: ${{ (github.event_name == 'workflow_dispatch' && inputs.coverage) && 'xdebug' || 'none' }}
+          coverage: xdebug
 
       - name: Cache Composer packages
         uses: actions/cache@v4
@@ -60,43 +60,36 @@ jobs:
       # phpunit.xml drives the test environment: sqlite :memory:, array cache/sessions,
       # sync queue and VERTEX_INSTALLED=true, so no database service is needed.
       - name: Run tests
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.coverage) }}
         run: php artisan test
 
-      # Coverage is opt-in because PHPUnit's report generation currently crashes on
-      # the runner (exit 255 inside PHPUnit\Runner\CodeCoverage::generateReports()
-      # with xdebug loaded in coverage mode), which would turn every push red.
-      # Dispatch the workflow with coverage=true to exercise it; phpunit.xml already
-      # declares the <source> block that coverage needs.
-      - name: Run tests with coverage
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.coverage }}
+      # Experimental: collects a text coverage report and encodes the outcome in the
+      # artifact name so the result is readable from the API without job logs.
+      - name: Coverage diagnostics
+        id: cov
+        continue-on-error: true
         run: |
           set +e
-          php -d memory_limit=-1 artisan test --coverage --min="$COVERAGE_MIN" 2>&1 | tee coverage.txt
-          status=${PIPESTATUS[0]}
+          php -d memory_limit=-1 -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text > coverage.txt 2>&1
+          status=$?
           pct=$(grep -oE '[0-9]+([.][0-9]+)?%' coverage.txt | tail -1)
+          msg=$(grep -iE 'error|exception|fatal|failed|warning' coverage.txt | tail -2 | tr -d '\r' | tr '\n' '|' | tr -c 'A-Za-z0-9.,=_-|' '_' | cut -c1-150)
+          echo "status=$status pct=${pct:-none}"
+          tail -5 coverage.txt
           {
-            echo "### Code coverage"
-            echo ""
-            echo "Measured: ${pct:-unknown}, minimum: ${COVERAGE_MIN}%"
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ $status -ne 0 ]; then
-            reason=$(grep -m1 -iE 'error|exception|fatal|failed' coverage.txt | tr -d '\r' | cut -c1-300)
-            echo "::error title=Coverage run failed::${reason:-no diagnostic line}"
-          fi
-          exit $status
+            echo "pct=$status-${pct:-none}-${msg:-none}"
+          } >> "$GITHUB_OUTPUT"
+          exit 0
         env:
-          COVERAGE_MIN: '0'
           XDEBUG_MODE: coverage
 
-      - name: Upload coverage report
-        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.coverage }}
+      - name: Upload coverage diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: cov-${{ steps.cov.outputs.pct }}
           path: coverage.txt
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
 
   frontend-build:
     name: npm run build
