@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      coverage:
-        description: 'Run the PHP job with code coverage (xdebug)'
-        type: boolean
-        default: false
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
@@ -62,33 +57,49 @@ jobs:
       - name: Run tests
         run: php artisan test
 
-      # `artisan test` cannot emit clover, so coverage is collected in a second pass.
+      # `artisan test` cannot emit clover, so coverage is collected in a second
+      # pass. The report is summarised and enforced by scripts/ci/coverage-check.php;
+      # the percentage also lands in the artifact name and the job summary.
       - name: Collect coverage
         id: cov
-        continue-on-error: true
         run: |
           set +e
-          php -d memory_limit=-1 -d xdebug.mode=coverage vendor/bin/phpunit --coverage-clover=coverage.xml > coverage.txt 2>&1
-          status=$?
+          php -d memory_limit=-1 -d xdebug.mode=coverage vendor/bin/phpunit \
+            --coverage-clover=coverage.xml > coverage.txt 2>&1
+          tests_status=$?
           tail -5 coverage.txt
-          pct=$(php scripts/ci/coverage-check.php coverage.xml 0 | tail -1)
+
+          php scripts/ci/coverage-check.php coverage.xml "$COVERAGE_MIN" > coverage-summary.txt
+          coverage_status=$?
+          cat coverage-summary.txt
+
+          pct=$(tail -1 coverage-summary.txt)
+          echo "pct=${pct:-none}" >> "$GITHUB_OUTPUT"
           {
-            echo "pct=${status}-${pct:-none}"
-          } >> "$GITHUB_OUTPUT"
-          exit 0
+            echo "### Code coverage"
+            echo ""
+            echo '```'
+            head -1 coverage-summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ $tests_status -ne 0 ] || [ $coverage_status -ne 0 ]; then
+            exit 1
+          fi
         env:
+          COVERAGE_MIN: '45'
           XDEBUG_MODE: coverage
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cov-${{ steps.cov.outputs.pct }}
+          name: coverage-${{ steps.cov.outputs.pct }}
           path: |
             coverage.xml
             coverage.txt
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 14
 
   frontend-build:
     name: npm run build
