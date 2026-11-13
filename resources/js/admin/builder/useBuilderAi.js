@@ -1,4 +1,4 @@
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const clone = (value) => JSON.parse(JSON.stringify(value ?? []));
 
@@ -36,6 +36,7 @@ export function useBuilderAi({
     const aiMessages = ref([]);
     const aiProposal = ref(null);
     const aiApplyStatus = ref('');
+    const aiScope = ref('page');
 
     const aiQuickPrompts = [
         { label: 'Лендинг', prompt: 'Собери лендинг под этот запрос: ' },
@@ -44,6 +45,33 @@ export function useBuilderAi({
         { label: 'Секция FAQ', prompt: 'Добавь секцию FAQ из 5 вопросов' },
         { label: 'Упростить', prompt: 'Упрости страницу: оставь только ключевые блоки' },
     ];
+
+    const aiHasSectionTarget = computed(() => selectedSection.value !== null);
+    const aiHasBlockTarget = computed(() => selectedBlock.value !== null && aiHasSectionTarget.value);
+
+    const aiScopeOptions = computed(() => [
+        { id: 'page', label: 'Вся страница', available: true },
+        { id: 'section', label: aiHasSectionTarget.value ? `Секция ${selectedSection.value + 1}` : 'Секция', available: aiHasSectionTarget.value },
+        { id: 'block', label: aiHasBlockTarget.value ? 'Выбранный блок' : 'Блок', available: aiHasBlockTarget.value },
+    ]);
+
+    watch([selectedSection, selectedBlock], () => {
+        if (aiHasBlockTarget.value) {
+            aiScope.value = 'block';
+        } else if (aiHasSectionTarget.value) {
+            aiScope.value = 'section';
+        } else {
+            aiScope.value = 'page';
+        }
+    }, { immediate: true });
+
+    watch(aiScopeOptions, (options) => {
+        const current = options.find((option) => option.id === aiScope.value);
+
+        if (!current?.available) {
+            aiScope.value = 'page';
+        }
+    });
 
     const aiSelectedContext = computed(() => {
         if (selectedSection.value === null) {
@@ -74,7 +102,11 @@ export function useBuilderAi({
             0,
         );
 
-        return `${(aiProposal.value.sections || []).length} секций, ${count} блоков`;
+        const target = aiProposal.value.target?.label
+            ? ` · ${aiProposal.value.target.label}`
+            : '';
+
+        return `${(aiProposal.value.sections || []).length} секций, ${count} блоков${target}`;
     });
 
     const toggleAiPanel = () => {
@@ -146,6 +178,7 @@ export function useBuilderAi({
                 },
                 body: JSON.stringify({
                     instruction,
+                    scope: aiScope.value,
                     sections: sections.value,
                     selection: aiSelectedContext.value,
                     provider: aiConfig.value.provider || null,
@@ -172,6 +205,8 @@ export function useBuilderAi({
             aiProposal.value = {
                 sections: data.sections || [],
                 message: data.message || 'Структура страницы обновлена',
+                scope: data.scope || aiScope.value,
+                target: data.target || null,
             };
 
             await nextTick();
@@ -194,6 +229,8 @@ export function useBuilderAi({
         aiMessages,
         aiProposal,
         aiApplyStatus,
+        aiScope,
+        aiScopeOptions,
         aiQuickPrompts,
         aiSummary,
         toggleAiPanel,

@@ -124,6 +124,8 @@ Last updated: `2026-11-11`
   - service: `App\Builder\Services\BuilderAiService`
   - UI state: `resources/js/admin/builder/useBuilderAi.js`
   - the model receives the block catalog plus the current sections and returns a full JSON section tree
+  - three edit scopes are supported: `page` (full tree), `section` (only the selected section) and `block` (only the selected block); targeted answers are merged into the current structure, so ids and untouched content survive the edit
+  - the canvas picks the scope automatically from the selection (block → section → page) and the editor can switch it manually
   - unknown block types are dropped, the result is validated by `PageBuilderService::validateBlocks`, and one retry is made on an invalid answer
   - the proposal is applied to the canvas only after an explicit click, adds an undo history entry and is saved through the normal page save flow
   - disabled module and unconfigured provider are reported as stable `422` errors (`ai_disabled`, `ai_provider_not_configured`)

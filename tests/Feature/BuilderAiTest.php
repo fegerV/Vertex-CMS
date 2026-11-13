@@ -183,6 +183,162 @@ class BuilderAiTest extends TestCase
         $this->assertStringContainsString('"configured":true', $html);
     }
 
+    public function test_builder_ai_agent_rewrites_only_the_selected_block(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'content_json' => $this->twoSectionContent(),
+        ]);
+
+        $this->configureAi('openai');
+
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'message' => 'Переписал заголовок',
+                            'block' => [
+                                'type' => 'heading',
+                                'settings' => ['text' => 'Новый заголовок', 'level' => 'h1'],
+                            ],
+                        ], JSON_UNESCAPED_UNICODE),
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($editor)->postJson("/admin/pages/{$page->id}/builder/ai", [
+            'instruction' => 'Перепиши заголовок короче',
+            'scope' => 'block',
+            'sections' => $this->twoSectionContent()['sections'],
+            'selection' => ['section_index' => 0, 'block_index' => 0],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('ok', true);
+        $response->assertJsonPath('scope', 'block');
+        $response->assertJsonPath('target.label', 'Секция 1, блок 1');
+
+        $sections = $response->json('sections');
+
+        $this->assertSame('Новый заголовок', $sections[0]['blocks'][0]['settings']['text']);
+        $this->assertSame('h1', $sections[0]['blocks'][0]['settings']['level']);
+        $this->assertSame('block-one', $sections[0]['blocks'][0]['id'], 'Block id must survive targeted edits.');
+        $this->assertSame('Оставить как есть', $sections[0]['blocks'][1]['settings']['content']);
+        $this->assertSame('section-one', $sections[0]['id']);
+        $this->assertSame(32, $sections[0]['settings']['padding_top']);
+        $this->assertSame('Вторая секция', $sections[1]['blocks'][0]['settings']['content']);
+
+        Http::assertSent(function ($request) {
+            $payload = $request->data();
+            $body = (string) ($payload['messages'][1]['content'] ?? '');
+
+            return str_contains($body, '"scope": "block"')
+                && str_contains($body, 'target_block')
+                && str_contains($body, 'Перепиши заголовок короче');
+        });
+    }
+
+    public function test_builder_ai_agent_rewrites_only_the_selected_section_and_keeps_other_sections(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'content_json' => $this->twoSectionContent(),
+        ]);
+
+        $this->configureAi('openai');
+
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'message' => 'Пересобрал первую секцию',
+                            'section' => [
+                                'settings' => ['padding_top' => 96],
+                                'blocks' => [
+                                    ['type' => 'heading', 'settings' => ['text' => 'Секция пересобрана', 'level' => 'h2']],
+                                    ['type' => 'button', 'settings' => ['text' => 'Записаться', 'url' => '#form']],
+                                ],
+                            ],
+                        ], JSON_UNESCAPED_UNICODE),
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($editor)->postJson("/admin/pages/{$page->id}/builder/ai", [
+            'instruction' => 'Пересобери первую секцию',
+            'scope' => 'section',
+            'sections' => $this->twoSectionContent()['sections'],
+            'selection' => ['section_index' => 0],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('scope', 'section');
+
+        $sections = $response->json('sections');
+
+        $this->assertCount(2, $sections[0]['blocks']);
+        $this->assertSame('heading', $sections[0]['blocks'][0]['type']);
+        $this->assertSame('block-one', $sections[0]['blocks'][0]['id'], 'Same-type blocks keep their id.');
+        $this->assertSame('button', $sections[0]['blocks'][1]['type']);
+        $this->assertNotSame('block-two', $sections[0]['blocks'][1]['id']);
+        $this->assertSame('section-one', $sections[0]['id']);
+        $this->assertSame(96, $sections[0]['settings']['padding_top']);
+        $this->assertSame('#f8fafc', $sections[0]['settings']['background_color'], 'Previous settings must be preserved.');
+        $this->assertSame('Вторая секция', $sections[1]['blocks'][0]['settings']['content']);
+        $this->assertSame('section-two', $sections[1]['id']);
+    }
+
+    public function test_builder_ai_agent_rejects_invalid_target_without_calling_provider(): void
+    {
+        $editor = $this->makeUserWithRole('editor');
+        $page = $this->createPage([
+            'content_json' => $this->twoSectionContent(),
+        ]);
+
+        $this->configureAi('openai');
+        Http::fake();
+
+        $this->actingAs($editor)->postJson("/admin/pages/{$page->id}/builder/ai", [
+            'instruction' => 'Перепиши блок',
+            'scope' => 'block',
+            'sections' => $this->twoSectionContent()['sections'],
+            'selection' => ['section_index' => 0, 'block_index' => 9],
+        ])->assertStatus(422)
+            ->assertJsonPath('ok', false)
+            ->assertJsonPath('error', 'ai_invalid_target');
+
+        Http::assertNothingSent();
+    }
+
+    private function twoSectionContent(): array
+    {
+        return [
+            'version' => '1.0',
+            'layout' => 'default',
+            'sections' => [
+                [
+                    'id' => 'section-one',
+                    'settings' => ['padding_top' => 32, 'background_color' => '#f8fafc'],
+                    'blocks' => [
+                        ['id' => 'block-one', 'type' => 'heading', 'settings' => ['text' => 'Старый заголовок', 'level' => 'h2']],
+                        ['id' => 'block-two', 'type' => 'text', 'settings' => ['content' => 'Оставить как есть']],
+                    ],
+                ],
+                [
+                    'id' => 'section-two',
+                    'settings' => [],
+                    'blocks' => [
+                        ['id' => 'block-three', 'type' => 'text', 'settings' => ['content' => 'Вторая секция']],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     private function configureAi(string $provider): void
     {
         app(SettingsService::class)->setMany([

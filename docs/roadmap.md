@@ -124,6 +124,7 @@ Acceptance criteria:
 - Ограничения по ролям и расходам. **РЕАЛИЗОВАНО**.
 - Live LLM Integration. **РЕАЛИЗОВАНО**: `OpenAiProvider`, `AnthropicProvider`, `OllamaProvider` работают с реальными API.
 - AI-агент внутри конструктора страниц (2026-11-13). **РЕАЛИЗОВАНО**: панель «AI-агент» в advanced builder, эндпоинт `POST /admin/pages/{page}/builder/ai`, `BuilderAiService` с каталогом блоков, валидацией секций и одной повторной попыткой; применение предложения только по кнопке и через обычное сохранение страницы. Тесты: `tests/Feature/BuilderAiTest.php`.
+- Точечные AI-правки в конструкторе (2026-11-13). **РЕАЛИЗОВАНО**: scope `page` / `section` / `block`; для секции и блока сервер вливает ответ в текущую структуру, сохраняя id и нетронутые блоки, а некорректная цель отбивается `422 ai_invalid_target` без вызова провайдера.
 
 Acceptance criteria:
 

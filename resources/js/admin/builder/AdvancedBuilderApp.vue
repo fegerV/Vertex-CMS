@@ -993,6 +993,29 @@
                 </div>
 
                 <div class="border-t border-[var(--vc-border)] p-4">
+                    <div class="mb-3">
+                        <p class="vc-builder-eyebrow">Область правки</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <button
+                                v-for="option in aiScopeOptions"
+                                :key="option.id"
+                                type="button"
+                                class="vc-builder-chip"
+                                :class="{ 'vc-builder-chip-active': aiScope === option.id }"
+                                :disabled="!option.available"
+                                @click="aiScope = option.id"
+                            >
+                                {{ option.label }}
+                            </button>
+                        </div>
+                        <p class="mt-2 text-[11px] text-[var(--vc-text-soft)]">
+                            {{ aiScope === 'page'
+                                ? 'Агент вернёт всю структуру страницы.'
+                                : (aiScope === 'section'
+                                    ? 'Агент изменит только выбранную секцию, остальные останутся как есть.'
+                                    : 'Агент изменит только выбранный блок, остальные блоки не тронет.') }}
+                        </p>
+                    </div>
                     <div class="mb-2 flex flex-wrap gap-2">
                         <button
                             v-for="item in aiQuickPrompts"
@@ -2537,6 +2560,8 @@ const {
     aiMessages,
     aiProposal,
     aiApplyStatus,
+    aiScope,
+    aiScopeOptions,
     aiQuickPrompts,
     aiSummary,
     toggleAiPanel,

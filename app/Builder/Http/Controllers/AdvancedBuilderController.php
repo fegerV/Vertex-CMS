@@ -101,8 +101,11 @@ class AdvancedBuilderController extends Controller
         $payload = $request->validate([
             'instruction' => ['required', 'string', 'max:4000'],
             'provider' => ['nullable', 'string', 'max:50'],
+            'scope' => ['nullable', 'string', 'in:page,section,block'],
             'sections' => ['nullable', 'array'],
             'selection' => ['nullable', 'array'],
+            'selection.section_index' => ['nullable', 'integer', 'min:0'],
+            'selection.block_index' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $result = $this->builderAi->run(
@@ -111,6 +114,7 @@ class AdvancedBuilderController extends Controller
             is_array($payload['sections'] ?? null) ? $payload['sections'] : ($page->content_json['sections'] ?? []),
             is_array($payload['selection'] ?? null) ? $payload['selection'] : [],
             $payload['provider'] ?? null,
+            (string) ($payload['scope'] ?? 'page'),
         );
 
         if (! ($result['success'] ?? false)) {
@@ -124,6 +128,8 @@ class AdvancedBuilderController extends Controller
         $this->activityLog->record('builder.ai.generate', 'ai_request', null, 'Builder AI applied a page structure.', [
             'page_id' => $page->id,
             'provider' => $result['provider']['id'] ?? null,
+            'scope' => $result['scope'] ?? 'page',
+            'target' => $result['target']['label'] ?? null,
             'sections' => count($result['sections'] ?? []),
             'blocks' => collect($result['sections'] ?? [])->sum(fn (array $section): int => count($section['blocks'] ?? [])),
             'dropped_blocks' => $result['dropped_blocks'] ?? [],
@@ -132,6 +138,8 @@ class AdvancedBuilderController extends Controller
         return response()->json([
             'ok' => true,
             'message' => $result['message'] ?? 'Структура страницы обновлена.',
+            'scope' => $result['scope'] ?? 'page',
+            'target' => $result['target'] ?? null,
             'sections' => $result['sections'] ?? [],
             'provider' => $result['provider'] ?? null,
             'dropped_blocks' => $result['dropped_blocks'] ?? [],

@@ -15,12 +15,21 @@ use Illuminate\Support\Facades\Log;
  * Принимает инструкцию на естественном языке, текущую структуру страницы и
  * каталог доступных блоков, просит модель вернуть JSON-секции и приводит ответ
  * к контракту билдера (те же правила, что и у ручного сохранения).
+ *
+ * Поддерживаются три области правки:
+ *  - page    — модель возвращает всю структуру страницы;
+ *  - section — модель возвращает только выбранную секцию;
+ *  - block   — модель возвращает только выбранный блок.
+ * Для точечных областей ответ вливается в текущую структуру, остальные блоки и
+ * секции остаются нетронутыми.
  */
 class BuilderAiService
 {
     private const MAX_ATTEMPTS = 2;
 
     private const MAX_TOKENS = 6000;
+
+    private const SCOPES = ['page', 'section', 'block'];
 
     public function __construct(
         private readonly AiProviderRegistry $providers,
@@ -61,7 +70,7 @@ class BuilderAiService
     /**
      * Выполнить запрос агента и вернуть валидные секции билдера.
      *
-     * @return array{success: bool, message?: string, sections?: array, provider?: array, usage?: array, dropped_blocks?: array, error?: string, status?: int}
+     * @return array{success: bool, message?: string, sections?: array, provider?: array, usage?: array, dropped_blocks?: array, scope?: string, target?: array, error?: string, status?: int}
      */
     public function run(
         Page $page,
@@ -69,6 +78,7 @@ class BuilderAiService
         array $currentSections = [],
         array $selection = [],
         ?string $providerId = null,
+        string $scope = 'page',
     ): array {
         if (! $this->isEnabled()) {
             return [
@@ -100,10 +110,22 @@ class BuilderAiService
             ];
         }
 
+        $scope = in_array($scope, self::SCOPES, true) ? $scope : 'page';
         $sections = $this->builder->normalizeSections($currentSections);
+        $target = $this->resolveTarget($scope, $sections, $selection);
+
+        if (! $target['ok']) {
+            return [
+                'success' => false,
+                'status' => 422,
+                'error' => 'ai_invalid_target',
+                'message' => $target['error'],
+            ];
+        }
+
         $messages = [
-            ['role' => 'system', 'content' => $this->systemPrompt()],
-            ['role' => 'user', 'content' => $this->userPayload($page, $instruction, $sections, $selection)],
+            ['role' => 'system', 'content' => $this->systemPrompt($scope)],
+            ['role' => 'user', 'content' => $this->userPayload($page, $instruction, $sections, $selection, $scope, $target)],
         ];
 
         $lastError = null;
@@ -120,31 +142,44 @@ class BuilderAiService
                 ];
             }
 
-            $decoded = $this->decodeResponse((string) $response['content']);
+            $decoded = $this->decodeResponse((string) $response['content'], $scope);
+            $dropped = [];
 
             if (! $decoded['success']) {
                 $lastError = $decoded['error'];
             } else {
-                $candidate = $this->sanitizeSections($decoded['sections']);
-                $errors = $this->builder->validateBlocks($candidate['sections']);
+                $applied = $this->applyScope($scope, $sections, $target, $decoded);
 
-                if ($errors === []) {
-                    return [
-                        'success' => true,
-                        'message' => $decoded['message'] !== ''
-                            ? $decoded['message']
-                            : 'AI обновил структуру страницы.',
-                        'sections' => $candidate['sections'],
-                        'provider' => [
-                            'id' => $provider['id'],
-                            'name' => $provider['name'],
-                        ],
-                        'usage' => $response['usage'] ?? [],
-                        'dropped_blocks' => $candidate['dropped'],
-                    ];
+                if ($applied['success']) {
+                    $errors = $this->builder->validateBlocks($applied['sections']);
+                    $dropped = $applied['dropped'];
+
+                    if ($errors === []) {
+                        return [
+                            'success' => true,
+                            'message' => $decoded['message'] !== ''
+                                ? $decoded['message']
+                                : 'AI обновил структуру страницы.',
+                            'sections' => $applied['sections'],
+                            'scope' => $scope,
+                            'target' => [
+                                'section_index' => $target['section_index'],
+                                'block_index' => $target['block_index'],
+                                'label' => $target['label'],
+                            ],
+                            'provider' => [
+                                'id' => $provider['id'],
+                                'name' => $provider['name'],
+                            ],
+                            'usage' => $response['usage'] ?? [],
+                            'dropped_blocks' => $dropped,
+                        ];
+                    }
+
+                    $lastError = implode('; ', $errors);
+                } else {
+                    $lastError = $applied['error'];
                 }
-
-                $lastError = implode('; ', $errors);
             }
 
             if ($attempt < self::MAX_ATTEMPTS) {
@@ -159,6 +194,7 @@ class BuilderAiService
 
         Log::warning('Builder AI returned invalid structure.', [
             'page_id' => $page->id,
+            'scope' => $scope,
             'error' => $lastError,
         ]);
 
@@ -170,13 +206,30 @@ class BuilderAiService
         ];
     }
 
-    private function systemPrompt(): string
+    private function systemPrompt(string $scope): string
     {
-        return <<<'PROMPT'
-Ты — AI-агент визуального конструктора страниц VertexCMS (аналог Breakdance).
-Ты создаёшь и редактируешь структуру страницы через блоки конструктора.
-
-ФОРМАТ ОТВЕТА — строго один JSON-объект, без markdown и пояснений:
+        $contract = match ($scope) {
+            'section' => <<<'JSON'
+{
+  "message": "короткое описание изменений на языке пользователя",
+  "section": {
+    "settings": {"background_color": "#ffffff", "padding_top": 64, "padding_bottom": 64},
+    "blocks": [
+      {"type": "heading", "settings": {"text": "Заголовок", "level": "h2"}}
+    ]
+  }
+}
+JSON,
+            'block' => <<<'JSON'
+{
+  "message": "короткое описание изменений на языке пользователя",
+  "block": {
+    "type": "heading",
+    "settings": {"text": "Новый заголовок", "level": "h2"}
+  }
+}
+JSON,
+            default => <<<'JSON'
 {
   "message": "короткое описание изменений на языке пользователя (1-2 предложения)",
   "sections": [
@@ -189,21 +242,45 @@ class BuilderAiService
     }
   ]
 }
+JSON,
+        };
+
+        $scopeRule = match ($scope) {
+            'section' => 'Ты правишь ТОЛЬКО одну секцию: верни её целиком в поле section. Остальные секции страницы не возвращай — они останутся без изменений.',
+            'block' => 'Ты правишь ТОЛЬКО один блок: верни его в поле block. Секции и соседние блоки не возвращай — они останутся без изменений.',
+            default => 'Верни ВСЮ новую структуру страницы в поле sections (полный массив), а не патч.',
+        };
+
+        return <<<PROMPT
+Ты — AI-агент визуального конструктора страниц VertexCMS (аналог Breakdance).
+Ты создаёшь и редактируешь структуру страницы через блоки конструктора.
+
+ФОРМАТ ОТВЕТА — строго один JSON-объект, без markdown и пояснений:
+{$contract}
+
+ОБЛАСТЬ ПРАВКИ:
+{$scopeRule}
 
 ПРАВИЛА:
 1. Используй ТОЛЬКО типы блоков из каталога и только поля, перечисленные для этого блока.
-2. Если пользователь просит изменить/добавить/удалить часть страницы — верни ВСЮ новую структуру секций (полный массив), а не патч.
-3. Сохраняй разумный порядок: hero/heading -> текст -> медиа -> CTA -> FAQ.
+2. Не меняй то, о чём не просили: правь только содержимое целевой области.
+3. Сохраняй разумный порядок блоков: заголовок -> текст -> медиа -> CTA -> FAQ.
 4. Тексты пиши качественные, конкретные, без Lorem ipsum, на языке инструкции пользователя.
 5. Не выдумывай медиа-id и внешние URL картинок; оставляй поля media_id/url пустыми, если пользователь не дал ссылку.
 6. Для блоков-повторителей (repeater) items — массив объектов с полями, указанными в каталоге.
 7. Не добавляй HTML-теги в текстовые поля, если поле не является html.
-8. Если инструкция не про страницу — верни текущую структуру без изменений и объясни в message.
+8. Если инструкция не про страницу — верни текущее содержимое без изменений и объясни в message.
 PROMPT;
     }
 
-    private function userPayload(Page $page, string $instruction, array $sections, array $selection): string
-    {
+    private function userPayload(
+        Page $page,
+        string $instruction,
+        array $sections,
+        array $selection,
+        string $scope,
+        array $target,
+    ): string {
         $payload = [
             'page' => [
                 'title' => $page->title,
@@ -211,10 +288,20 @@ PROMPT;
                 'slug' => $page->slug,
             ],
             'instruction' => $instruction,
-            'current_sections' => $sections,
-            'selected' => $selection,
-            'block_catalog' => $this->blockCatalog(),
+            'scope' => $scope,
         ];
+
+        if ($scope === 'block') {
+            $payload['target_block'] = $sections[$target['section_index']]['blocks'][$target['block_index']];
+            $payload['target_path'] = $target['label'];
+        } elseif ($scope === 'section') {
+            $payload['target_section'] = $sections[$target['section_index']];
+            $payload['target_path'] = $target['label'];
+        }
+
+        $payload['current_sections'] = $sections;
+        $payload['selected'] = $selection;
+        $payload['block_catalog'] = $this->blockCatalog();
 
         $language = (string) $this->settings->get('ai.content_language', '');
         if ($language !== '') {
@@ -227,6 +314,87 @@ PROMPT;
         }
 
         return json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ?: '{}';
+    }
+
+    /**
+     * Проверяет, что выбранная область существует в текущей структуре.
+     *
+     * @return array{ok: bool, section_index: ?int, block_index: ?int, label: string, error?: string}
+     */
+    private function resolveTarget(string $scope, array $sections, array $selection): array
+    {
+        if ($scope === 'page') {
+            return [
+                'ok' => true,
+                'section_index' => null,
+                'block_index' => null,
+                'label' => 'Вся страница',
+            ];
+        }
+
+        $sectionIndex = $selection['section_index'] ?? null;
+
+        if (! is_int($sectionIndex) && ! (is_string($sectionIndex) && ctype_digit($sectionIndex))) {
+            return [
+                'ok' => false,
+                'section_index' => null,
+                'block_index' => null,
+                'label' => '',
+                'error' => 'Сначала выберите секцию на холсте.',
+            ];
+        }
+
+        $sectionIndex = (int) $sectionIndex;
+
+        if (! isset($sections[$sectionIndex])) {
+            return [
+                'ok' => false,
+                'section_index' => null,
+                'block_index' => null,
+                'label' => '',
+                'error' => 'Выбранная секция не найдена на странице.',
+            ];
+        }
+
+        if ($scope === 'section') {
+            return [
+                'ok' => true,
+                'section_index' => $sectionIndex,
+                'block_index' => null,
+                'label' => 'Секция '.($sectionIndex + 1),
+            ];
+        }
+
+        $blockIndex = $selection['block_index'] ?? null;
+
+        if (! is_int($blockIndex) && ! (is_string($blockIndex) && ctype_digit($blockIndex))) {
+            return [
+                'ok' => false,
+                'section_index' => null,
+                'block_index' => null,
+                'label' => '',
+                'error' => 'Сначала выберите блок на холсте.',
+            ];
+        }
+
+        $blockIndex = (int) $blockIndex;
+
+        if (! isset($sections[$sectionIndex]['blocks'][$blockIndex])) {
+            return [
+                'ok' => false,
+                'section_index' => null,
+                'block_index' => null,
+                'label' => '',
+                'error' => 'Выбранный блок не найден на странице.',
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'section_index' => $sectionIndex,
+            'block_index' => $blockIndex,
+            'label' => 'Секция '.($sectionIndex + 1).', блок '.($blockIndex + 1),
+        ];
     }
 
     /**
@@ -277,9 +445,9 @@ PROMPT;
     }
 
     /**
-     * @return array{success: bool, message?: string, sections?: array, error?: string}
+     * @return array{success: bool, message?: string, sections?: array, section?: array, block?: array, blocks?: array, error?: string}
      */
-    private function decodeResponse(string $content): array
+    private function decodeResponse(string $content, string $scope): array
     {
         $content = trim($content);
         $content = preg_replace('/^```(?:json)?\s*|\s*```$/u', '', $content) ?? $content;
@@ -308,11 +476,48 @@ PROMPT;
         }
 
         if (array_is_list($decoded)) {
+            if ($scope === 'block') {
+                return [
+                    'success' => true,
+                    'message' => '',
+                    'block' => is_array($decoded[0] ?? null) ? $decoded[0] : null,
+                ];
+            }
+
             return [
                 'success' => true,
                 'message' => '',
                 'sections' => $decoded,
             ];
+        }
+
+        $message = trim((string) ($decoded['message'] ?? ''));
+
+        if ($scope === 'block') {
+            $block = $decoded['block'] ?? (is_array($decoded['blocks'][0] ?? null) ? $decoded['blocks'][0] : null);
+
+            if (! is_array($block)) {
+                return ['success' => false, 'error' => 'В ответе нет блока (block)'];
+            }
+
+            return ['success' => true, 'message' => $message, 'block' => $block];
+        }
+
+        if ($scope === 'section') {
+            $section = $decoded['section'] ?? null;
+
+            if ($section === null && is_array($decoded['blocks'] ?? null)) {
+                $section = [
+                    'settings' => is_array($decoded['settings'] ?? null) ? $decoded['settings'] : [],
+                    'blocks' => $decoded['blocks'],
+                ];
+            }
+
+            if (! is_array($section)) {
+                return ['success' => false, 'error' => 'В ответе нет секции (section)'];
+            }
+
+            return ['success' => true, 'message' => $message, 'section' => $section];
         }
 
         $sections = $decoded['sections'] ?? null;
@@ -321,11 +526,92 @@ PROMPT;
             return ['success' => false, 'error' => 'В ответе нет массива sections'];
         }
 
-        return [
-            'success' => true,
-            'message' => trim((string) ($decoded['message'] ?? '')),
-            'sections' => $sections,
-        ];
+        return ['success' => true, 'message' => $message, 'sections' => $sections];
+    }
+
+    /**
+     * Вливает ответ модели в текущую структуру согласно области правки.
+     *
+     * @return array{success: bool, sections?: array, dropped?: array, error?: string}
+     */
+    private function applyScope(string $scope, array $sections, array $target, array $decoded): array
+    {
+        if ($scope === 'page') {
+            $sanitized = $this->sanitizeSections($decoded['sections'] ?? []);
+
+            return [
+                'success' => true,
+                'sections' => $sanitized['sections'],
+                'dropped' => $sanitized['dropped'],
+            ];
+        }
+
+        if ($scope === 'block') {
+            $block = is_array($decoded['block'] ?? null) ? $decoded['block'] : null;
+
+            if ($block === null) {
+                return ['success' => false, 'error' => 'Блок не найден в ответе'];
+            }
+
+            $type = (string) ($block['type'] ?? '');
+
+            if ($type === '' || BlockRegistry::get($type) === null) {
+                return ['success' => false, 'error' => 'Неизвестный тип блока: '.$type];
+            }
+
+            $sectionIndex = (int) $target['section_index'];
+            $blockIndex = (int) $target['block_index'];
+            $original = $sections[$sectionIndex]['blocks'][$blockIndex];
+
+            $sections[$sectionIndex]['blocks'][$blockIndex] = [
+                'id' => (string) ($original['id'] ?? ''),
+                'type' => $type,
+                'settings' => array_merge(
+                    (array) ($original['settings'] ?? []),
+                    is_array($block['settings'] ?? null) ? $block['settings'] : [],
+                ),
+            ];
+
+            return ['success' => true, 'sections' => array_values($sections), 'dropped' => []];
+        }
+
+        $rawSection = is_array($decoded['section'] ?? null) ? $decoded['section'] : null;
+
+        if ($rawSection === null) {
+            return ['success' => false, 'error' => 'Секция не найдена в ответе'];
+        }
+
+        $sanitized = $this->sanitizeSections([$rawSection]);
+        $replacement = $sanitized['sections'][0] ?? null;
+
+        if ($replacement === null) {
+            return ['success' => false, 'error' => 'Не удалось разобрать секцию'];
+        }
+
+        $sectionIndex = (int) $target['section_index'];
+        $original = $sections[$sectionIndex];
+
+        $replacement['id'] = (string) ($original['id'] ?? $replacement['id']);
+        $replacement['settings'] = array_merge(
+            (array) ($original['settings'] ?? []),
+            (array) ($replacement['settings'] ?? []),
+        );
+
+        $replacement['blocks'] = array_values(array_map(
+            function (array $block, int $index) use ($original): array {
+                if (($original['blocks'][$index]['type'] ?? null) === ($block['type'] ?? null)) {
+                    $block['id'] = (string) ($original['blocks'][$index]['id'] ?? $block['id']);
+                }
+
+                return $block;
+            },
+            $replacement['blocks'] ?? [],
+            array_keys($replacement['blocks'] ?? []),
+        ));
+
+        $sections[$sectionIndex] = $replacement;
+
+        return ['success' => true, 'sections' => array_values($sections), 'dropped' => $sanitized['dropped']];
     }
 
     /**

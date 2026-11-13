@@ -328,13 +328,28 @@ Flow:
    the current sections and a compact catalog of registered block types and their
    fields, then calls the configured provider (OpenAI, Anthropic or a custom
    OpenAI-compatible endpoint).
-3. The model must answer with `{ "message": string, "sections": [...] }`. The
-   response is decoded, normalized with `PageBuilderService::normalizeSections`,
-   stripped of block types that are not in `BlockRegistry`, and validated with
+3. The request carries a `scope`:
+
+   | Scope | Model answer | What changes |
+   |---|---|---|
+   | `page` | `{ "message", "sections": [...] }` | the whole section tree |
+   | `section` | `{ "message", "section": { "settings", "blocks" } }` | only the selected section |
+   | `block` | `{ "message", "block": { "type", "settings" } }` | only the selected block |
+
+   For `section` and `block` the server merges the answer into the current
+   structure: section ids, block ids (when the block type is unchanged) and the
+   previous settings stay in place, and every other section/block is returned
+   untouched. An out-of-range target is rejected with `422 ai_invalid_target`
+   before any provider request is made. The canvas defaults to `block` when a
+   block is selected, `section` when only a section is selected, and `page`
+   otherwise.
+4. The model answer is decoded, normalized with
+   `PageBuilderService::normalizeSections`, stripped of block types that are not
+   in `BlockRegistry`, and validated with
    `PageBuilderService::validateBlocks`.
-4. Invalid JSON or an invalid structure triggers exactly one retry with the
+5. Invalid JSON or an invalid structure triggers exactly one retry with the
    validator feedback attached to the conversation.
-5. The proposal is returned to the canvas but never persisted automatically. The
+6. The proposal is returned to the canvas but never persisted automatically. The
    editor applies it explicitly, which creates an undo history entry and leaves
    saving to the normal builder save/autosave flow.
 
