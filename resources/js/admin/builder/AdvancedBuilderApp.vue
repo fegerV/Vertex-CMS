@@ -37,6 +37,12 @@
                 <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'live' }" @click="canvasMode = 'live'">Сайт</button>
                 <button type="button" class="vc-builder-appbar-button" :class="{ 'vc-builder-appbar-button-active': canvasMode === 'edit' }" @click="canvasMode = 'edit'">Редактор</button>
                 <button type="button" class="vc-builder-appbar-button" @click="previewContent">Просмотр</button>
+                <button
+                    type="button"
+                    class="vc-builder-appbar-button"
+                    :class="{ 'vc-builder-appbar-button-active': aiOpen }"
+                    @click="toggleAiPanel"
+                >AI-агент</button>
                 <button type="button" class="vc-builder-appbar-button" @click="openDesignLibrary">Библиотека</button>
                 <button type="button" class="vc-builder-appbar-save" :disabled="saving" @click="saveContent">
                     {{ saving ? 'Сохраняю…' : 'Сохранить' }}
@@ -922,6 +928,101 @@
             </button>
         </div>
 
+        <aside
+            v-if="aiOpen"
+            class="vc-builder-ai-panel fixed bottom-6 right-6 top-24 z-40 flex w-[380px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-3xl border border-[var(--vc-border)] bg-[var(--vc-surface)] shadow-2xl"
+        >
+            <header class="flex items-start justify-between gap-3 border-b border-[var(--vc-border)] px-5 py-4">
+                <div>
+                    <p class="vc-builder-eyebrow">AI-агент</p>
+                    <h3 class="text-base font-semibold text-[var(--vc-text)]">Сборка и правка страницы</h3>
+                    <p class="mt-1 text-xs text-[var(--vc-text-soft)]">
+                        {{ aiConfigured ? (aiConfig.provider_name || 'Провайдер готов') : 'Провайдер не настроен' }}
+                    </p>
+                </div>
+                <button type="button" class="vc-builder-chip" @click="closeAiPanel">Закрыть</button>
+            </header>
+
+            <div v-if="!aiAvailable" class="p-5 text-sm text-[var(--vc-text-soft)]">
+                AI-модуль отключён. Включите его и укажите API-ключ, чтобы агент мог строить страницы.
+                <a class="mt-3 inline-flex font-semibold underline" :href="aiConfig.settings_url || '/admin/settings'">Открыть настройки AI</a>
+            </div>
+            <div v-else-if="!aiConfigured" class="p-5 text-sm text-[var(--vc-text-soft)]">
+                У выбранного провайдера нет API-ключа. Добавьте ключ в настройках AI, и агент заработает сразу.
+                <a class="mt-3 inline-flex font-semibold underline" :href="aiConfig.settings_url || '/admin/settings'">Настроить провайдера</a>
+            </div>
+            <template v-else>
+                <div class="min-h-0 flex-1 space-y-3 overflow-auto px-5 py-4">
+                    <div
+                        v-if="!aiMessages.length"
+                        class="rounded-2xl border border-[var(--vc-border)] bg-[var(--vc-surface-muted)] p-4 text-sm text-[var(--vc-text-soft)]"
+                    >
+                        Опишите словами, что собрать или изменить. Агент вернёт готовую структуру блоков, а вы примените её одним нажатием.
+                    </div>
+
+                    <div
+                        v-for="(message, index) in aiMessages"
+                        :key="index"
+                        class="rounded-2xl px-4 py-3 text-sm"
+                        :class="message.role === 'user'
+                            ? 'bg-[var(--vc-surface-muted)] text-[var(--vc-text)]'
+                            : (message.error
+                                ? 'border border-rose-200 bg-rose-50 text-rose-700'
+                                : 'border border-[var(--vc-border)] text-[var(--vc-text)]')"
+                    >
+                        <div class="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--vc-text-soft)]">
+                            {{ message.role === 'user' ? 'Вы' : 'Агент' }}
+                        </div>
+                        <div class="whitespace-pre-line">{{ message.content }}</div>
+                    </div>
+
+                    <div v-if="aiProposal" class="rounded-2xl border border-[var(--vc-border)] bg-[var(--vc-surface-muted)] p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="text-sm font-semibold text-[var(--vc-text)]">Предложение готово</div>
+                            <span class="vc-builder-stat-pill">{{ aiSummary }}</span>
+                        </div>
+                        <p class="mt-2 text-xs text-[var(--vc-text-soft)]">{{ aiProposal.message }}</p>
+                        <div class="mt-3 flex gap-2">
+                            <button type="button" class="vc-button vc-button-primary flex-1" @click="applyAiProposal">Применить</button>
+                            <button type="button" class="vc-button vc-button-secondary" @click="discardAiProposal">Отклонить</button>
+                        </div>
+                    </div>
+
+                    <div v-if="aiLoading" class="text-xs text-[var(--vc-text-soft)]">Агент собирает структуру…</div>
+                    <div v-if="aiApplyStatus" class="text-xs text-[var(--vc-text-soft)]">{{ aiApplyStatus }}</div>
+                </div>
+
+                <div class="border-t border-[var(--vc-border)] p-4">
+                    <div class="mb-2 flex flex-wrap gap-2">
+                        <button
+                            v-for="item in aiQuickPrompts"
+                            :key="item.label"
+                            type="button"
+                            class="vc-builder-chip"
+                            @click="useQuickPrompt(item)"
+                        >
+                            {{ item.label }}
+                        </button>
+                    </div>
+                    <textarea
+                        v-model="aiPrompt"
+                        class="vc-input min-h-[84px] w-full"
+                        placeholder="Например: сделай лендинг для кофейни с меню и кнопкой записи"
+                        @keydown.ctrl.enter.prevent="askAi()"
+                        @keydown.meta.enter.prevent="askAi()"
+                    ></textarea>
+                    <button
+                        type="button"
+                        class="vc-button vc-button-primary mt-3 w-full"
+                        :disabled="aiLoading || !aiPrompt.trim()"
+                        @click="askAi()"
+                    >
+                        {{ aiLoading ? 'Думаю…' : 'Отправить агенту' }}
+                    </button>
+                </div>
+            </template>
+        </aside>
+
         <div v-if="showMediaPicker" class="vc-builder-modal fixed inset-0 z-50 flex items-center justify-center p-6" @click.self="closeMediaPicker">
             <div class="vc-builder-modal-card flex h-[85vh] w-full max-w-7xl flex-col overflow-hidden">
                 <div class="flex items-center justify-between border-b border-[var(--vc-border)] px-6 py-4">
@@ -949,6 +1050,7 @@ import { useBuilderCommands } from './useBuilderCommands';
 import { useBuilderCanvas } from './useBuilderCanvas';
 import { useBuilderPersistence } from './useBuilderPersistence';
 import { useBuilderMedia } from './useBuilderMedia';
+import { useBuilderAi } from './useBuilderAi';
 
 const props = defineProps({
     page: {
@@ -1455,6 +1557,17 @@ const commandsState = useBuilderCommands({
 });
 
 closeContextMenuImpl = commandsState.closeContextMenu;
+
+const aiState = useBuilderAi({
+    page: props.page,
+    config: props.config,
+    sections,
+    selectedSection,
+    selectedBlock,
+    csrfToken,
+    saveToHistory,
+    markContentChanged,
+});
 
 function scheduleLivePreviewRefresh(delay = 900) {
     if (livePreviewTimer.value) clearTimeout(livePreviewTimer.value);
@@ -2412,6 +2525,27 @@ const {
     openMediaPicker,
     closeMediaPicker,
 } = mediaState;
+
+const {
+    aiConfig,
+    aiAvailable,
+    aiConfigured,
+    aiOpen,
+    aiPrompt,
+    aiLoading,
+    aiError,
+    aiMessages,
+    aiProposal,
+    aiApplyStatus,
+    aiQuickPrompts,
+    aiSummary,
+    toggleAiPanel,
+    closeAiPanel,
+    useQuickPrompt,
+    askAi,
+    applyAiProposal,
+    discardAiProposal,
+} = aiState;
 
 const {
     showCommandPalette,

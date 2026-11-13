@@ -19,6 +19,7 @@ Route::get("pages/{page}/builder", [AdvancedBuilderController::class, "advanced"
 Route::put("pages/{page}/builder", [PageBuilderController::class, "update"])->middleware("vertex.permission:pages.edit")->name("pages.builder.update");
 Route::post("pages/{page}/builder/preview", [PageBuilderController::class, "preview"])->middleware("vertex.permission:pages.edit")->name("pages.builder.preview");
 Route::post("pages/{page}/builder/advanced/save", [AdvancedBuilderController::class, "saveAdvanced"])->middleware("vertex.permission:pages.edit")->name("pages.builder.advanced.save");
+Route::post("pages/{page}/builder/ai", [AdvancedBuilderController::class, "ai"])->middleware("vertex.permission:pages.edit")->name("pages.builder.ai");
 Route::post("pages/{page}/builder/auto-save", [AdvancedBuilderController::class, "autoSave"])->middleware("vertex.permission:pages.edit")->name("pages.builder.auto-save");
 Route::get("pages/{page}/revisions", [AdvancedBuilderController::class, "getRevisions"])->middleware("vertex.permission:pages.edit")->name("pages.revisions.index");
 Route::post("pages/{page}/revisions/{revision}/restore", [AdvancedBuilderController::class, "restoreRevision"])->middleware("vertex.permission:pages.edit")->name("pages.revisions.restore");

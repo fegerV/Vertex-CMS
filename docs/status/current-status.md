@@ -119,6 +119,14 @@ Last updated: `2026-11-11`
   - white central page canvas on a dark work area
 - UX Builder-inspired delivery planning is now documented in:
   - `docs/architecture/ux-builder-inspired-delivery-plan.md`
+- the advanced builder now has a built-in AI agent panel that builds and edits pages:
+  - endpoint: `POST /admin/pages/{page}/builder/ai` (`pages.builder.ai`)
+  - service: `App\Builder\Services\BuilderAiService`
+  - UI state: `resources/js/admin/builder/useBuilderAi.js`
+  - the model receives the block catalog plus the current sections and returns a full JSON section tree
+  - unknown block types are dropped, the result is validated by `PageBuilderService::validateBlocks`, and one retry is made on an invalid answer
+  - the proposal is applied to the canvas only after an explicit click, adds an undo history entry and is saved through the normal page save flow
+  - disabled module and unconfigured provider are reported as stable `422` errors (`ai_disabled`, `ai_provider_not_configured`)
 
 ## Current Stage
 

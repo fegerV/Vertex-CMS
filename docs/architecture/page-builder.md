@@ -315,6 +315,32 @@ That means:
 
 without switching to shortcode storage or DOM-first editing.
 
+## AI-агент конструктора
+
+The advanced builder exposes an AI agent panel (`AI-агент` in the app bar) that
+builds and edits the page from a natural-language instruction.
+
+Flow:
+
+1. The browser sends the instruction, the current `sections` array and the current
+   selection to `POST /admin/pages/{page}/builder/ai`.
+2. `App\Builder\Services\BuilderAiService` composes a prompt with the page meta,
+   the current sections and a compact catalog of registered block types and their
+   fields, then calls the configured provider (OpenAI, Anthropic or a custom
+   OpenAI-compatible endpoint).
+3. The model must answer with `{ "message": string, "sections": [...] }`. The
+   response is decoded, normalized with `PageBuilderService::normalizeSections`,
+   stripped of block types that are not in `BlockRegistry`, and validated with
+   `PageBuilderService::validateBlocks`.
+4. Invalid JSON or an invalid structure triggers exactly one retry with the
+   validator feedback attached to the conversation.
+5. The proposal is returned to the canvas but never persisted automatically. The
+   editor applies it explicitly, which creates an undo history entry and leaves
+   saving to the normal builder save/autosave flow.
+
+The agent never bypasses the JSON contract, so it cannot introduce blocks or
+settings that the renderer and inspector do not understand.
+
 ## Decision
 
 Use TipTap for rich text inside the existing JSON/block-based page builder, not as a replacement for the builder architecture itself.

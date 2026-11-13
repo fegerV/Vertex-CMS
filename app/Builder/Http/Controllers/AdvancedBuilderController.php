@@ -4,6 +4,7 @@ namespace App\Builder\Http\Controllers;
 
 use App\Builder\Config\BlockRegistry;
 use App\Builder\Config\SectionRegistry;
+use App\Builder\Services\BuilderAiService;
 use App\Builder\Services\PageBuilderService;
 use App\Builder\Services\DesignSystemService;
 use App\Builder\Support\BuilderContractSerializer;
@@ -26,6 +27,7 @@ class AdvancedBuilderController extends Controller
         private readonly BuilderContractSerializer $serializer,
         private readonly ActivityLogService $activityLog,
         private readonly DesignSystemService $designSystem,
+        private readonly BuilderAiService $builderAi,
     ) {}
 
     public function advanced(Request $request, Page $page): View
@@ -92,6 +94,48 @@ class AdvancedBuilderController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function ai(Request $request, Page $page): JsonResponse
+    {
+        $payload = $request->validate([
+            'instruction' => ['required', 'string', 'max:4000'],
+            'provider' => ['nullable', 'string', 'max:50'],
+            'sections' => ['nullable', 'array'],
+            'selection' => ['nullable', 'array'],
+        ]);
+
+        $result = $this->builderAi->run(
+            $page,
+            (string) $payload['instruction'],
+            is_array($payload['sections'] ?? null) ? $payload['sections'] : ($page->content_json['sections'] ?? []),
+            is_array($payload['selection'] ?? null) ? $payload['selection'] : [],
+            $payload['provider'] ?? null,
+        );
+
+        if (! ($result['success'] ?? false)) {
+            return response()->json([
+                'ok' => false,
+                'error' => $result['error'] ?? 'ai_error',
+                'message' => $result['message'] ?? 'Не удалось получить ответ AI.',
+            ], (int) ($result['status'] ?? 422));
+        }
+
+        $this->activityLog->record('builder.ai.generate', 'ai_request', null, 'Builder AI applied a page structure.', [
+            'page_id' => $page->id,
+            'provider' => $result['provider']['id'] ?? null,
+            'sections' => count($result['sections'] ?? []),
+            'blocks' => collect($result['sections'] ?? [])->sum(fn (array $section): int => count($section['blocks'] ?? [])),
+            'dropped_blocks' => $result['dropped_blocks'] ?? [],
+        ], $request);
+
+        return response()->json([
+            'ok' => true,
+            'message' => $result['message'] ?? 'Структура страницы обновлена.',
+            'sections' => $result['sections'] ?? [],
+            'provider' => $result['provider'] ?? null,
+            'dropped_blocks' => $result['dropped_blocks'] ?? [],
+        ]);
     }
 
     public function autoSave(Request $request, Page $page): JsonResponse
@@ -530,6 +574,7 @@ class AdvancedBuilderController extends Controller
             'quick_add' => [
                 'templates' => $this->library->quickAddTemplates(),
             ],
+            'ai' => $this->builderAi->assistantContext(),
             'design_library_url' => route('admin.pages.builder.design-library.index'),
             'media' => [
                 'api_base' => url('/admin/api/media'),
