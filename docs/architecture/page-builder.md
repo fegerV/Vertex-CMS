@@ -356,6 +356,28 @@ Flow:
 The agent never bypasses the JSON contract, so it cannot introduce blocks or
 settings that the renderer and inspector do not understand.
 
+### Smoke-проверка без API-ключа
+
+Перед релизом агента можно проверить целиком, не тратя токены и не заводя ключ:
+
+```bash
+php artisan builder:ai-smoke
+```
+
+Команда поднимает локальную OpenAI-совместимую заглушку
+(`scripts/smoke/ai-provider-stub.php`), подключает её как провайдер `custom`,
+генерирует страницу, правит выбранный блок, сохраняет обе версии и проверяет,
+что id блока, соседние блоки, вторая секция и её настройки не изменились, а
+страница рендерится. В конце настройки AI, тестовая страница, ревизии и
+временные файлы откатываются; код возврата `1` означает провал проверки.
+
+Опции:
+
+- `--port=8123` — порт заглушки (по умолчанию 8123);
+- `--keep-page` — оставить тестовую страницу и вывести ссылку на конструктор.
+
+Та же проверка выполняется в CI через `tests/Feature/BuilderAiSmokeCommandTest.php`.
+
 ## Decision
 
 Use TipTap for rich text inside the existing JSON/block-based page builder, not as a replacement for the builder architecture itself.

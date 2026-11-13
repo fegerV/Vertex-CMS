@@ -129,6 +129,8 @@ Last updated: `2026-11-11`
   - unknown block types are dropped, the result is validated by `PageBuilderService::validateBlocks`, and one retry is made on an invalid answer
   - the proposal is applied to the canvas only after an explicit click, adds an undo history entry and is saved through the normal page save flow
   - disabled module and unconfigured provider are reported as stable `422` errors (`ai_disabled`, `ai_provider_not_configured`)
+  - repeatable smoke check without an API key: `php artisan builder:ai-smoke` (`app/Console/Commands/BuilderAiSmokeCommand.php`, stub at `scripts/smoke/ai-provider-stub.php`); it generates a page, edits one block, saves, asserts the rest is untouched and rolls everything back
+  - the same smoke flow is covered in CI by `tests/Feature/BuilderAiSmokeCommandTest.php`
 
 ## Current Stage
 
